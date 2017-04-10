@@ -1,0 +1,33 @@
+{
+  "name": "AOMAnalyzer",
+  "version": "1.0.0",
+  "description": "AOM/VP9 Bitstream Analyzer",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --config config/webpack.config.js",
+    "build-watch": "webpack --watch --config config/webpack.config.js",
+    "build-debug": "webpack --display-reasons --progress --config config/webpack.config.js",
+    "build-release": "webpack -p --config config/webpack.config.js",
+    "build-watch": "webpack --watch --config config/webpack.config.js",
+    "package-darwin": "electron-packager . --platform=darwin --electron-version=1.4.16 --overwrite --icon=vomit.icns",
+    "package-linux": "electron-packager . --platform=linux --electron-version=1.4.16 --overwrite",
+    "package-all": "electron-packager . --all --electron-version=1.4.16 --overwrite"
+  },
+  "author": "Michael Bebenita",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/react": "^0.14.33",
+    "@types/react-dom": "^0.14.16",
+    "electron-packager": "^8.6.0",
+    "ts-loader": "^2.0.3",
+    "typescript": "^2.2.2",
+    "webpack": "^2.3.3"
+  },
+  "dependencies": {
+    "argparse": "^1.0.9",
+    "react": "^15.4.1",
+    "react-dom": "^15.4.1",
+    "material-ui": "^0.16.4",
+    "react-tap-event-plugin": "^2.0.1"
+  }
+}

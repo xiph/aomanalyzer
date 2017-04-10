@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Analyzer</title>
+  <link href="fonts/materialIcons.css" rel="stylesheet">
+  <link href="fonts/roboto.css" rel="stylesheet">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0px;
+    }
+    body {
+      background-color: #222222;
+      min-height: 100%;
+    }
+  </style>
+
+  <style>
+    .glyphicon-refresh-animate {
+      -animation: spin .7s infinite linear;
+      -webkit-animation: spin2 .7s infinite linear;
+    }
+
+    @-webkit-keyframes spin2 {
+      from {
+        -webkit-transform: rotate(0deg);
+      }
+      to {
+        -webkit-transform: rotate(360deg);
+      }
+    }
+
+    @keyframes spin {
+      from {
+        transform: scale(1) rotate(0deg);
+      }
+      to {
+        transform: scale(1) rotate(360deg);
+      }
+    }
+
+    .activeContent {
+      padding: 4px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 10px;
+    }
+
+    .tabContent {
+      padding: 10px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 12px;
+    }
+
+    #sidePanel {
+      width: 500px;
+      background-color: #111111;
+      color: white;
+      padding: 0px;
+      font-size: 11px;
+    }
+
+    .contentContainer {
+      width: 100%;
+      overflow: auto;
+    }
+
+    .canvasContainer {
+      position: relative;
+    }
+
+    .panel {
+      padding: 10px;
+      background-color: rgba(20, 20, 20, 0.8);
+      color: white;
+    }
+
+    .sectionHeader {
+      font-size: 12px;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      font-weight: bold;
+      border-bottom: 1px solid deepskyblue;
+      color: deepskyblue;
+      clear: left;
+    }
+
+    .propertyName {
+      font-size: 11px;
+      color: #CCCCCC;
+    }
+
+
+    .propertyValue {
+      font-size: 11px;
+      font-family: monospace;
+    }
+
+
+    .rootContainer {
+      overflow: hidden;
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      height: 100%;
+    }
+
+    #frameComment {
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin-top: auto;
+      margin-bottom: auto;
+      margin-right: auto;
+      margin-left: auto;
+      width: 512px;
+      height: 320px;
+
+      position: fixed;
+      z-index: 20;
+      opacity: 1;
+      background-color: rgba(20, 20, 20, 0.9);
+      padding-left: 10px;
+      vertical-align: middle;
+      color: white;
+      padding: 10px;
+      font-size: 11px;
+      border-radius: 1em;
+      /*overflow: scroll;*/
+    }
+
+    .maxWidthAndHeight {
+      width: 100%;
+      height: 100%;
+    }
+
+    .runDetail {
+      padding-top: 4px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 12px;
+      color: white;
+    }
+
+    .runPaper {
+      background-color: black;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="maxWidthAndHeight" id="analyzer-app"></div>
+  <!-- Dependencies -->
+  <!--<script src="lib/react.js"></script>
+  <script src="lib/react-dom.js"></script>-->
+  <!-- Main -->
+  <script src="lib/mousetrap.min.js"></script>
+  <script src="./dist/analyzer.bundle.js"></script>
+
+  <!--<script src="lib/dragscroll.js"></script>-->
+</body>
+
+</html>
