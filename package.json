@@ -8,10 +8,9 @@
     "build-watch": "webpack --watch --config config/webpack.config.js",
     "build-debug": "webpack --display-reasons --progress --config config/webpack.config.js",
     "build-release": "webpack -p --config config/webpack.config.js",
-    "package-darwin": "electron-packager . --platform=darwin --electron-version=1.4.16 --overwrite --icon=vomit.icns",
-    "package-linux": "electron-packager . --platform=linux --electron-version=1.4.16 --overwrite",
-    "package-win32": "electron-packager . --platform=win32 --electron-version=1.4.16 --overwrite",
-    "package-all": "electron-packager . --all --electron-version=1.4.16 --overwrite"
+    "package-darwin": "electron-packager . --platform=darwin --arch=x64 --electron-version=1.4.16 --overwrite --icon=vomit.icns --out=release_builds",
+    "package-linux": "electron-packager . --platform=linux --arch=x64 --electron-version=1.4.16 --overwrite  --out=release_builds",
+    "package-win32": "electron-packager . --platform=win32 --arch=x64 --electron-version=1.4.16 --overwrite  --out=release_builds"
   },
   "author": "Michael Bebenita",
   "license": "ISC",
