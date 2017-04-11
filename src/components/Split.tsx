@@ -14,6 +14,8 @@ import {grey900, grey800, grey100, grey200} from 'material-ui/styles/colors';
 import { unreachable } from "./analyzerTools";
 import Dialog from 'material-ui/Dialog';
 
+declare const Mousetrap;
+
 interface SplitViewProps {
   groups: AnalyzerFrame[][],
   groupNames?: string[],
