@@ -1125,17 +1125,17 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
           let names = Accounting.getSortedSymbolNames(frames.map(frame => frame.accounting));
           bitLayerToolbar = <Toolbar>
             <ToolbarGroup firstChild={true} >
-              <DropDownMenu style={{ width: 150 }} autoWidth={false} value={this.state.showBitsScale} onChange={(event, index, value) => this.setState({ showBitsScale: value } as any)}>
+              <DropDownMenu animated={false} style={{ width: 150 }} autoWidth={false} value={this.state.showBitsScale} onChange={(event, index, value) => this.setState({ showBitsScale: value } as any)}>
                 <MenuItem value="frame" primaryText="Frame Relative" />
                 <MenuItem value="video" primaryText="Video Relative" />
                 <MenuItem value="videos" primaryText="Video Relative (all)" />
               </DropDownMenu>
-              <DropDownMenu style={{ width: 150 }} autoWidth={false} value={this.state.showBitsMode} onChange={(event, index, value) => this.setState({ showBitsMode: value } as any)}>
+              <DropDownMenu animated={false} style={{ width: 150 }} autoWidth={false} value={this.state.showBitsMode} onChange={(event, index, value) => this.setState({ showBitsMode: value } as any)}>
                 <MenuItem value="linear" primaryText="Single Color" />
                 <MenuItem value="heat" primaryText="Heat Map" />
                 <MenuItem value="heat-opaque" primaryText="Heat Map (Opaque)" />
               </DropDownMenu>
-              <DropDownMenu style={{ width: 150 }} autoWidth={false} value={this.state.showBitsFilter} onChange={(event, index, value) => this.setState({ showBitsFilter: value } as any)}>
+              <DropDownMenu animated={false} style={{ width: 150 }} autoWidth={false} value={this.state.showBitsFilter} onChange={(event, index, value) => this.setState({ showBitsFilter: value } as any)}>
                 <MenuItem value="" primaryText="None" />
                 {
                   names.map(name => <MenuItem key={name} value={name} primaryText={name} />)
@@ -1171,6 +1171,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
                 <FontIcon className="material-icons md-24" style={iconStyles}>layers</FontIcon>
               </IconButton>
               <Popover open={this.state.layerMenuIsOpen}
+                animated={false}
                 anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
                 targetOrigin={{ horizontal: 'left', vertical: 'top' }}
                 anchorEl={this.state.layerMenuAnchorEl}
@@ -1232,7 +1233,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
               {this.state.activeTab == 1 && <div>
                 <Toolbar>
                   <ToolbarGroup firstChild={true}>
-                    <DropDownMenu value={this.state.activeHistogramTab} onChange={(event, index, value) => this.setState({ activeHistogramTab: value } as any)}>
+                    <DropDownMenu animated={false} value={this.state.activeHistogramTab} onChange={(event, index, value) => this.setState({ activeHistogramTab: value } as any)}>
                       <MenuItem value={0} label="Bits" primaryText="Bits" />
                       <MenuItem value={1} label="Symbols" primaryText="Symbols" />
                       <MenuItem value={2} label="Block Size" primaryText="Block Size" />
