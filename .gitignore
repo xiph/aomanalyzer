@@ -4,3 +4,4 @@ AOMAnalyzer-win32-x64
 *.zip
 dist
 \.*
+release_builds
