@@ -3,7 +3,7 @@ import * as React from "react";
 
 import { makeBlockSizeLog2MapByValue, COLORS, HEAT_COLORS, Decoder, Rectangle, Size, AnalyzerFrame, loadFramesFromJson, downloadFile, Histogram, Accounting, AccountingSymbolMap, clamp, Vector, localFiles, localFileProtocol } from "./analyzerTools";
 import { HistogramComponent } from "./Histogram";
-import { log2, assert, unreachable } from "./analyzerTools";
+import { padLeft, log2, assert, unreachable } from "./analyzerTools";
 
 import RaisedButton from 'material-ui/RaisedButton';
 import Popover from 'material-ui/Popover';
@@ -227,7 +227,7 @@ export class FrameInfoComponent extends React.Component<{
             <TableRowColumn>Video</TableRowColumn><TableRowColumn style={valueStyle}>{this.props.activeGroup}</TableRowColumn>
           </TableRow>
           <TableRow>
-            <TableRowColumn>Frame</TableRowColumn><TableRowColumn style={valueStyle}>{this.props.activeFrame}</TableRowColumn>
+            <TableRowColumn>Frame</TableRowColumn><TableRowColumn style={valueStyle}>{this.props.activeFrame + 1}</TableRowColumn>
           </TableRow>
           <TableRow>
             <TableRowColumn>Frame Type</TableRowColumn><TableRowColumn style={valueStyle}>{frame.json.frameType}</TableRowColumn>
@@ -1156,15 +1156,15 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
               activeGroup: value,
             } as any);
           }}>{tabs}</Tabs>
-            <div className="activeContent">
-              {this.getGroupName(this.state.activeGroup)} {this.getActiveFrameConfig()}
-            </div>
           </div>
         }
 
         sidePanel = <div id="sidePanel">
           <Alert open={this.state.showDecodeDialog} onClose={this.decodeAdditionalFrames.bind(this)} title={`Decode ${this.state.decodeFrameCount} Frame(s)?`} description="Frames will be decoded in the background and may take a while." />
           {groupTabs}
+          <div className="activeContent">
+            Frame: {padLeft(this.state.activeFrame + 1, 2)}, Group: {this.getGroupName(this.state.activeGroup)} {this.getActiveFrameConfig()}
+          </div>
           <Toolbar>
             <ToolbarGroup firstChild={true}>
               <IconButton onClick={this.showLayerMenu.bind(this)} tooltip="Layers">

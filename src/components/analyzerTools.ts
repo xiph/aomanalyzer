@@ -690,6 +690,12 @@ const transformSizeLog2MapByName = {
   TX_32X32: [5, 5]
 }
 
+export function padLeft(v, n) {
+  let str = String(v);
+  while (str.length < n) str = " " + str;
+  return str;
+}
+
 export function log2(n: number): number {
   switch (n) {
     case 1: return 0;
