@@ -353,6 +353,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   showDecodeDialog: boolean;
   decodeFrameCount: number;
   activeTab: number;
+  playInterval: any;
 }> {
   public static defaultProps: AnalyzerViewProps = {
     groups: [],
@@ -363,7 +364,6 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   };
 
   activeGroupScore: number[][];
-  playInterval;
   ratio: number;
   frameSize: Size;
   frameCanvas: HTMLCanvasElement;
@@ -738,14 +738,16 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     } as any);
   }
   playPause() {
-    if (!this.playInterval) {
-      this.playInterval = setInterval(() => {
+    let playInterval = this.state.playInterval;
+    if (!playInterval) {
+      playInterval = setInterval(() => {
         this.advanceFrame(1);
       }, 1000 / this.props.playbackFrameRate);
     } else {
-      clearInterval(this.playInterval);
-      this.playInterval = 0;
+      clearInterval(playInterval);
+      playInterval = 0;
     }
+    this.setState({playInterval} as any);
   }
   advanceGroup(delta) {
     let activeGroup = this.state.activeGroup + delta;
@@ -1186,7 +1188,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
                 <FontIcon className="material-icons md-24" style={iconStyles}>skip_previous</FontIcon>
               </IconButton>
               <IconButton onClick={this.playPause.bind(this)} tooltip="Pause / Play: space">
-                <FontIcon className="material-icons md-24" style={iconStyles}>play_arrow</FontIcon>
+                <FontIcon className="material-icons md-24" style={iconStyles}>{!this.state.playInterval ? "play_arrow" : "stop"}</FontIcon>
               </IconButton>
               <IconButton onClick={this.advanceFrame.bind(this, 1)} tooltip="Next: .">
                 <FontIcon className="material-icons md-24" style={iconStyles}>skip_next</FontIcon>
