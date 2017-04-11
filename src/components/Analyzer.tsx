@@ -22,6 +22,7 @@ import { red500, yellow500, blue500 } from 'material-ui/styles/colors';
 import Dialog from 'material-ui/Dialog';
 import FlatButton from 'material-ui/FlatButton';
 import CircularProgress from 'material-ui/CircularProgress';
+import Checkbox from 'material-ui/Checkbox';
 
 declare const Mousetrap;
 
@@ -191,7 +192,6 @@ export class AccountingComponent extends React.Component<{
       </TableRow>);
     }
 
-
     return <div>
       <Table>
         <TableHeader adjustForCheckbox={false} displaySelectAll={false}>
@@ -354,6 +354,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   decodeFrameCount: number;
   activeTab: number;
   playInterval: any;
+
+  showLayersInZoom: boolean;
 }> {
   public static defaultProps: AnalyzerViewProps = {
     groups: [],
@@ -548,7 +550,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       layerMenuAnchorEl: null,
       showDecodeDialog: false,
       decodeFrameCount: 1,
-      activeTab: 0
+      activeTab: 0,
+      showLayersInZoom: false
     } as any;
     this.ratio = ratio;
     this.frameCanvas = document.createElement("canvas") as any;
@@ -665,7 +668,9 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         src.x, src.y, src.w, src.h,
         dst.x, dst.y, dst.w, dst.h);
     }
-    this.drawLayers(frame, this.zoomContext, src, dst);
+    if (this.state.showLayersInZoom) {
+      this.drawLayers(frame, this.zoomContext, src, dst);
+    }
   }
   drawLayers(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     ctx.save();
@@ -1215,6 +1220,13 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
           }}>
             <Tab value={0} label="Zoom">
               <canvas ref={(self: any) => this.resetZoomCanvas(self)} width="256" height="256"></canvas>
+              <div className="tabContent">
+                <Checkbox
+                  label="Show Layers in Zoom"
+                  checked={this.state.showLayersInZoom}
+                  onCheck={(event, value) => this.setState({ showLayersInZoom: value } as any)}
+                />
+              </div>
             </Tab>
             <Tab value={1} label="Histograms">
               {this.state.activeTab == 1 && <div>
