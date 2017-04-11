@@ -23,8 +23,10 @@ import Dialog from 'material-ui/Dialog';
 import FlatButton from 'material-ui/FlatButton';
 import CircularProgress from 'material-ui/CircularProgress';
 import Checkbox from 'material-ui/Checkbox';
+import TextField from 'material-ui/TextField';
 
 declare const Mousetrap;
+declare var shortenUrl;
 
 const MAX_FRAMES = 128;
 const SUPER_BLOCK_SIZE = 64;
@@ -356,6 +358,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   playInterval: any;
 
   showLayersInZoom: boolean;
+  shareUrl: string;
+  showShareUrlDialog: boolean;
 }> {
   public static defaultProps: AnalyzerViewProps = {
     groups: [],
@@ -551,7 +555,9 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       showDecodeDialog: false,
       decodeFrameCount: 1,
       activeTab: 0,
-      showLayersInZoom: false
+      showLayersInZoom: false,
+      shareUrl: "",
+      showShareUrlDialog: false
     } as any;
     this.ratio = ratio;
     this.frameCanvas = document.createElement("canvas") as any;
@@ -1160,6 +1166,17 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         }
 
         sidePanel = <div id="sidePanel">
+          <Dialog modal={false}
+            title="Share URL"
+            open={this.state.showShareUrlDialog}
+            actions={[<FlatButton
+              label="Ok"
+              primary={true}
+              onTouchTap={() => { this.setState({showShareUrlDialog: false} as any)}
+            />]}
+          >
+          <TextField defaultValue={this.state.shareUrl} />
+          </Dialog>
           <Alert open={this.state.showDecodeDialog} onClose={this.decodeAdditionalFrames.bind(this)} title={`Decode ${this.state.decodeFrameCount} Frame(s)?`} description="Frames will be decoded in the background and may take a while." />
           {groupTabs}
           <div className="activeContent">
@@ -1208,9 +1225,12 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
               <IconButton onClick={this.alertDecodeAdditionalFrames.bind(this, 30)} tooltip="Decode 30 Additional Frames">
                 <FontIcon className="material-icons md-24" style={iconStyles}>replay_30</FontIcon>
               </IconButton>
-              <IconButton onClick={this.analyze.bind(this)} tooltip="Analyze Other AWCY Videos">
-                <FontIcon className="material-icons md-24" style={iconStyles}>send</FontIcon>
+              <IconButton onClick={this.shareLink.bind(this)} tooltip="Share Link">
+                <FontIcon className="material-icons md-24" style={iconStyles}>share</FontIcon>
               </IconButton>
+              {/*<IconButton onClick={this.analyze.bind(this)} tooltip="Analyze Other AWCY Videos">
+                <FontIcon className="material-icons md-24" style={iconStyles}>send</FontIcon>
+              </IconButton>*/}
             </ToolbarGroup>
           </Toolbar>
           {bitLayerToolbar}
@@ -1268,24 +1288,20 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
               }
             </Tab>
             <Tab value={4} label="More">
-              <Tabs style={{ backgrundColor: "#212121" }}>
-                <Tab label="Build Config">
-                  <div className="tabContent">
-                    <p>
-                      {frame.config}
-                    </p>
-                  </div>
-                </Tab>
-                <Tab label="Help">
-                  <div className="tabContent">
-                    <ul>
-                      <li>Click anywhere on the image to lock focus and get mode info details.</li>
-                      <li>All analyzer features have keyboard shortcuts, use them.</li>
-                      <li>Toggle between video sequences by using the number keys: 1, 2, 3, etc.</li>
-                    </ul>
-                  </div>
-                </Tab>
-              </Tabs>
+              <div className="tabContent">
+                <RaisedButton primary={true} label="Feature Request" onTouchTap={this.fileIssue.bind(this, "enhancement")}/>{' '}
+                <RaisedButton secondary={true} label="File a Bug" onTouchTap={this.fileIssue.bind(this, "bug")}/>
+                <h3>Configuration</h3>
+                <p>
+                  {frame.config}
+                </p>
+                <h3>Tips</h3>
+                <ul>
+                  <li>Click anywhere on the image to lock focus and get mode info details.</li>
+                  <li>All analyzer features have keyboard shortcuts, use them.</li>
+                  <li>Toggle between video sequences by using the number keys: 1, 2, 3, etc.</li>
+                </ul>
+              </div>
             </Tab>
           </Tabs>
         </div>
@@ -1690,6 +1706,23 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     } else {
       throw new Error("Can't handle mode: " + mode);
     }
+  }
+  createSharingLink(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      shortenUrl(window.location.href , (url) => {
+        resolve(url);
+      });
+    });
+  }
+  shareLink() {
+    this.createSharingLink().then(link => {
+      this.setState({showShareUrlDialog: true, shareUrl: link} as any);
+    });
+  }
+  fileIssue(label: string = "") {
+    this.createSharingLink().then(link => {
+      window.open("https://github.com/mbebenita/aomanalyzer/issues/new?labels=" + label + "&body=" + encodeURIComponent(link));
+    });
   }
 }
 
