@@ -1204,8 +1204,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
               <IconButton onClick={this.zoom.bind(this, 2)} tooltip="Zoom In: ]">
                 <FontIcon className="material-icons md-24" style={iconStyles}>zoom_in</FontIcon>
               </IconButton>
-              <IconButton onClick={this.alertDecodeAdditionalFrames.bind(this, 10)} tooltip="Decode 10 Additional Frames">
-                <FontIcon className="material-icons md-24" style={iconStyles}>replay_5</FontIcon>
+              <IconButton onClick={this.alertDecodeAdditionalFrames.bind(this, 30)} tooltip="Decode 30 Additional Frames">
+                <FontIcon className="material-icons md-24" style={iconStyles}>replay_30</FontIcon>
               </IconButton>
               <IconButton onClick={this.analyze.bind(this)} tooltip="Analyze Other AWCY Videos">
                 <FontIcon className="material-icons md-24" style={iconStyles}>send</FontIcon>
