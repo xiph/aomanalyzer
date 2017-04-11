@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { AnalyzerViewLoaderComponent } from "./components/Analyzer";
+import { AnalyzerViewLoaderComponent } from "./components/Loader";
 import { LocalAnalyzerComponent } from "./components/LocalAnalyzer";
 
 // since the export is a function, this is the only actual correct way:
@@ -49,6 +49,7 @@ let maxFrames = parameters.maxFrames;
 let filePrefix = parameters.filePrefix || "";
 let local = parameters.local | 0;
 let blind = parameters.blind | 0;
+let split = parameters.split | 0;
 let benchmark = parameters.benchmark | 0;
 
 /**
@@ -118,7 +119,8 @@ if (local || pairs.length == 0) {
       playbackFrameRate={playbackFrameRate}
       layers={layers}
       maxFrames={maxFrames}
-      blind={blind}/>
+      blind={blind}
+      split={split}/>
     </MuiThemeProvider>,
     document.getElementById("analyzer-app")
   );

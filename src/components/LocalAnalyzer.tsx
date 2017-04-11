@@ -1,6 +1,6 @@
 import * as React from "react";
 import { localFiles, localFileProtocol } from "./analyzerTools";
-import { AnalyzerViewLoaderComponent } from "./Analyzer"
+import { AnalyzerViewLoaderComponent } from "./Loader"
 import Dialog from 'material-ui/Dialog';
 import FlatButton from 'material-ui/FlatButton';
 import CircularProgress from 'material-ui/CircularProgress';

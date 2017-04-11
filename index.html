@@ -147,11 +147,50 @@
     .runPaper {
       background-color: black;
     }
+
+    .splitCenterContainer {
+      overflow: hidden;
+      width: 100%;
+      height: calc(100% - 56px);
+    }
+
+    .splitVerticalContainer {
+      overflow: hidden;
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      height: calc(100% - 56px);
+    }
+
+    .splitVerticalContent {
+      width: 50%;
+      overflow: auto;
+    }
+
+    .splitHorizontalContainer {
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: calc(100% - 56px);
+    }
+
+    .splitHorizontalContent {
+      height: 50%;
+      overflow: auto;
+    }
+
+    .splitTextContent {
+      padding: 8px;
+      /*font-family: 'Roboto Mono', monospace;*/
+      font-family: 'Roboto';
+      font-size: 14px;
+      color: #CCCCCC;
+    }
   </style>
 </head>
 
 <body>
-
   <div class="maxWidthAndHeight" id="analyzer-app"></div>
   <script src="gapi.js"></script>
   <!-- Dependencies -->
