@@ -73,6 +73,9 @@ function getDecoderVideoUrls(): {decoderUrl: string, videoUrl: string, decoderNa
 let pairs = getDecoderVideoUrls();
 
 let overrideTheme = {
+  palette: {
+    accent1Color: "red"
+  },
   tableRow: {
     height: 24
   },
