@@ -22,7 +22,9 @@ You can run the analyzer using `electron` from the command line using:
 electron . decoder1 video1 decoder2 video2 video3 ...
 ```
 
-The `decoder` and `video` parameters can point either to a local file or a remote url.
+The `decoder` and `video` parameters can point either to a local file or a remote url. If you don't specify any arguments, the analyzer will prompt you to select jobs directly from AWCY.
+
+If you've downloaded a standalone package of the analyzer, you can omit the `electron .` part and just run the binary directly from the command line.
 
 ### Command Line Options
 
