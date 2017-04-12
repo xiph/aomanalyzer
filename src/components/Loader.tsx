@@ -7,7 +7,7 @@ import CircularProgress from 'material-ui/CircularProgress';
 import { AnalyzerView } from './Analyzer'
 import { SplitView } from './Split'
 
-interface AnalyzerViewLoaderComponentProps {
+interface LoaderComponentProps {
   decoderVideoUrlPairs: { decoderUrl: string, videoUrl: string, decoderName: string }[];
   playbackFrameRate?: number;
   layers?: number;
@@ -16,7 +16,7 @@ interface AnalyzerViewLoaderComponentProps {
   split?: number;
 }
 
-export class AnalyzerViewLoaderComponent extends React.Component<AnalyzerViewLoaderComponentProps, {
+export class LoaderComponent extends React.Component<LoaderComponentProps, {
   frames: AnalyzerFrame[][],
   groupNames: string[],
   analyzerFailedToLoad: boolean,
@@ -26,13 +26,13 @@ export class AnalyzerViewLoaderComponent extends React.Component<AnalyzerViewLoa
   playbackFrameRate; number;
 }> {
   playbackFrameRate: number;
-  public static defaultProps: AnalyzerViewLoaderComponentProps = {
+  public static defaultProps: LoaderComponentProps = {
     decoderVideoUrlPairs: [],
     playbackFrameRate: 1000,
     maxFrames: MAX_FRAMES,
     layers: 0xFFFFFFFF
   };
-  constructor(props: AnalyzerViewLoaderComponentProps) {
+  constructor(props: LoaderComponentProps) {
     super();
     this.state = {
       frames: [],
@@ -104,7 +104,10 @@ export class AnalyzerViewLoaderComponent extends React.Component<AnalyzerViewLoa
 
   decodedFrameCount = 0;
   decodeFrames(decoder: Decoder, count: number): Promise<AnalyzerFrame[]> {
-    decoder.setLayers(0xffffffff);
+    // If we use the split view, we don't need any layers making decoding faster.
+    if (!this.props.split) {
+      decoder.setLayers(0xffffffff);
+    }
     return new Promise((resolve, reject) => {
       let time = performance.now();
       let decodedFrames = [];
@@ -145,7 +148,7 @@ export class AnalyzerViewLoaderComponent extends React.Component<AnalyzerViewLoa
 
     if (this.props.split) {
       return <div className="maxWidthAndHeight">
-        <SplitView onDecodeAdditionalFrames={this.decodeAdditionalFrames.bind(this)} groups={this.state.frames} groupNames={this.state.groupNames}></SplitView>
+        <SplitView mode={this.props.split - 1} onDecodeAdditionalFrames={this.decodeAdditionalFrames.bind(this)} groups={this.state.frames} groupNames={this.state.groupNames}></SplitView>
       </div>;
     } else {
       return <div className="maxWidthAndHeight">

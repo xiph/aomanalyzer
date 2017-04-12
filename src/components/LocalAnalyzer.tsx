@@ -1,6 +1,6 @@
 import * as React from "react";
 import { localFiles, localFileProtocol } from "./analyzerTools";
-import { AnalyzerViewLoaderComponent } from "./Loader"
+import { LoaderComponent } from "./Loader"
 import Dialog from 'material-ui/Dialog';
 import FlatButton from 'material-ui/FlatButton';
 import CircularProgress from 'material-ui/CircularProgress';
@@ -198,7 +198,7 @@ export class LocalAnalyzerComponent extends React.Component<{
     //   maxFrames={maxFrames}
     //   blind={blind}
     if (this.state.pairs) {
-      return <AnalyzerViewLoaderComponent
+      return <LoaderComponent
         decoderVideoUrlPairs={this.state.pairs}
         maxFrames={4}
       />

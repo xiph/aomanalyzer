@@ -16,19 +16,20 @@ import Dialog from 'material-ui/Dialog';
 
 declare const Mousetrap;
 
-interface SplitViewProps {
-  groups: AnalyzerFrame[][],
-  groupNames?: string[],
-  onDecodeAdditionalFrames: (count: number) => void;
-  playbackFrameRate?: number;
-}
-
 enum SplitMode {
   Left,
   Right,
   Vertical,
   Horizontal,
   Last
+}
+
+interface SplitViewProps {
+  groups: AnalyzerFrame[][],
+  groupNames?: string[],
+  onDecodeAdditionalFrames: (count: number) => void;
+  playbackFrameRate?: number;
+  mode?: SplitMode
 }
 
 export class SplitView extends React.Component<SplitViewProps, {
@@ -48,16 +49,17 @@ export class SplitView extends React.Component<SplitViewProps, {
     groups: [],
     groupNames: null,
     playbackFrameRate: 30,
-    onDecodeAdditionalFrames: null
+    onDecodeAdditionalFrames: null,
+    mode: SplitMode.Vertical
   };
 
-  constructor() {
+  constructor(props: SplitViewProps) {
     super();
     this.state = {
       activeFrame: 0,
       playInterval: null,
       lockScroll: false,
-      mode: SplitMode.Horizontal,
+      mode: props.mode,
       showDetails: false
     };
   }

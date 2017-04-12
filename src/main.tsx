@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { AnalyzerViewLoaderComponent } from "./components/Loader";
+import { LoaderComponent } from "./components/Loader";
 import { LocalAnalyzerComponent } from "./components/LocalAnalyzer";
 
 // since the export is a function, this is the only actual correct way:
@@ -114,7 +114,7 @@ if (local || pairs.length == 0) {
 } else {
   ReactDOM.render(
     <MuiThemeProvider muiTheme={theme}>
-    <AnalyzerViewLoaderComponent
+    <LoaderComponent
       decoderVideoUrlPairs={pairs}
       playbackFrameRate={playbackFrameRate}
       layers={layers}
