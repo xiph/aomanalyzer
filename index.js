@@ -17,6 +17,7 @@ try {
   parser.addArgument(['--frames'], { defaultValue: 4, help: 'Number of frames to decode.' });
   parser.addArgument(['--dev'], { action: 'storeTrue', help: 'Developer mode.' });
   parser.addArgument(['--zoomFactor'], { defaultValue: 1, help: 'Default browser zoom. 1 default, 0.75 small, 0.5 tiny' });
+  parser.addArgument(['--split'], { defaultValue: 0, help: 'Split mode: 0 none, 4 vertical' });
   parser.addArgument(['file'], { nargs: '*', help: 'Decoder or IVF file path (local path or url).' });
   cliArgs = parser.parseArgs();
 } catch (x) {
@@ -25,6 +26,7 @@ try {
   cliArgs = {
     file: [],
     zoomFactor: 1,
+    split: 0,
     dev: false
   }
 }
@@ -76,7 +78,7 @@ function createWindow() {
     return x;
   }).join("&");
 
-  let search = `?maxFrames=${cliArgs.frames}&` + files;
+  let search = `?split=${cliArgs.split}&maxFrames=${cliArgs.frames}&` + files;
   win.loadURL(url.format({
     pathname: path.join(__dirname, 'index.html'),
     protocol: 'file:',
