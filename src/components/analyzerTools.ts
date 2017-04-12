@@ -35,7 +35,10 @@ export const COLORS_OLD = [
   "#FF6E41", "#005F39", "#6B6882", "#5FAD4E", "#A75740", "#A5FFD2", "#FFB167"
 ];
 
-export const COLORS = ["#126800",
+// Use 31 colors, don't use 32 colors since hash(string) % 32 can cause colors
+// collisions.
+export const COLORS = [
+  "#126800",
   "#3e2dd5",
   "#87ba00",
   "#305eff",
@@ -65,9 +68,8 @@ export const COLORS = ["#126800",
   "#dcbaed",
   "#511500",
   "#f3b9a2",
-  "#5b0022",
-  "#92004f"];
-
+  "#5b0022"
+];
 
 export const HEAT_COLORS = [];
 function generateHeatColors() {
