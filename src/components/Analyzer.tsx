@@ -1251,7 +1251,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
               {this.state.activeTab == 1 && <div>
                 <Toolbar>
                   <ToolbarGroup firstChild={true}>
-                    <DropDownMenu animated={false} value={this.state.activeHistogramTab} onChange={(event, index, value) => this.setState({ activeHistogramTab: value } as any)}>
+                    <DropDownMenu value={this.state.activeHistogramTab} onChange={(event, index, value) => this.setState({ activeHistogramTab: value } as any)}>
                       <MenuItem value={0} label="Bits" primaryText="Bits" />
                       <MenuItem value={1} label="Symbols" primaryText="Symbols" />
                       <MenuItem value={2} label="Block Size" primaryText="Block Size" />
