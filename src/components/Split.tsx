@@ -258,7 +258,5 @@ export class SplitView extends React.Component<SplitViewProps, {
         </ToolbarGroup>
       </Toolbar>
     </div>
-
-    // {this.props.groupNames[0]} vs. {this.props.groupNames[1]}
   }
 }
