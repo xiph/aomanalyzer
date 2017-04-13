@@ -126,7 +126,7 @@ function drawLine(ctx: CanvasRenderingContext2D, x, y, dx, dy) {
 }
 
 interface BlockVisitor {
-  (size: number, c: number, r: number, sc: number, sr: number, bounds: Rectangle, scale: number): void;
+  (blockSize: number, c: number, r: number, sc: number, sr: number, bounds: Rectangle, scale: number): void;
 }
 
 interface AnalyzerViewProps {
@@ -1350,7 +1350,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   drawSkip(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let skipGrid = frame.json["skip"];
     let map = frame.json["skipMap"];
-    this.drawFillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
+    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       let v = skipGrid[r][c];
       if (v == map.SKIP) {
         return false;
@@ -1359,6 +1359,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       return true;
     });
   }
+
   drawCDEF(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let skipGrid = frame.json["skip"];
     if (!skipGrid) return;
@@ -1384,7 +1385,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     if (!levelGrid) return;
     if (!strengthGrid) return;
     ctx.globalAlpha = 0.2;
-    this.drawFillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
+    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       if (allSkip(c, r)) {
         return;
       }
@@ -1413,7 +1414,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
   drawReferenceFrames(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let referenceGrid = frame.json["referenceFrame"];
-    this.drawFillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
+    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       let v = referenceGrid[r][c][0];
       if (v < 0) {
         return false;
@@ -1476,7 +1477,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
   drawTransformType(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let typeGrid = frame.json["transformType"];
-    this.drawFillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
+    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       ctx.fillStyle = COLORS[typeGrid[r][c]];
       return true;
     });
@@ -1509,7 +1510,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         });
       });
     }
-    this.drawFillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
+    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       let area = blockSizeArea(frame, blockSize);
       let bits = getBits(blocks, c, r);
       let value = (bits / area) / maxBitsPerPixel;
@@ -1594,16 +1595,15 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     }
     ctx.restore();
   }
-  drawFillBlock(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, setFillStyle: (blockSize, c, r, sc, sr) => boolean, mode = VisitMode.Block) {
-    let scale = dst.w / src.w;
-    ctx.save();
-    ctx.translate(-src.x * scale, -src.y * scale);
-    this.visitBlocks(mode, frame, (blockSize, c, r, sc, sr, bounds) => {
-      bounds.multiplyScalar(scale);
-      setFillStyle(blockSize, c, r, sc, sr) && ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-    });
-    ctx.restore();
+
+  fillBlock(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, setFillStyle: (blockSize: number, c: number, r: number, sc: number, sr: number) => boolean, mode = VisitMode.Block) {
+    this.drawBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr, bounds, scale) => {
+      if (setFillStyle(blockSize, c, r, sc, sr)) {
+        ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+      }
+    }, mode);
   }
+
   drawBlock(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, visitor: BlockVisitor, mode = VisitMode.Block) {
     let scale = dst.w / src.w;
     ctx.save();
