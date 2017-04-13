@@ -96,18 +96,6 @@ function getLineOffset(lineWidth: number) {
   return lineWidth % 2 == 0 ? 0 : 0.5;
 }
 
-function drawSplit(ctx, x, y, dx, dy) {
-  ctx.beginPath();
-  ctx.save();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x + dx, y);
-  ctx.moveTo(x, y);
-  ctx.lineTo(x, y + dy);
-  ctx.restore();
-  ctx.closePath();
-  ctx.stroke();
-}
-
 function drawVector(ctx: CanvasRenderingContext2D, a: Vector, b: Vector) {
   ctx.beginPath();
   ctx.moveTo(a.x, a.y);
@@ -713,7 +701,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.lineWidth = lineWidth;
     this.visitBlocks(mode, frame, (blockSize, c, r, sc, sr, bounds) => {
       bounds.multiplyScalar(scale);
-      drawSplit(ctx, bounds.x, bounds.y, bounds.w, bounds.h);
+      ctx.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
     });
     ctx.restore();
   }
