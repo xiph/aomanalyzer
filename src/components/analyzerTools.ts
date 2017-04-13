@@ -1,6 +1,19 @@
 declare let DecoderModule: any;
 declare let TextDecoder: any;
 
+export function makePattern(uri: string, scale: number, ready: (canvas: HTMLCanvasElement) => void) {
+  let image = new Image();
+  image.onload = function () {
+    var canvas = document.createElement("canvas");
+    canvas.width = image.width * scale;
+    canvas.height = image.height * scale;
+    let ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, canvas.width, canvas.height);
+    ready(canvas);
+  }
+  image.src = uri;
+}
 export function assert(c: boolean, message: string = "") {
   if (!c) {
     throw new Error(message);
@@ -35,7 +48,10 @@ export const COLORS_OLD = [
   "#FF6E41", "#005F39", "#6B6882", "#5FAD4E", "#A75740", "#A5FFD2", "#FFB167"
 ];
 
-export const COLORS = ["#126800",
+// Use 31 colors, don't use 32 colors since hash(string) % 32 can cause colors
+// collisions.
+export const COLORS = [
+  "#126800",
   "#3e2dd5",
   "#87ba00",
   "#305eff",
@@ -65,9 +81,8 @@ export const COLORS = ["#126800",
   "#dcbaed",
   "#511500",
   "#f3b9a2",
-  "#5b0022",
-  "#92004f"];
-
+  "#5b0022"
+];
 
 export const HEAT_COLORS = [];
 function generateHeatColors() {
@@ -723,4 +738,112 @@ export function makeTransformSizeLog2MapByValue(transformSizeMap): [number, numb
     byValue[transformSizeMap[key]] = transformSizeLog2MapByName[key];
   }
   return byValue;
+}
+
+export function reverseMap(map: { [name: string]: number }): { [id: number]: string } {
+  let o = [];
+  for (let k in map) {
+    o[map[k]] = k
+  }
+  return o;
+}
+
+/**
+ * Hand selected using http://tools.medialab.sciences-po.fr/iwanthue/
+ */
+export const palette = {
+  blockSize: {
+    BLOCK_2X2:              "#f4ffc3",
+    BLOCK_2X4:              "#622cd8",
+    BLOCK_4X2:              "#deff76",
+    BLOCK_4X4:              "#ff50ed",
+    BLOCK_4X8:              "#808900",
+    BLOCK_8X4:              "#014bb5",
+    BLOCK_8X8:              "#ffbd35",
+    BLOCK_8X16:             "#6895ff",
+    BLOCK_16X8:             "#e62b00",
+    BLOCK_16X16:            "#02b4e1",
+    BLOCK_16X32:            "#a45a00",
+    BLOCK_32X16:            "#00a781",
+    BLOCK_32X32:            "#ff70a6",
+    BLOCK_32X64:            "#00372a",
+    BLOCK_64X32:            "#ff9556",
+    BLOCK_64X64:            "#7a0032"
+  },
+  transformSize: {
+    TX_2X2:                 "#f4ffc3",
+    TX_4X4:                 "#622cd8",
+    TX_4X8:                 "#deff76",
+    TX_4X16:                "#ff50ed",
+    TX_8X4:                 "#808900",
+    TX_8X8:                 "#014bb5",
+    TX_8X16:                "#ffbd35",
+    TX_8X32:                "#6895ff",
+    TX_16X4:                "#e62b00",
+    TX_16X8:                "#02b4e1",
+    TX_16X16:               "#a45a00",
+    TX_16X32:               "#00a781",
+    TX_32X8:                "#ff70a6",
+    TX_32X16:               "#00372a",
+    TX_32X32:               "#ff9556"
+  },
+  transformType: {
+    DCT_DCT:                "#f4ffc3",
+    ADST_DCT:               "#622cd8",
+    DCT_ADST:               "#deff76",
+    ADST_ADST:              "#ff50ed",
+    FLIPADST_DCT:           "#808900",
+    DCT_FLIPADST:           "#014bb5",
+    FLIPADST_FLIPADST:      "#ffbd35",
+    ADST_FLIPADST:          "#6895ff",
+    FLIPADST_ADST:          "#e62b00",
+    IDTX:                   "#02b4e1",
+    V_DCT:                  "#a45a00",
+    H_DCT:                  "#00a781",
+    V_ADST:                 "#ff70a6",
+    H_ADST:                 "#00372a",
+    V_FLIPADST:             "#ff9556",
+    H_FLIPADST:             "#7a0032"
+  },
+  skip: {
+    SKIP:                   "#6c0039",
+    NO_SKIP:                "#00d041"
+  },
+  predictionMode: {
+    DC_PRED:                "#6c0039",
+    V_PRED:                 "#00d041",
+    H_PRED:                 "#801cd1",
+    D45_PRED:               "#a0ff78",
+    D135_PRED:              "#ff4ff7",
+    D117_PRED:              "#02c45a",
+    D153_PRED:              "#2d64ff",
+    D207_PRED:              "#91b900",
+    D63_PRED:               "#001d80",
+    SMOOTH_PRED:            "#78ff9f",
+    TM_PRED:                "#410065",
+    NEARESTMV:              "#8affe8",
+    NEARMV:                 "#ee007d",
+    ZEROMV:                 "#01ad84",
+    NEWMV:                  "#c00045",
+    NEWFROMNEARMV:          "#6beeff",
+    NEAREST_NEARESTMV:      "#af1b00",
+    NEAREST_NEARMV:         "#00468f",
+    NEAR_NEARESTMV:         "#ff5a3b",
+    NEAR_NEARMV:            "#007e7c",
+    NEAREST_NEWMV:          "#ff696f",
+    NEW_NEARESTMV:          "#006a43",
+    NEAR_NEWMV:             "#b79dff",
+    NEW_NEARMV:             "#b17d00",
+    ZERO_ZEROMV:            "#00041a",
+    NEW_NEWMV:              "#ffa574"
+  },
+  referenceFrame: {
+    INTRA_FRAME:            "#f4ffc3",
+    LAST_FRAME:             "#622cd8",
+    LAST2_FRAME:            "#deff76",
+    LAST3_FRAME:            "#ff50ed",
+    GOLDEN_FRAME:           "#ff50ed",
+    BWDREF_FRAME:           "#808900",
+    ALTREF_FRAME:           "#014bb5"
+  }
 }

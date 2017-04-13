@@ -44,8 +44,10 @@
     .activeContent {
       padding: 8px;
       font-family: 'Roboto Mono', monospace;
-      font-size: 12px;
+      font-size: 10px;
+      height: 30px;
       background-color: darkred;
+      overflow: hidden;
     }
 
     .tabContent {
@@ -203,18 +205,20 @@
   <!--<script src="lib/dragscroll.js"></script>-->
   <!-- Piwik -->
   <script type="text/javascript">
+    // Only do analytics for the website.
+    if (window.location.origin.indexOf("arewecompressedyet") >= 0) {
       var _paq = _paq || [];
       _paq.push(['trackPageView']);
       _paq.push(['enableLinkTracking']);
       (function() {
-      var u="//mbebenita.piwikpro.com/";
-      _paq.push(['setTrackerUrl', u+'piwik.php']);
-      _paq.push(['setSiteId', 1]);
-      var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-      g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+        var u="//mbebenita.piwikpro.com/";
+        _paq.push(['setTrackerUrl', u+'piwik.php']);
+        _paq.push(['setSiteId', 1]);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
       })();
-      </script>
-  <noscript><p><img src="//mbebenita.piwikpro.com/piwik.php?idsite=1" style="border:0;" alt="" /></p></noscript>
+    }
+  </script>
   <!-- End Piwik Code -->
 
 </body>

@@ -1,7 +1,7 @@
 import * as React from "react";
 // import { hashString, appStore, AppDispatcher, Jobs, Job, metricNames, AnalyzeFile, fileExists, analyzerBaseUrl, baseUrl } from "../../stores/Stores";
 
-import { makeBlockSizeLog2MapByValue, COLORS, HEAT_COLORS, Decoder, Rectangle, Size, AnalyzerFrame, loadFramesFromJson, downloadFile, Histogram, Accounting, AccountingSymbolMap, clamp, Vector, localFiles, localFileProtocol } from "./analyzerTools";
+import { makePattern, reverseMap, palette, hashString, makeBlockSizeLog2MapByValue, COLORS, HEAT_COLORS, Decoder, Rectangle, Size, AnalyzerFrame, loadFramesFromJson, downloadFile, Histogram, Accounting, AccountingSymbolMap, clamp, Vector, localFiles, localFileProtocol } from "./analyzerTools";
 import { HistogramComponent } from "./Histogram";
 import { padLeft, log2, assert, unreachable } from "./analyzerTools";
 
@@ -33,6 +33,24 @@ const ZOOM_SOURCE = 64;
 const DEFAULT_CONFIG = "--disable-multithread --disable-runtime-cpu-detect --target=generic-gnu --enable-accounting --enable-analyzer --enable-aom_highbitdepth --extra-cflags=-D_POSIX_SOURCE --enable-inspection --disable-docs --disable-webm-io --enable-experimental";
 const DERING_STRENGTHS = 21;
 const CLPF_STRENGTHS = 4;
+
+
+enum VisitMode {
+  Block,
+  SuperBlock,
+  TransformBlock,
+  Tile
+}
+
+enum HistogramTab {
+  Bits,
+  Symbols,
+  BlockSize,
+  TransformSize,
+  TransformType,
+  PredictionMode,
+  Skip
+}
 
 function colorScale(v, colors) {
   return colors[Math.round(v * (colors.length - 1))];
@@ -88,18 +106,6 @@ function getLineOffset(lineWidth: number) {
   return lineWidth % 2 == 0 ? 0 : 0.5;
 }
 
-function drawSplit(ctx, x, y, dx, dy) {
-  ctx.beginPath();
-  ctx.save();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x + dx, y);
-  ctx.moveTo(x, y);
-  ctx.lineTo(x, y + dy);
-  ctx.restore();
-  ctx.closePath();
-  ctx.stroke();
-}
-
 function drawVector(ctx: CanvasRenderingContext2D, a: Vector, b: Vector) {
   ctx.beginPath();
   ctx.moveTo(a.x, a.y);
@@ -118,7 +124,7 @@ function drawLine(ctx: CanvasRenderingContext2D, x, y, dx, dy) {
 }
 
 interface BlockVisitor {
-  (size: number, c: number, r: number, sc: number, sr: number, bounds: Rectangle, scale: number): void;
+  (blockSize: number, c: number, r: number, sc: number, sr: number, bounds: Rectangle, scale: number): void;
 }
 
 interface AnalyzerViewProps {
@@ -299,10 +305,10 @@ export class ModeInfoComponent extends React.Component<{
             <TableRowColumn>Block Size</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("blockSize")}</TableRowColumn>
           </TableRow>
           <TableRow>
-            <TableRowColumn>Tx Size</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("transformSize")}</TableRowColumn>
+            <TableRowColumn>Transform Size</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("transformSize")}</TableRowColumn>
           </TableRow>
           <TableRow>
-            <TableRowColumn>Tx Type</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("transformType")}</TableRowColumn>
+            <TableRowColumn>Transform Type</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("transformType")}</TableRowColumn>
           </TableRow>
           <TableRow>
             <TableRowColumn>Mode</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("mode")}</TableRowColumn>
@@ -547,7 +553,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       showReferenceFrames: false,
       showTools: !props.blind,
       showFrameComment: false,
-      activeHistogramTab: 0,
+      activeHistogramTab: HistogramTab.Bits,
       layerMenuIsOpen: false,
       layerMenuAnchorEl: null,
       showDecodeDialog: false,
@@ -687,14 +693,14 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.state.showMotionVectors && this.drawMotionVectors(frame, ctx, src, dst);
     this.state.showReferenceFrames && this.drawReferenceFrames(frame, ctx, src, dst);
     ctx.globalAlpha = 1;
-    this.state.showSuperBlockGrid && this.drawGrid(frame, "super-block", "#87CEEB", ctx, src, dst, 2);
-    this.state.showTransformGrid && this.drawGrid(frame, "transform", "yellow", ctx, src, dst);
-    this.state.showBlockGrid && this.drawGrid(frame, "block", "white", ctx, src, dst);
-    this.state.showTileGrid && this.drawGrid(frame, "tile", "orange", ctx, src, dst, 5);
+    this.state.showSuperBlockGrid && this.drawGrid(frame, VisitMode.SuperBlock, "#87CEEB", ctx, src, dst, 2);
+    this.state.showTransformGrid && this.drawGrid(frame, VisitMode.TransformBlock, "yellow", ctx, src, dst);
+    this.state.showBlockGrid && this.drawGrid(frame, VisitMode.Block, "white", ctx, src, dst);
+    this.state.showTileGrid && this.drawGrid(frame, VisitMode.Tile, "orange", ctx, src, dst, 5);
     ctx.restore();
 
   }
-  drawGrid(frame: AnalyzerFrame, mode: string, color: string, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, lineWidth = 1) {
+  drawGrid(frame: AnalyzerFrame, mode: VisitMode, color: string, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, lineWidth = 1) {
     let scale = dst.w / src.w;
     ctx.save();
     ctx.lineWidth = 1;
@@ -705,7 +711,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.lineWidth = lineWidth;
     this.visitBlocks(mode, frame, (blockSize, c, r, sc, sr, bounds) => {
       bounds.multiplyScalar(scale);
-      drawSplit(ctx, bounds.x, bounds.y, bounds.w, bounds.h);
+      ctx.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
     });
     ctx.restore();
   }
@@ -1048,23 +1054,51 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
 
 
-  getHistogram(tab: number, frames: AnalyzerFrame[]): Histogram[] {
+  getHistogram(tab: HistogramTab, frames: AnalyzerFrame[]): Histogram[] {
     switch (tab) {
-      case 0:
-      case 1:
+      case HistogramTab.Bits:
+      case HistogramTab.Symbols:
         return this.getSymbolHist(frames);
-      case 2:
+      case HistogramTab.BlockSize:
         return frames.map(x => x.blockSizeHist);
-      case 3:
+      case HistogramTab.TransformSize:
         return frames.map(x => x.transformSizeHist);
-      case 4:
+      case HistogramTab.TransformType:
         return frames.map(x => x.transformTypeHist);
-      case 5:
+      case HistogramTab.PredictionMode:
         return frames.map(x => x.predictionModeHist);
-      case 6:
+      case HistogramTab.Skip:
         return frames.map(x => x.skipHist);
     }
     return null;
+  }
+
+  getHistogramColor(tab: HistogramTab, name: string) {
+    let color = null;
+    switch (tab) {
+      case HistogramTab.BlockSize:
+        color = palette.blockSize[name];
+        break;
+      case HistogramTab.TransformSize:
+        color = palette.transformSize[name];
+        break;
+      case HistogramTab.TransformType:
+        color = palette.transformType[name];
+        break;
+      case HistogramTab.PredictionMode:
+        color = palette.predictionMode[name];
+        break;
+      case HistogramTab.Skip:
+        color = palette.skip[name];
+        break;
+      default:
+        color = COLORS[hashString(name) % COLORS.length];
+    }
+    if (!color) {
+      console.warn(`No color for ${name}`);
+      return COLORS[hashString(name) % COLORS.length];
+    }
+    return color;
   }
 
   showLayerMenu(event) {
@@ -1251,19 +1285,20 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
               {this.state.activeTab == 1 && <div>
                 <Toolbar>
                   <ToolbarGroup firstChild={true}>
-                    <DropDownMenu animated={false} value={this.state.activeHistogramTab} onChange={(event, index, value) => this.setState({ activeHistogramTab: value } as any)}>
-                      <MenuItem value={0} label="Bits" primaryText="Bits" />
-                      <MenuItem value={1} label="Symbols" primaryText="Symbols" />
-                      <MenuItem value={2} label="Block Size" primaryText="Block Size" />
-                      <MenuItem value={3} label="Transform Size" primaryText="Transform Size" />
-                      <MenuItem value={4} label="Transform Type" primaryText="Transform Type" />
-                      <MenuItem value={5} label="Prediction Mode" primaryText="Prediction Mode" />
-                      <MenuItem value={6} label="Skip" primaryText="Skip" />
+                    <DropDownMenu value={this.state.activeHistogramTab} onChange={(event, index, value) => this.setState({ activeHistogramTab: value } as any)}>
+                      <MenuItem value={HistogramTab.Bits} label="Bits" primaryText="Bits" />
+                      <MenuItem value={HistogramTab.Symbols} label="Symbols" primaryText="Symbols" />
+                      <MenuItem value={HistogramTab.BlockSize} label="Block Size" primaryText="Block Size" />
+                      <MenuItem value={HistogramTab.TransformSize} label="Transform Size" primaryText="Transform Size" />
+                      <MenuItem value={HistogramTab.TransformType} label="Transform Type" primaryText="Transform Type" />
+                      <MenuItem value={HistogramTab.PredictionMode} label="Prediction Mode" primaryText="Prediction Mode" />
+                      <MenuItem value={HistogramTab.Skip} label="Skip" primaryText="Skip" />
                     </DropDownMenu>
                   </ToolbarGroup>
                 </Toolbar>
                 <HistogramComponent
                   histograms={this.getHistogram(this.state.activeHistogramTab, frames)}
+                  color={this.getHistogramColor.bind(this, this.state.activeHistogramTab)}
                   highlight={this.state.activeFrame}
                   height={512} width={500}
                   scale={this.state.activeHistogramTab == 0 ? "max" : undefined}
@@ -1341,16 +1376,17 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
 
   drawSkip(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let skipGrid = frame.json["skip"];
-    let map = frame.json["skipMap"];
-    this.drawFillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
+    let skipMap = frame.json["skipMap"];
+    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       let v = skipGrid[r][c];
-      if (v == map.SKIP) {
+      if (v == skipMap.SKIP) {
         return false;
       }
-      ctx.fillStyle = COLORS[map.NO_SKIP];
+      ctx.fillStyle = palette.skip.NO_SKIP;
       return true;
     });
   }
+
   drawCDEF(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let skipGrid = frame.json["skip"];
     if (!skipGrid) return;
@@ -1376,7 +1412,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     if (!levelGrid) return;
     if (!strengthGrid) return;
     ctx.globalAlpha = 0.2;
-    this.drawFillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
+    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       if (allSkip(c, r)) {
         return;
       }
@@ -1386,7 +1422,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       }
       ctx.fillStyle = colorScale(v / (DERING_STRENGTHS + CLPF_STRENGTHS), HEAT_COLORS);
       return true;
-    }, "super-block");
+    }, VisitMode.SuperBlock);
     ctx.globalAlpha = 1;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -1401,19 +1437,43 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       let o = bounds.getCenter();
       ctx.fillText(l + "/" + s, o.x, o.y);
       return true;
-    }, "super-block");
+    }, VisitMode.SuperBlock);
   }
   drawReferenceFrames(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let referenceGrid = frame.json["referenceFrame"];
-    this.drawFillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
-      let v = referenceGrid[r][c][0];
-      if (v < 0) {
-        return false;
+    let referenceMapByValue = reverseMap(frame.json["referenceFrameMap"]);
+    const triangles = true;
+    this.drawBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr, bounds) => {
+      ctx.save();
+      if (referenceGrid[r][c][0] >= 0) {
+        ctx.fillStyle = palette.referenceFrame[referenceMapByValue[referenceGrid[r][c][0]]];
+        if (triangles) {
+          ctx.beginPath();
+          ctx.moveTo(bounds.x, bounds.y);
+          ctx.lineTo(bounds.x + bounds.w, bounds.y);
+          ctx.lineTo(bounds.x, bounds.y + bounds.h);
+          ctx.fill();
+        } else {
+          ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+        }
       }
-      ctx.fillStyle = COLORS[v];
+      if (referenceGrid[r][c][1] >= 0) {
+        ctx.fillStyle = palette.referenceFrame[referenceMapByValue[referenceGrid[r][c][1]]];
+        if (triangles) {
+          ctx.beginPath();
+          ctx.moveTo(bounds.x + bounds.w, bounds.y);
+          ctx.lineTo(bounds.x + bounds.w, bounds.y + bounds.h);
+          ctx.lineTo(bounds.x, bounds.y + bounds.h);
+          ctx.fill();
+        } else {
+          ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+        }
+      }
+      ctx.restore();
       return true;
     });
   }
+
   drawMotionVectors(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let motionVectorsGrid = frame.json["motionVectors"];
     let scale = dst.w / src.w;
@@ -1426,7 +1486,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.lineWidth = scale / 2;
 
     ctx.translate(-src.x * scale, -src.y * scale);
-    this.visitBlocks("block", frame, (blockSize, c, r, sc, sr, bounds) => {
+    this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
       bounds.multiplyScalar(scale);
       let o = bounds.getCenter();
       let m = motionVectorsGrid[r][c];
@@ -1468,8 +1528,9 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
   drawTransformType(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let typeGrid = frame.json["transformType"];
-    this.drawFillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
-      ctx.fillStyle = COLORS[typeGrid[r][c]];
+    let transformTypeMapByValue = reverseMap(frame.json["transformTypeMap"]);
+    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
+      ctx.fillStyle = palette.transformType[transformTypeMapByValue[typeGrid[r][c]]];
       return true;
     });
   }
@@ -1483,7 +1544,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     }
     let maxBitsPerPixel = 0;
     if (this.state.showBitsScale == "frame") {
-      this.visitBlocks("block", frame, (blockSize, c, r, sc, sr, bounds) => {
+      this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
         let area = blockSizeArea(frame, blockSize);
         let bits = getBits(blocks, c, r);
         maxBitsPerPixel = Math.max(maxBitsPerPixel, bits / area);
@@ -1493,7 +1554,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       groups.forEach(frames => {
         frames.forEach(frame => {
           let { blocks } = frame.accounting.countBits(this.state.showBitsFilter);
-          this.visitBlocks("block", frame, (blockSize, c, r, sc, sr, bounds) => {
+          this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
             let area = blockSizeArea(frame, blockSize);
             let bits = getBits(blocks, c, r);
             maxBitsPerPixel = Math.max(maxBitsPerPixel, bits / area);
@@ -1501,7 +1562,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         });
       });
     }
-    this.drawFillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
+    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       let area = blockSizeArea(frame, blockSize);
       let bits = getBits(blocks, c, r);
       let value = (bits / area) / maxBitsPerPixel;
@@ -1522,7 +1583,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   drawMode(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let modeGrid = frame.json["mode"];
     let modeMap = frame.json["modeMap"];
-
+    let modeMapByValue = reverseMap(modeMap);
     const V_PRED = modeMap.V_PRED;
     const H_PRED = modeMap.H_PRED;
     const D45_PRED = modeMap.D45_PRED;
@@ -1541,7 +1602,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.translate(-src.x * scale, -src.y * scale);
     let lineWidth = 1;
     ctx.lineWidth = lineWidth;
-    this.visitBlocks("block", frame, (blockSize, c, r, sc, sr, bounds) => {
+    this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
       bounds.multiplyScalar(scale);
       drawMode(modeGrid[r][c], bounds);
     });
@@ -1579,24 +1640,23 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
           drawLine(ctx, x, y + hh, w, -hh);
           break;
         default:
-          ctx.fillStyle = COLORS[m];
+          ctx.fillStyle = palette.predictionMode[modeMapByValue[m]];
           ctx.fillRect(x, y, w, h);
           break;
       }
     }
     ctx.restore();
   }
-  drawFillBlock(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, setFillStyle: (blockSize, c, r, sc, sr) => boolean, mode: string | number = "block") {
-    let scale = dst.w / src.w;
-    ctx.save();
-    ctx.translate(-src.x * scale, -src.y * scale);
-    this.visitBlocks(mode, frame, (blockSize, c, r, sc, sr, bounds) => {
-      bounds.multiplyScalar(scale);
-      setFillStyle(blockSize, c, r, sc, sr) && ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-    });
-    ctx.restore();
+
+  fillBlock(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, setFillStyle: (blockSize: number, c: number, r: number, sc: number, sr: number) => boolean, mode = VisitMode.Block) {
+    this.drawBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr, bounds, scale) => {
+      if (setFillStyle(blockSize, c, r, sc, sr)) {
+        ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+      }
+    }, mode);
   }
-  drawBlock(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, visitor: BlockVisitor, mode: string | number = "block") {
+
+  drawBlock(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, visitor: BlockVisitor, mode = VisitMode.Block) {
     let scale = dst.w / src.w;
     ctx.save();
     ctx.translate(-src.x * scale, -src.y * scale);
@@ -1609,7 +1669,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   /**
    * A variety of ways to visit the grid.
    */
-  visitBlocks(mode: string | number, frame: AnalyzerFrame, visitor: BlockVisitor) {
+  visitBlocks(mode: VisitMode, frame: AnalyzerFrame, visitor: BlockVisitor) {
     const blockSizeGrid = frame.json["blockSize"];
     const miSizeLog2 = frame.miSizeLog2;
     const miSuperSizeLog2 = frame.miSuperSizeLog2;
@@ -1618,14 +1678,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     const rows = blockSizeGrid.length;
     const cols = blockSizeGrid[0].length;
 
-    if (typeof mode === "number") {
-      for (let c = 0; c < cols; c += 1 << mode) {
-        for (let r = 0; r < rows; r += 1 << mode) {
-          let size = blockSizeGrid[r][c];
-          visitor(size, c, r, 0, 0, rect.set(c << miSizeLog2, r << miSizeLog2, (1 << miSizeLog2) << mode, (1 << miSizeLog2) << mode), 1);
-        }
-      }
-    } else if (mode === "tile") {
+    if (mode === VisitMode.Tile) {
       let tileCols = frame.json["tileCols"];
       let tileRows = frame.json["tileRows"];
       if (!tileCols || !tileRows) return;
@@ -1635,20 +1688,20 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
           visitor(size, c, r, 0, 0, rect.set(c << miSizeLog2, r << miSizeLog2, (1 << miSizeLog2) * tileCols, (1 << miSizeLog2) * tileRows), 1);
         }
       }
-    } else if (mode === "super-block") {
+    } else if (mode === VisitMode.SuperBlock) {
       for (let c = 0; c < cols; c += 1 << (miSuperSizeLog2 - miSizeLog2)) {
         for (let r = 0; r < rows; r += 1 << (miSuperSizeLog2 - miSizeLog2)) {
           let size = blockSizeGrid[r][c];
           visitor(size, c, r, 0, 0, rect.set(c << miSizeLog2, r << miSizeLog2, 1 << miSuperSizeLog2, 1 << miSuperSizeLog2), 1);
         }
       }
-    } else if (mode === "block" || mode === "transform") {
+    } else if (mode === VisitMode.Block || mode === VisitMode.TransformBlock) {
       let allSizes;
       let sizeGrid;
-      if (mode === "block") {
+      if (mode === VisitMode.Block) {
         sizeGrid = blockSizeGrid;
         allSizes = frame.blockSizeLog2Map;
-      } else if (mode === "transform") {
+      } else if (mode === VisitMode.TransformBlock) {
         sizeGrid = frame.json["transformSize"];
         allSizes = frame.transformSizeLog2Map;
       } else {
@@ -1678,7 +1731,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         for (let r = 0; r < rows; r++) {
           let size = sizeGrid[r][c];
           const sizeLog2 = allSizes[size];
-          if (sizeLog2[0] >= miSizeLog2 || sizeLog2[1] >= miSizeLog2) {
+          if (sizeLog2[0] >= miSizeLog2 && sizeLog2[1] >= miSizeLog2) {
             continue;
           }
           let w = 1 << sizeLog2[0];
