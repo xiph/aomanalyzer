@@ -1398,10 +1398,10 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     let skipMap = frame.json["skipMap"];
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       let v = skipGrid[r][c];
-      if (v == skipMap.SKIP) {
+      if (v == skipMap.NO_SKIP) {
         return false;
       }
-      ctx.fillStyle = palette.skip.NO_SKIP;
+      ctx.fillStyle = palette.skip.SKIP;
       return true;
     });
   }
