@@ -1,7 +1,7 @@
 import * as React from "react";
 // import { hashString, appStore, AppDispatcher, Jobs, Job, metricNames, AnalyzeFile, fileExists, analyzerBaseUrl, baseUrl } from "../../stores/Stores";
 
-import { makeBlockSizeLog2MapByValue, COLORS, HEAT_COLORS, Decoder, Rectangle, Size, AnalyzerFrame, loadFramesFromJson, downloadFile, Histogram, Accounting, AccountingSymbolMap, clamp, Vector, localFiles, localFileProtocol } from "./analyzerTools";
+import { palette, hashString, makeBlockSizeLog2MapByValue, COLORS, HEAT_COLORS, Decoder, Rectangle, Size, AnalyzerFrame, loadFramesFromJson, downloadFile, Histogram, Accounting, AccountingSymbolMap, clamp, Vector, localFiles, localFileProtocol } from "./analyzerTools";
 import { HistogramComponent } from "./Histogram";
 import { padLeft, log2, assert, unreachable } from "./analyzerTools";
 
@@ -40,6 +40,16 @@ enum VisitMode {
   SuperBlock,
   TransformBlock,
   Tile
+}
+
+enum HistogramTab {
+  Bits,
+  Symbols,
+  BlockSize,
+  TransformSize,
+  TransformType,
+  PredictionMode,
+  Skip
 }
 
 function colorScale(v, colors) {
@@ -543,7 +553,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       showReferenceFrames: false,
       showTools: !props.blind,
       showFrameComment: false,
-      activeHistogramTab: 0,
+      activeHistogramTab: HistogramTab.Bits,
       layerMenuIsOpen: false,
       layerMenuAnchorEl: null,
       showDecodeDialog: false,
@@ -1044,23 +1054,51 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
 
 
-  getHistogram(tab: number, frames: AnalyzerFrame[]): Histogram[] {
+  getHistogram(tab: HistogramTab, frames: AnalyzerFrame[]): Histogram[] {
     switch (tab) {
-      case 0:
-      case 1:
+      case HistogramTab.Bits:
+      case HistogramTab.Symbols:
         return this.getSymbolHist(frames);
-      case 2:
+      case HistogramTab.BlockSize:
         return frames.map(x => x.blockSizeHist);
-      case 3:
+      case HistogramTab.TransformSize:
         return frames.map(x => x.transformSizeHist);
-      case 4:
+      case HistogramTab.TransformType:
         return frames.map(x => x.transformTypeHist);
-      case 5:
+      case HistogramTab.PredictionMode:
         return frames.map(x => x.predictionModeHist);
-      case 6:
+      case HistogramTab.Skip:
         return frames.map(x => x.skipHist);
     }
     return null;
+  }
+
+  getHistogramColor(tab: HistogramTab, name: string) {
+    let color = null;
+    switch (tab) {
+      case HistogramTab.BlockSize:
+        color = palette.blockSize[name];
+        break;
+      case HistogramTab.TransformSize:
+        color = palette.transformSize[name];
+        break;
+      case HistogramTab.TransformType:
+        color = palette.transformType[name];
+        break;
+      case HistogramTab.PredictionMode:
+        color = palette.predictionMode[name];
+        break;
+      case HistogramTab.Skip:
+        color = palette.skip[name];
+        break;
+      default:
+        color = COLORS[hashString(name) % COLORS.length];
+    }
+    if (!color) {
+      console.warn(`No color for ${name}`);
+      return COLORS[hashString(name) % COLORS.length];
+    }
+    return color;
   }
 
   showLayerMenu(event) {
@@ -1248,18 +1286,19 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
                 <Toolbar>
                   <ToolbarGroup firstChild={true}>
                     <DropDownMenu value={this.state.activeHistogramTab} onChange={(event, index, value) => this.setState({ activeHistogramTab: value } as any)}>
-                      <MenuItem value={0} label="Bits" primaryText="Bits" />
-                      <MenuItem value={1} label="Symbols" primaryText="Symbols" />
-                      <MenuItem value={2} label="Block Size" primaryText="Block Size" />
-                      <MenuItem value={3} label="Transform Size" primaryText="Transform Size" />
-                      <MenuItem value={4} label="Transform Type" primaryText="Transform Type" />
-                      <MenuItem value={5} label="Prediction Mode" primaryText="Prediction Mode" />
-                      <MenuItem value={6} label="Skip" primaryText="Skip" />
+                      <MenuItem value={HistogramTab.Bits} label="Bits" primaryText="Bits" />
+                      <MenuItem value={HistogramTab.Symbols} label="Symbols" primaryText="Symbols" />
+                      <MenuItem value={HistogramTab.BlockSize} label="Block Size" primaryText="Block Size" />
+                      <MenuItem value={HistogramTab.TransformSize} label="Transform Size" primaryText="Transform Size" />
+                      <MenuItem value={HistogramTab.TransformType} label="Transform Type" primaryText="Transform Type" />
+                      <MenuItem value={HistogramTab.PredictionMode} label="Prediction Mode" primaryText="Prediction Mode" />
+                      <MenuItem value={HistogramTab.Skip} label="Skip" primaryText="Skip" />
                     </DropDownMenu>
                   </ToolbarGroup>
                 </Toolbar>
                 <HistogramComponent
                   histograms={this.getHistogram(this.state.activeHistogramTab, frames)}
+                  color={this.getHistogramColor.bind(this, this.state.activeHistogramTab)}
                   highlight={this.state.activeFrame}
                   height={512} width={500}
                   scale={this.state.activeHistogramTab == 0 ? "max" : undefined}
