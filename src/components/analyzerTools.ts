@@ -251,6 +251,7 @@ export class AnalyzerFrame {
   transformSizeHist: Histogram;
   transformTypeHist: Histogram;
   predictionModeHist: Histogram;
+  uvPredictionModeHist: Histogram;
   skipHist: Histogram;
   image: HTMLCanvasElement;
   config: string;
@@ -308,6 +309,7 @@ function readFrameFromJson(json): AnalyzerFrame {
   frame.transformSizeHist = getHistogramFromJson(json, "transformSize");
   frame.transformTypeHist = getHistogramFromJson(json, "transformType");
   frame.predictionModeHist = getHistogramFromJson(json, "mode");
+  frame.uvPredictionModeHist = getHistogramFromJson(json, "uv_mode");
   frame.miSizeLog2 = log2(json.config.MI_SIZE);
   frame.miSuperSizeLog2 = log2(64); // TODO: Does this ever change?
   frame.blockSizeLog2Map = makeBlockSizeLog2MapByValue(json["blockSizeMap"]);
