@@ -49,6 +49,7 @@ enum HistogramTab {
   TransformSize,
   TransformType,
   PredictionMode,
+  UVPredictionMode,
   Skip
 }
 
@@ -314,6 +315,9 @@ export class ModeInfoComponent extends React.Component<{
             <TableRowColumn>Mode</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("mode")}</TableRowColumn>
           </TableRow>
           <TableRow>
+            <TableRowColumn>UV Mode</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("uv_mode")}</TableRowColumn>
+          </TableRow>
+          <TableRow>
             <TableRowColumn>Skip</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("skip")}</TableRowColumn>
           </TableRow>
           <TableRow>
@@ -345,6 +349,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   showSkip: boolean;
   showCDEF: boolean;
   showMode: boolean;
+  showUVMode: boolean;
   showBits: boolean;
   showBitsScale: "frame" | "video" | "videos";
   showBitsMode: "linear" | "heat" | "heat-opaque";
@@ -498,6 +503,14 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       value: undefined,
       icon: "icon-l"
     },
+    showUVMode: {
+      key: "p",
+      description: "UV Mode",
+      detail: "Display UV prediction modes.",
+      default: false,
+      value: undefined,
+      icon: "icon-l"
+    },
     showBits: {
       key: "b",
       description: "Bits",
@@ -544,6 +557,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       showSkip: false,
       showCDEF: false,
       showMode: false,
+      showUVMode: false,
       showBits: false,
       showBitsScale: "frame",
       showBitsMode: "heat",
@@ -686,7 +700,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.save();
     ctx.globalAlpha = 0.5;
     this.state.showSkip && this.drawSkip(frame, ctx, src, dst);
-    this.state.showMode && this.drawMode(frame, ctx, src, dst);
+    this.state.showMode && this.drawMode("mode", frame, ctx, src, dst);
+    this.state.showUVMode && this.drawMode("uv_mode", frame, ctx, src, dst);
     this.state.showBits && this.drawBits(frame, ctx, src, dst);
     this.state.showCDEF && this.drawCDEF(frame, ctx, src, dst);
     this.state.showTransformType && this.drawTransformType(frame, ctx, src, dst);
@@ -1067,6 +1082,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         return frames.map(x => x.transformTypeHist);
       case HistogramTab.PredictionMode:
         return frames.map(x => x.predictionModeHist);
+      case HistogramTab.UVPredictionMode:
+        return frames.map(x => x.uvPredictionModeHist);
       case HistogramTab.Skip:
         return frames.map(x => x.skipHist);
     }
@@ -1086,6 +1103,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         color = palette.transformType[name];
         break;
       case HistogramTab.PredictionMode:
+      case HistogramTab.UVPredictionMode:
         color = palette.predictionMode[name];
         break;
       case HistogramTab.Skip:
@@ -1292,6 +1310,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
                       <MenuItem value={HistogramTab.TransformSize} label="Transform Size" primaryText="Transform Size" />
                       <MenuItem value={HistogramTab.TransformType} label="Transform Type" primaryText="Transform Type" />
                       <MenuItem value={HistogramTab.PredictionMode} label="Prediction Mode" primaryText="Prediction Mode" />
+                      <MenuItem value={HistogramTab.UVPredictionMode} label="UV Prediction Mode" primaryText="UV Prediction Mode" />
                       <MenuItem value={HistogramTab.Skip} label="Skip" primaryText="Skip" />
                     </DropDownMenu>
                   </ToolbarGroup>
@@ -1580,8 +1599,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       return true;
     });
   }
-  drawMode(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    let modeGrid = frame.json["mode"];
+  drawMode(type: string, frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
+    let modeGrid = frame.json[type];
     let modeMap = frame.json["modeMap"];
     let modeMapByValue = reverseMap(modeMap);
     const V_PRED = modeMap.V_PRED;
