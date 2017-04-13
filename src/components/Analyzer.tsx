@@ -1678,7 +1678,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         for (let r = 0; r < rows; r++) {
           let size = sizeGrid[r][c];
           const sizeLog2 = allSizes[size];
-          if (sizeLog2[0] >= miSizeLog2 || sizeLog2[1] >= miSizeLog2) {
+          if (sizeLog2[0] >= miSizeLog2 && sizeLog2[1] >= miSizeLog2) {
             continue;
           }
           let w = 1 << sizeLog2[0];
