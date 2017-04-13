@@ -1,7 +1,7 @@
 import * as React from "react";
 // import { hashString, appStore, AppDispatcher, Jobs, Job, metricNames, AnalyzeFile, fileExists, analyzerBaseUrl, baseUrl } from "../../stores/Stores";
 
-import { reverseMap, palette, hashString, makeBlockSizeLog2MapByValue, COLORS, HEAT_COLORS, Decoder, Rectangle, Size, AnalyzerFrame, loadFramesFromJson, downloadFile, Histogram, Accounting, AccountingSymbolMap, clamp, Vector, localFiles, localFileProtocol } from "./analyzerTools";
+import { makePattern, reverseMap, palette, hashString, makeBlockSizeLog2MapByValue, COLORS, HEAT_COLORS, Decoder, Rectangle, Size, AnalyzerFrame, loadFramesFromJson, downloadFile, Histogram, Accounting, AccountingSymbolMap, clamp, Vector, localFiles, localFileProtocol } from "./analyzerTools";
 import { HistogramComponent } from "./Histogram";
 import { padLeft, log2, assert, unreachable } from "./analyzerTools";
 
@@ -305,10 +305,10 @@ export class ModeInfoComponent extends React.Component<{
             <TableRowColumn>Block Size</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("blockSize")}</TableRowColumn>
           </TableRow>
           <TableRow>
-            <TableRowColumn>Tx Size</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("transformSize")}</TableRowColumn>
+            <TableRowColumn>Transform Size</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("transformSize")}</TableRowColumn>
           </TableRow>
           <TableRow>
-            <TableRowColumn>Tx Type</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("transformType")}</TableRowColumn>
+            <TableRowColumn>Transform Type</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("transformType")}</TableRowColumn>
           </TableRow>
           <TableRow>
             <TableRowColumn>Mode</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("mode")}</TableRowColumn>
@@ -1441,15 +1441,39 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
   drawReferenceFrames(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let referenceGrid = frame.json["referenceFrame"];
-    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
-      let v = referenceGrid[r][c][0];
-      if (v < 0) {
-        return false;
+    let referenceMapByValue = reverseMap(frame.json["referenceFrameMap"]);
+    const triangles = true;
+    this.drawBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr, bounds) => {
+      ctx.save();
+      if (referenceGrid[r][c][0] >= 0) {
+        ctx.fillStyle = palette.referenceFrame[referenceMapByValue[referenceGrid[r][c][0]]];
+        if (triangles) {
+          ctx.beginPath();
+          ctx.moveTo(bounds.x, bounds.y);
+          ctx.lineTo(bounds.x + bounds.w, bounds.y);
+          ctx.lineTo(bounds.x, bounds.y + bounds.h);
+          ctx.fill();
+        } else {
+          ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+        }
       }
-      ctx.fillStyle = COLORS[v];
+      if (referenceGrid[r][c][1] >= 0) {
+        ctx.fillStyle = palette.referenceFrame[referenceMapByValue[referenceGrid[r][c][1]]];
+        if (triangles) {
+          ctx.beginPath();
+          ctx.moveTo(bounds.x + bounds.w, bounds.y);
+          ctx.lineTo(bounds.x + bounds.w, bounds.y + bounds.h);
+          ctx.lineTo(bounds.x, bounds.y + bounds.h);
+          ctx.fill();
+        } else {
+          ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+        }
+      }
+      ctx.restore();
       return true;
     });
   }
+
   drawMotionVectors(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let motionVectorsGrid = frame.json["motionVectors"];
     let scale = dst.w / src.w;

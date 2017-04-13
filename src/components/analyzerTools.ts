@@ -1,6 +1,19 @@
 declare let DecoderModule: any;
 declare let TextDecoder: any;
 
+export function makePattern(uri: string, scale: number, ready: (canvas: HTMLCanvasElement) => void) {
+  let image = new Image();
+  image.onload = function () {
+    var canvas = document.createElement("canvas");
+    canvas.width = image.width * scale;
+    canvas.height = image.height * scale;
+    let ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, canvas.width, canvas.height);
+    ready(canvas);
+  }
+  image.src = uri;
+}
 export function assert(c: boolean, message: string = "") {
   if (!c) {
     throw new Error(message);
@@ -823,5 +836,14 @@ export const palette = {
     NEW_NEARMV:             "#b17d00",
     ZERO_ZEROMV:            "#00041a",
     NEW_NEWMV:              "#ffa574"
+  },
+  referenceFrame: {
+    INTRA_FRAME:            "#f4ffc3",
+    LAST_FRAME:             "#622cd8",
+    LAST2_FRAME:            "#deff76",
+    LAST3_FRAME:            "#ff50ed",
+    GOLDEN_FRAME:           "#ff50ed",
+    BWDREF_FRAME:           "#808900",
+    ALTREF_FRAME:           "#014bb5"
   }
 }
