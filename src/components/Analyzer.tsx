@@ -34,6 +34,14 @@ const DEFAULT_CONFIG = "--disable-multithread --disable-runtime-cpu-detect --tar
 const DERING_STRENGTHS = 21;
 const CLPF_STRENGTHS = 4;
 
+
+enum VisitMode {
+  Block,
+  SuperBlock,
+  TransformBlock,
+  Tile
+}
+
 function colorScale(v, colors) {
   return colors[Math.round(v * (colors.length - 1))];
 }
@@ -687,14 +695,14 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.state.showMotionVectors && this.drawMotionVectors(frame, ctx, src, dst);
     this.state.showReferenceFrames && this.drawReferenceFrames(frame, ctx, src, dst);
     ctx.globalAlpha = 1;
-    this.state.showSuperBlockGrid && this.drawGrid(frame, "super-block", "#87CEEB", ctx, src, dst, 2);
-    this.state.showTransformGrid && this.drawGrid(frame, "transform", "yellow", ctx, src, dst);
-    this.state.showBlockGrid && this.drawGrid(frame, "block", "white", ctx, src, dst);
-    this.state.showTileGrid && this.drawGrid(frame, "tile", "orange", ctx, src, dst, 5);
+    this.state.showSuperBlockGrid && this.drawGrid(frame, VisitMode.SuperBlock, "#87CEEB", ctx, src, dst, 2);
+    this.state.showTransformGrid && this.drawGrid(frame, VisitMode.TransformBlock, "yellow", ctx, src, dst);
+    this.state.showBlockGrid && this.drawGrid(frame, VisitMode.Block, "white", ctx, src, dst);
+    this.state.showTileGrid && this.drawGrid(frame, VisitMode.Tile, "orange", ctx, src, dst, 5);
     ctx.restore();
 
   }
-  drawGrid(frame: AnalyzerFrame, mode: string, color: string, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, lineWidth = 1) {
+  drawGrid(frame: AnalyzerFrame, mode: VisitMode, color: string, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, lineWidth = 1) {
     let scale = dst.w / src.w;
     ctx.save();
     ctx.lineWidth = 1;
@@ -1386,7 +1394,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       }
       ctx.fillStyle = colorScale(v / (DERING_STRENGTHS + CLPF_STRENGTHS), HEAT_COLORS);
       return true;
-    }, "super-block");
+    }, VisitMode.SuperBlock);
     ctx.globalAlpha = 1;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -1401,7 +1409,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       let o = bounds.getCenter();
       ctx.fillText(l + "/" + s, o.x, o.y);
       return true;
-    }, "super-block");
+    }, VisitMode.SuperBlock);
   }
   drawReferenceFrames(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let referenceGrid = frame.json["referenceFrame"];
@@ -1426,7 +1434,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.lineWidth = scale / 2;
 
     ctx.translate(-src.x * scale, -src.y * scale);
-    this.visitBlocks("block", frame, (blockSize, c, r, sc, sr, bounds) => {
+    this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
       bounds.multiplyScalar(scale);
       let o = bounds.getCenter();
       let m = motionVectorsGrid[r][c];
@@ -1483,7 +1491,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     }
     let maxBitsPerPixel = 0;
     if (this.state.showBitsScale == "frame") {
-      this.visitBlocks("block", frame, (blockSize, c, r, sc, sr, bounds) => {
+      this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
         let area = blockSizeArea(frame, blockSize);
         let bits = getBits(blocks, c, r);
         maxBitsPerPixel = Math.max(maxBitsPerPixel, bits / area);
@@ -1493,7 +1501,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       groups.forEach(frames => {
         frames.forEach(frame => {
           let { blocks } = frame.accounting.countBits(this.state.showBitsFilter);
-          this.visitBlocks("block", frame, (blockSize, c, r, sc, sr, bounds) => {
+          this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
             let area = blockSizeArea(frame, blockSize);
             let bits = getBits(blocks, c, r);
             maxBitsPerPixel = Math.max(maxBitsPerPixel, bits / area);
@@ -1541,7 +1549,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.translate(-src.x * scale, -src.y * scale);
     let lineWidth = 1;
     ctx.lineWidth = lineWidth;
-    this.visitBlocks("block", frame, (blockSize, c, r, sc, sr, bounds) => {
+    this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
       bounds.multiplyScalar(scale);
       drawMode(modeGrid[r][c], bounds);
     });
@@ -1586,7 +1594,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     }
     ctx.restore();
   }
-  drawFillBlock(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, setFillStyle: (blockSize, c, r, sc, sr) => boolean, mode: string | number = "block") {
+  drawFillBlock(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, setFillStyle: (blockSize, c, r, sc, sr) => boolean, mode = VisitMode.Block) {
     let scale = dst.w / src.w;
     ctx.save();
     ctx.translate(-src.x * scale, -src.y * scale);
@@ -1596,7 +1604,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     });
     ctx.restore();
   }
-  drawBlock(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, visitor: BlockVisitor, mode: string | number = "block") {
+  drawBlock(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, visitor: BlockVisitor, mode = VisitMode.Block) {
     let scale = dst.w / src.w;
     ctx.save();
     ctx.translate(-src.x * scale, -src.y * scale);
@@ -1609,7 +1617,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   /**
    * A variety of ways to visit the grid.
    */
-  visitBlocks(mode: string | number, frame: AnalyzerFrame, visitor: BlockVisitor) {
+  visitBlocks(mode: VisitMode, frame: AnalyzerFrame, visitor: BlockVisitor) {
     const blockSizeGrid = frame.json["blockSize"];
     const miSizeLog2 = frame.miSizeLog2;
     const miSuperSizeLog2 = frame.miSuperSizeLog2;
@@ -1618,14 +1626,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     const rows = blockSizeGrid.length;
     const cols = blockSizeGrid[0].length;
 
-    if (typeof mode === "number") {
-      for (let c = 0; c < cols; c += 1 << mode) {
-        for (let r = 0; r < rows; r += 1 << mode) {
-          let size = blockSizeGrid[r][c];
-          visitor(size, c, r, 0, 0, rect.set(c << miSizeLog2, r << miSizeLog2, (1 << miSizeLog2) << mode, (1 << miSizeLog2) << mode), 1);
-        }
-      }
-    } else if (mode === "tile") {
+    if (mode === VisitMode.Tile) {
       let tileCols = frame.json["tileCols"];
       let tileRows = frame.json["tileRows"];
       if (!tileCols || !tileRows) return;
@@ -1635,20 +1636,20 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
           visitor(size, c, r, 0, 0, rect.set(c << miSizeLog2, r << miSizeLog2, (1 << miSizeLog2) * tileCols, (1 << miSizeLog2) * tileRows), 1);
         }
       }
-    } else if (mode === "super-block") {
+    } else if (mode === VisitMode.SuperBlock) {
       for (let c = 0; c < cols; c += 1 << (miSuperSizeLog2 - miSizeLog2)) {
         for (let r = 0; r < rows; r += 1 << (miSuperSizeLog2 - miSizeLog2)) {
           let size = blockSizeGrid[r][c];
           visitor(size, c, r, 0, 0, rect.set(c << miSizeLog2, r << miSizeLog2, 1 << miSuperSizeLog2, 1 << miSuperSizeLog2), 1);
         }
       }
-    } else if (mode === "block" || mode === "transform") {
+    } else if (mode === VisitMode.Block || mode === VisitMode.TransformBlock) {
       let allSizes;
       let sizeGrid;
-      if (mode === "block") {
+      if (mode === VisitMode.Block) {
         sizeGrid = blockSizeGrid;
         allSizes = frame.blockSizeLog2Map;
-      } else if (mode === "transform") {
+      } else if (mode === VisitMode.TransformBlock) {
         sizeGrid = frame.json["transformSize"];
         allSizes = frame.transformSizeLog2Map;
       } else {
