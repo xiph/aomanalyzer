@@ -727,6 +727,14 @@ export function makeTransformSizeLog2MapByValue(transformSizeMap): [number, numb
   return byValue;
 }
 
+export function reverseMap(map: { [name: string]: number }): { [id: number]: string } {
+  let o = [];
+  for (let k in map) {
+    o[map[k]] = k
+  }
+  return o;
+}
+
 /**
  * Hand selected using http://tools.medialab.sciences-po.fr/iwanthue/
  */

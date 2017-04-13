@@ -1,7 +1,7 @@
 import * as React from "react";
 // import { hashString, appStore, AppDispatcher, Jobs, Job, metricNames, AnalyzeFile, fileExists, analyzerBaseUrl, baseUrl } from "../../stores/Stores";
 
-import { palette, hashString, makeBlockSizeLog2MapByValue, COLORS, HEAT_COLORS, Decoder, Rectangle, Size, AnalyzerFrame, loadFramesFromJson, downloadFile, Histogram, Accounting, AccountingSymbolMap, clamp, Vector, localFiles, localFileProtocol } from "./analyzerTools";
+import { reverseMap, palette, hashString, makeBlockSizeLog2MapByValue, COLORS, HEAT_COLORS, Decoder, Rectangle, Size, AnalyzerFrame, loadFramesFromJson, downloadFile, Histogram, Accounting, AccountingSymbolMap, clamp, Vector, localFiles, localFileProtocol } from "./analyzerTools";
 import { HistogramComponent } from "./Histogram";
 import { padLeft, log2, assert, unreachable } from "./analyzerTools";
 
@@ -1376,13 +1376,13 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
 
   drawSkip(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let skipGrid = frame.json["skip"];
-    let map = frame.json["skipMap"];
+    let skipMap = frame.json["skipMap"];
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       let v = skipGrid[r][c];
-      if (v == map.SKIP) {
+      if (v == skipMap.SKIP) {
         return false;
       }
-      ctx.fillStyle = COLORS[map.NO_SKIP];
+      ctx.fillStyle = palette.skip.NO_SKIP;
       return true;
     });
   }
@@ -1504,8 +1504,9 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
   drawTransformType(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let typeGrid = frame.json["transformType"];
+    let transformTypeMapByValue = reverseMap(frame.json["transformTypeMap"]);
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
-      ctx.fillStyle = COLORS[typeGrid[r][c]];
+      ctx.fillStyle = palette.transformType[transformTypeMapByValue[typeGrid[r][c]]];
       return true;
     });
   }
@@ -1558,7 +1559,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   drawMode(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let modeGrid = frame.json["mode"];
     let modeMap = frame.json["modeMap"];
-
+    let modeMapByValue = reverseMap(modeMap);
     const V_PRED = modeMap.V_PRED;
     const H_PRED = modeMap.H_PRED;
     const D45_PRED = modeMap.D45_PRED;
@@ -1615,7 +1616,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
           drawLine(ctx, x, y + hh, w, -hh);
           break;
         default:
-          ctx.fillStyle = COLORS[m];
+          ctx.fillStyle = palette.predictionMode[modeMapByValue[m]];
           ctx.fillRect(x, y, w, h);
           break;
       }
