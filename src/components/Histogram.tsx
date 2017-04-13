@@ -121,17 +121,19 @@ export class HistogramComponent extends React.Component<{
         let v = data[i][k];
         ctx.fillStyle = this.props.color(k);
         if (this.props.horizontal) {
-          r.set(i * bw, h - (t * h | 0) - (v * h | 0), bw - 1, v * h | 0);
+          let y = (h - ((t + v) * h));
+          r.set(i * bw, y | 0, bw - 1, (v * h + (y - (y | 0))) | 0);
         } else {
           r.set((t * w | 0), bh * i, (v * w) | 0, bh - 1);
         }
         if (r.containsPoint(this.position)) {
-          ctx.globalAlpha = 1
+          ctx.globalAlpha = 1;
           selectedName = k;
           selectedValue = v;
           selectedFrame = i;
+          ctx.fillStyle = "white";
         } else {
-          ctx.globalAlpha = 0.75
+          ctx.globalAlpha = 1;
         }
         ctx.fillRect(r.x, r.y, r.w, r.h);
         t += v;
