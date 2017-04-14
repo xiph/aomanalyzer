@@ -46,19 +46,21 @@ onmessage = function (e) {
     case "load":
       try {
         importScripts.apply(self, e.data.payload);
-        load();
-        let buildConfig;
-        if (!native._get_aom_codec_build_config) {
-          buildConfig = "N/A";
-        }
-        buildConfig = native.UTF8ToString(native._get_aom_codec_build_config());
-        postMessage({
-          command: "loadResult",
-          payload: {
-            buildConfig
-          },
-          id: e.data.id
-        }, undefined);
+        load(e.data.payload[0], (nativeModule) => {
+          native = nativeModule;
+          let buildConfig;
+          if (!native._get_aom_codec_build_config) {
+            buildConfig = "N/A";
+          }
+          buildConfig = native.UTF8ToString(native._get_aom_codec_build_config());
+          postMessage({
+            command: "loadResult",
+            payload: {
+              buildConfig
+            },
+            id: e.data.id
+          }, undefined);
+        });
       } catch (x) {
         postMessage({
           command: "loadResult",
@@ -104,8 +106,17 @@ let frameRate = 0;
 let buffer: Uint8Array = null;
 let json = null;
 
-function load() {
+function getWasmBinaryFilePath(path: string) {
+  let i = path.lastIndexOf(".js");
+  if (i >= 0) {
+    return path.substring(0, i) + ".wasm";
+  }
+  return null;
+}
+
+function load(path: string, ready: (native: any) => void) {
   var Module = {
+    wasmBinaryFile: getWasmBinaryFilePath(path),
     noExitRuntime: true,
     noInitialRun: true,
     preRun: [],
@@ -128,9 +139,12 @@ function load() {
         s = (Module as any).UTF8ToString(p);
       }
       json = JSON.parse("[" + s + "null]");
+    },
+    onRuntimeInitialized: function () {
+      ready(Module);
     }
   };
-  native = new DecoderModule(Module);
+  DecoderModule(Module)
 }
 
 function openFileBytes(buffer: Uint8Array) {
