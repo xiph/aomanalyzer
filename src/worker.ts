@@ -231,9 +231,13 @@ function readFrame(e) {
     }, undefined);
     return null;
   }
+  let image = null;
+  if (e.data.shouldReadImageData) {
+    image = readImage();
+  }
   postMessage({
     command: "readFrameResult",
-    payload: { json: json, image: readImage() },
+    payload: { json, image },
     id: e.data.id
   }, undefined);
 }

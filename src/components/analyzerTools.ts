@@ -638,9 +638,11 @@ export class Decoder {
         }
         resolve(frames);
       });
+      let shouldReadImageData = self.shouldReadImageData;
       worker.postMessage({
         command: "readFrame",
-        id
+        id,
+        shouldReadImageData
       });
     });
   }
