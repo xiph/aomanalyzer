@@ -87,3 +87,11 @@ The red bar provides quick info about the current frame.
 ## Accounting
 
 Both the `Block Info` and `Frame Info` tabs have an accounting section. Accounting information keeps track of the number of bits spent on each symbol in the bit stream. The accounting tables show the symbol name, the number of bits spent on that symbol within a block (or frame), the percentage relative to the total number of bits spent in the block (or frame) and the number or samples (or the number of symbols read.)
+
+## Building JavaScript Decoders
+
+The analyzer uses a JavaScript decoder to decode video frames and extract information out of `.ivf` files. The decoder is compiled to JavaScript using the Emscripten compiler. To build your own decoder you'll first need to install [Emscripten](https://kripken.github.io/emscripten-site/docs/getting_started/downloads.html) and then run `build_inspector.sh` in the aom `tools` directory. This will produce a `inspect.js` file in the same directory that you can use as a decoder in the analyzer.
+
+Note that the `build_inspector.sh` shell script doesn't look at the current build configuration, so you'll need to edit it to add your own configure options. (Because of limitations in the web platform, the decoder must be configured with `--disable-multithread --disable-runtime-cpu-detect --target=generic-gnu` because threading and SIMD is not yet supported in JavaScript.)
+
+If something goes wrong, you can clean the build by deleting the `.inspect` directory and try again.
