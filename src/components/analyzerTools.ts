@@ -399,6 +399,7 @@ function getHistogramFromJson(json: any, name: string): Histogram {
 function uncompressArray(src: any []) {
   let pre;
   let dst = [];
+  let allUint8 = true;
   for (let i = 0; i < src.length; i++) {
     if (Array.isArray(src[i]) && src[i].length == 1) {
       let count = src[i][0];
@@ -409,7 +410,13 @@ function uncompressArray(src: any []) {
     } else {
       pre = src[i];
       dst.push(pre);
+      if (pre !== (pre & 0xFF)) {
+        allUint8 = false;
+      }
     }
+  }
+  if (allUint8) {
+    return new Uint8Array(dst);
   }
   return dst;
 }
@@ -577,17 +584,10 @@ export class Rectangle {
     return new Rectangle(this.x, this.y, this.w, this.h);
   }
   multiplyScalar(scalar: number) {
-    if (isFinite(scalar)) {
-      this.x *= scalar;
-      this.y *= scalar;
-      this.w *= scalar;
-      this.h *= scalar;
-    } else {
-      this.x = 0;
-      this.y = 0;
-      this.w = 0;
-      this.h = 0;
-    }
+    this.x *= scalar;
+    this.y *= scalar;
+    this.w *= scalar;
+    this.h *= scalar;
     return this;
   }
 }

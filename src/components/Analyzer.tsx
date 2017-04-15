@@ -1734,9 +1734,10 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         }
         let dc = 1 << (sizeLog2[0] - miSizeLog2);
         let dr = 1 << (sizeLog2[1] - miSizeLog2);
-        for (let c = 0; c < cols; c += dc) {
-          for (let r = 0; r < rows; r += dr) {
-            let size = sizeGrid[r][c];
+        for (let r = 0; r < rows; r += dr) {
+          let sizeGridRow = sizeGrid[r];
+          for (let c = 0; c < cols; c += dc) {
+            let size = sizeGridRow[c];
             if (size == i) {
               let w = dc << miSizeLog2;
               let h = dr << miSizeLog2;
@@ -1746,8 +1747,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         }
       }
       // Visit sizes < MI_SIZE
-      for (let c = 0; c < cols; c++) {
-        for (let r = 0; r < rows; r++) {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
           let size = sizeGrid[r][c];
           const sizeLog2 = allSizes[size];
           if (sizeLog2[0] >= miSizeLog2 && sizeLog2[1] >= miSizeLog2) {
