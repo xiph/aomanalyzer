@@ -50,6 +50,7 @@ let filePrefix = parameters.filePrefix || "";
 let local = parameters.local | 0;
 let blind = parameters.blind | 0;
 let split = parameters.split | 0;
+let bench = parameters.bench | 0;
 let benchmark = parameters.benchmark | 0;
 
 /**
@@ -120,7 +121,8 @@ if (local || pairs.length == 0) {
       layers={layers}
       maxFrames={maxFrames}
       blind={blind}
-      split={split}/>
+      split={split}
+      bench={bench}/>
     </MuiThemeProvider>,
     document.getElementById("analyzer-app")
   );

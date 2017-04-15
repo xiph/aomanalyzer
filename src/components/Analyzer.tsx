@@ -3,7 +3,7 @@ import * as React from "react";
 
 import { makePattern, reverseMap, palette, hashString, makeBlockSizeLog2MapByValue, COLORS, HEAT_COLORS, Decoder, Rectangle, Size, AnalyzerFrame, loadFramesFromJson, downloadFile, Histogram, Accounting, AccountingSymbolMap, clamp, Vector, localFiles, localFileProtocol } from "./analyzerTools";
 import { HistogramComponent } from "./Histogram";
-import { padLeft, log2, assert, unreachable } from "./analyzerTools";
+import { TRACE_RENDERING, padLeft, log2, assert, unreachable } from "./analyzerTools";
 
 import RaisedButton from 'material-ui/RaisedButton';
 import Popover from 'material-ui/Popover';
@@ -23,6 +23,7 @@ import Dialog from 'material-ui/Dialog';
 import FlatButton from 'material-ui/FlatButton';
 import Checkbox from 'material-ui/Checkbox';
 import TextField from 'material-ui/TextField';
+import Slider from 'material-ui/Slider';
 
 declare const Mousetrap;
 declare var shortenUrl;
@@ -33,7 +34,6 @@ const ZOOM_SOURCE = 64;
 const DEFAULT_CONFIG = "--disable-multithread --disable-runtime-cpu-detect --target=generic-gnu --enable-accounting --enable-analyzer --enable-aom_highbitdepth --extra-cflags=-D_POSIX_SOURCE --enable-inspection --disable-docs --disable-webm-io --enable-experimental";
 const DERING_STRENGTHS = 21;
 const CLPF_STRENGTHS = 4;
-
 
 enum VisitMode {
   Block,
@@ -367,6 +367,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   playInterval: any;
 
   showLayersInZoom: boolean;
+  lockSelection: boolean;
+  layerAlpha: number;
   shareUrl: string;
   showShareUrlDialog: boolean;
 }> {
@@ -574,6 +576,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       decodeFrameCount: 1,
       activeTab: 0,
       showLayersInZoom: false,
+      lockSelection: true,
+      layerAlpha: 1,
       shareUrl: "",
       showShareUrlDialog: false
     } as any;
@@ -656,28 +660,12 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     let dst = src.clone().multiplyScalar(scale * this.ratio);
 
     this.drawLayers(frame, ctx, src, dst);
-
-    if (this.state.showTools) {
-      ctx.save();
-      ctx.strokeStyle = "white";
-      ctx.setLineDash([2, 4]);
-      let w = ZOOM_SOURCE * ratio * scale;
-      ctx.strokeRect(this.mouseZoomPosition.x * ratio - w / 2,
-        this.mouseZoomPosition.y * ratio - w / 2, w, w);
-      let r = this.getParentMIRect(frame, this.mousePosition);
-      if (r) {
-        ctx.strokeStyle = "orange";
-        ctx.lineWidth = 3;
-        ctx.setLineDash([]);
-        ctx.strokeRect(r.x * ratio * scale, r.y * ratio * scale, r.w * ratio * scale, r.h * ratio * scale);
-      }
-      ctx.restore();
-    }
   }
   drawZoom(group: number, index: number) {
     if (!this.zoomCanvas) {
       return;
     }
+    TRACE_RENDERING && console.log("drawZoom");
     let frame = this.props.groups[group][index];
     let mousePosition = this.mouseZoomPosition.clone().divideScalar(this.state.scale).snap();
     let src = Rectangle.createRectangleCenteredAtPoint(mousePosition, ZOOM_SOURCE, ZOOM_SOURCE);
@@ -712,8 +700,28 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.state.showTransformGrid && this.drawGrid(frame, VisitMode.TransformBlock, "yellow", ctx, src, dst);
     this.state.showBlockGrid && this.drawGrid(frame, VisitMode.Block, "white", ctx, src, dst);
     this.state.showTileGrid && this.drawGrid(frame, VisitMode.Tile, "orange", ctx, src, dst, 5);
+    this.state.showTools && this.drawSelection(frame, ctx, src, dst);
     ctx.restore();
-
+  }
+  drawSelection(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
+    let scale = dst.w / src.w;
+    let ratio = 1;
+    ctx.save();
+    let lineOffset = getLineOffset(3);
+    ctx.translate(lineOffset, lineOffset);
+    ctx.translate(-src.x * scale, -src.y * scale);
+    // ctx.strokeStyle = "white";
+    // ctx.setLineDash([2, 4]);
+    // let w = ZOOM_SOURCE * ratio * scale;
+    // ctx.strokeRect(this.mouseZoomPosition.x * ratio - w / 2, this.mouseZoomPosition.y * ratio - w / 2, w, w);
+    let r = this.getParentMIRect(frame, this.mousePosition);
+    if (r) {
+      ctx.strokeStyle = "orange";
+      ctx.lineWidth = 3;
+      ctx.setLineDash([]);
+      ctx.strokeRect(r.x * ratio * scale, r.y * ratio * scale, r.w * ratio * scale, r.h * ratio * scale);
+    }
+    ctx.restore();
   }
   drawGrid(frame: AnalyzerFrame, mode: VisitMode, color: string, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, lineWidth = 1) {
     let scale = dst.w / src.w;
@@ -841,6 +849,14 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       this.toggleTools();
       e.preventDefault();
     });
+    Mousetrap.bind(['z'], (e) => {
+      this.setState({showLayersInZoom: !this.state.showLayersInZoom} as any);
+      e.preventDefault();
+    });
+    Mousetrap.bind(['x'], (e) => {
+      this.setState({lockSelection: !this.state.lockSelection} as any);
+      e.preventDefault();
+    });
     let self = this;
     function toggle(name, event) {
       self.toggleLayer(name);
@@ -917,7 +933,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         event.clientY - rect.top
       );
     }
-    if (click) {
+    if (click || !this.state.lockSelection) {
       this.mousePosition = getMousePosition(this.overlayCanvas, event);
       this.mouseZoomPosition = this.mousePosition;
       this.updateBlockInfo();
@@ -1181,17 +1197,17 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
           let names = Accounting.getSortedSymbolNames(frames.map(frame => frame.accounting));
           bitLayerToolbar = <Toolbar>
             <ToolbarGroup firstChild={true} >
-              <DropDownMenu animated={false} style={{ width: 150 }} autoWidth={false} value={this.state.showBitsScale} onChange={(event, index, value) => this.setState({ showBitsScale: value } as any)}>
+              <DropDownMenu style={{ width: 150 }} autoWidth={false} value={this.state.showBitsScale} onChange={(event, index, value) => this.setState({ showBitsScale: value } as any)}>
                 <MenuItem value="frame" primaryText="Frame Relative" />
                 <MenuItem value="video" primaryText="Video Relative" />
                 <MenuItem value="videos" primaryText="Video Relative (all)" />
               </DropDownMenu>
-              <DropDownMenu animated={false} style={{ width: 150 }} autoWidth={false} value={this.state.showBitsMode} onChange={(event, index, value) => this.setState({ showBitsMode: value } as any)}>
+              <DropDownMenu style={{ width: 150 }} autoWidth={false} value={this.state.showBitsMode} onChange={(event, index, value) => this.setState({ showBitsMode: value } as any)}>
                 <MenuItem value="linear" primaryText="Single Color" />
                 <MenuItem value="heat" primaryText="Heat Map" />
                 <MenuItem value="heat-opaque" primaryText="Heat Map (Opaque)" />
               </DropDownMenu>
-              <DropDownMenu animated={false} style={{ width: 150 }} autoWidth={false} value={this.state.showBitsFilter} onChange={(event, index, value) => this.setState({ showBitsFilter: value } as any)}>
+              <DropDownMenu style={{ width: 150 }} autoWidth={false} value={this.state.showBitsFilter} onChange={(event, index, value) => this.setState({ showBitsFilter: value } as any)}>
                 <MenuItem value="" primaryText="None" />
                 {
                   names.map(name => <MenuItem key={name} value={name} primaryText={name} />)
@@ -1290,14 +1306,28 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
             } as any);
           }}>
             <Tab value={0} label="Zoom">
-              <canvas ref={(self: any) => this.resetZoomCanvas(self)} width="256" height="256"></canvas>
-              <div className="tabContent">
-                <Checkbox
-                  label="Show Layers in Zoom"
-                  checked={this.state.showLayersInZoom}
-                  onCheck={(event, value) => this.setState({ showLayersInZoom: value } as any)}
-                />
-              </div>
+              {this.state.activeTab == 0 && <div>
+                  <canvas ref={(self: any) => this.resetZoomCanvas(self)} width="256" height="256"></canvas>
+                  <div className="tabContent">
+                    <Checkbox
+                      label="Show Layers in Zoom: Z"
+                      checked={this.state.showLayersInZoom}
+                      onCheck={(event, value) => this.setState({ showLayersInZoom: value } as any)}
+                    />
+                    <Checkbox
+                      label="Lock Selection: X"
+                      checked={this.state.lockSelection}
+                      onCheck={(event, value) => this.setState({ lockSelection: value } as any)}
+                    />
+                    <div className="componentHeader">Layer Alpha</div>
+                    <Slider min={0} max={1} step={0.1} defaultValue={1} value={this.state.layerAlpha}
+                      onChange={(event, value) => {
+                        this.setState({layerAlpha: value} as any);
+                      }}
+                    />
+                  </div>
+                </div>
+              }
             </Tab>
             <Tab value={1} label="Histograms">
               {this.state.activeTab == 1 && <div>
@@ -1363,7 +1393,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     let activeGroup = this.state.activeGroup;
     let groupName = this.props.groupNames ? this.props.groupNames[activeGroup] : String(activeGroup);
 
-    return <div className="maxWidthAndHeight">
+    let result = <div className="maxWidthAndHeight">
       <a style={{ display: "none" }} ref={(self: any) => this.downloadLink = self} />
       {this.state.showFrameComment &&
         <div id="frameComment">
@@ -1385,12 +1415,13 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         <div className="contentContainer">
           <div className="canvasContainer" ref={(self: any) => this.canvasContainer = self}>
             <canvas ref={(self: any) => this.displayCanvas = self} width="256" height="256" style={{ position: "absolute", left: 0, top: 0, zIndex: 0, imageRendering: "pixelated", backgroundCcolor: "#F5F5F5" }}></canvas>
-            <canvas ref={(self: any) => this.overlayCanvas = self} width="256" height="256" style={{ position: "absolute", left: 0, top: 0, zIndex: 1, imageRendering: "pixelated", cursor: "crosshair" }}></canvas>
+            <canvas ref={(self: any) => this.overlayCanvas = self} width="256" height="256" style={{ position: "absolute", left: 0, top: 0, zIndex: 1, imageRendering: "pixelated", cursor: "crosshair", opacity: this.state.layerAlpha }}></canvas>
           </div>
         </div>
         {this.state.showTools && sidePanel}
       </div>
     </div>
+    return result;
   }
 
   drawSkip(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
@@ -1734,9 +1765,10 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         }
         let dc = 1 << (sizeLog2[0] - miSizeLog2);
         let dr = 1 << (sizeLog2[1] - miSizeLog2);
-        for (let c = 0; c < cols; c += dc) {
-          for (let r = 0; r < rows; r += dr) {
-            let size = sizeGrid[r][c];
+        for (let r = 0; r < rows; r += dr) {
+          let sizeGridRow = sizeGrid[r];
+          for (let c = 0; c < cols; c += dc) {
+            let size = sizeGridRow[c];
             if (size == i) {
               let w = dc << miSizeLog2;
               let h = dr << miSizeLog2;
@@ -1745,9 +1777,10 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
           }
         }
       }
+
       // Visit sizes < MI_SIZE
-      for (let c = 0; c < cols; c++) {
-        for (let r = 0; r < rows; r++) {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
           let size = sizeGrid[r][c];
           const sizeLog2 = allSizes[size];
           if (sizeLog2[0] >= miSizeLog2 && sizeLog2[1] >= miSizeLog2) {

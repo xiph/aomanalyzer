@@ -14,6 +14,7 @@ interface LoaderComponentProps {
   maxFrames?: number;
   blind?: number;
   split?: number;
+  bench?: number;
 }
 
 export class LoaderComponent extends React.Component<LoaderComponentProps, {
@@ -80,9 +81,14 @@ export class LoaderComponent extends React.Component<LoaderComponentProps, {
           groupNames[i] = videoPath;
         }
         this.setState({ status: "Decoding Frames" } as any);
+        let s = performance.now();
         Promise.all(decoders.map(decoder => this.decodeFrames(decoder, this.props.maxFrames))).then(frames => {
           let playbackFrameRate = Math.min(this.props.playbackFrameRate, decoders[0].frameRate);
-          this.setState({ frames: frames, groupNames: groupNames, loading: "done", playbackFrameRate } as any);
+          if (this.props.bench) {
+            this.setState({ status: "Decoded Frames in " + (performance.now() - s).toFixed(2) + " ms." } as any);
+          } else {
+            this.setState({ frames: frames, groupNames: groupNames, loading: "done", playbackFrameRate } as any);
+          }
         });
       }).catch(e => {
         this.setState({ status: `Downloading Files Failed: ${e}`, loading: "error" } as any);
@@ -105,8 +111,11 @@ export class LoaderComponent extends React.Component<LoaderComponentProps, {
   decodedFrameCount = 0;
   decodeFrames(decoder: Decoder, count: number): Promise<AnalyzerFrame[]> {
     // If we use the split view, we don't need any layers making decoding faster.
-    if (!this.props.split) {
+    if (!this.props.split && !this.props.bench) {
       decoder.setLayers(0xffffffff);
+    }
+    if (this.props.bench == 1) {
+      decoder.shouldReadImageData = false;
     }
     return new Promise((resolve, reject) => {
       let time = performance.now();
@@ -119,7 +128,9 @@ export class LoaderComponent extends React.Component<LoaderComponentProps, {
       framePromises = framePromises.map(p => p.then((x) => {
         if (x) {
           this.decodedFrameCount += x.length;
-          this.setState({ status: `Decoded ${this.decodedFrameCount} Frames ...` } as any);
+          if (!this.props.bench) {
+            this.setState({ status: `Decoded ${this.decodedFrameCount} Frames ...` } as any);
+          }
         }
         return x;
       }).catch(() => undefined));
@@ -141,7 +152,7 @@ export class LoaderComponent extends React.Component<LoaderComponentProps, {
         modal={false}
         open={true}
       >
-        <CircularProgress size={40} thickness={7} />
+        { this.props.bench ? null : <CircularProgress size={40} thickness={7} /> }
         <div style={{ paddingTop: "10px" }}>{this.state.status}</div>
       </Dialog>
     }

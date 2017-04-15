@@ -1,5 +1,5 @@
 import * as React from "react";
-import { COLORS, Rectangle, Histogram, Vector, hashString } from "./analyzerTools";
+import { TRACE_RENDERING, COLORS, Rectangle, Histogram, Vector, hashString } from "./analyzerTools";
 
 export class HistogramComponent extends React.Component<{
   histograms: Histogram[];
@@ -49,6 +49,7 @@ export class HistogramComponent extends React.Component<{
 
   }
   renderHistogram(ctx: CanvasRenderingContext2D, histograms: Histogram[]) {
+    TRACE_RENDERING && console.log("renderHistogram");
     let names: string [] = null;
     let nameMap: { [id: string]: number };
     if (!histograms.length) {
