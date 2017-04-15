@@ -1,6 +1,124 @@
 declare let DecoderModule: any;
 declare let TextDecoder: any;
 
+let YUV2RGB_TABLE = new Uint32Array(256 * 256 * 256);
+function YUV2RGB(y, u, v) {
+  return YUV2RGB_TABLE[(y << 16) | (u << 8) | v];
+}
+export function clamp(v, a, b) {
+  if (v < a) v = a;
+  if (v > b) v = b;
+  return v;
+}
+function computeYUV2RGB(y, u, v) {
+  let rTmp = y + (1.370705 * (v - 128));
+  let gTmp = y - (0.698001 * (v - 128)) - (0.337633 * (u - 128));
+  let bTmp = y + (1.732446 * (u - 128));
+  let r = clamp(rTmp | 0, 0, 255) | 0;
+  let g = clamp(gTmp | 0, 0, 255) | 0;
+  let b = clamp(bTmp | 0, 0, 255) | 0;
+  return (b << 16) | (g << 8) | (r << 0);
+}
+function buildYUVTable() {
+  for (let y = 0; y < 256; y++) {
+    for (let u = 0; u < 256; u++) {
+      for (let v = 0; v < 256; v++) {
+        YUV2RGB_TABLE[(y << 16) | (u << 8) | v] = computeYUV2RGB(y, u, v);
+      }
+    }
+  }
+}
+buildYUVTable();
+
+export interface FrameImagePlane {
+  buffer: Uint8Array,
+  depth: number;
+  width: number;
+  height: number;
+  stride: number;
+}
+
+export interface FrameImage {
+  Y: FrameImagePlane,
+  U: FrameImagePlane,
+  V: FrameImagePlane
+}
+
+function createImageData(image: FrameImage) {
+  let w = image.Y.width;
+  let h = image.Y.height;
+  let depth = image.Y.depth;
+
+  let YH = image.Y.buffer;
+  let UH = image.U.buffer;
+  let VH = image.V.buffer;
+
+  let Ys = image.Y.stride;
+  let Us = image.U.stride;
+  let Vs = image.V.stride;
+
+  let imageData = new ImageData(w, h);
+  let I = imageData.data;
+
+  let p = 0;
+  let bgr = 0;
+  if (depth == 10) {
+    for (let y = 0; y < h; y++) {
+      let yYs = y * Ys;
+      let yUs = (y >> 1) * Us;
+      let yVs = (y >> 1) * Vs;
+      for (let x = 0; x < w; x++) {
+        p = yYs + (x << 1);
+        let Y = (YH[p] + (YH[p + 1] << 8)) >> 2;
+        p = yUs + ((x >> 1) << 1);
+        let U = (UH[p] + (UH[p + 1] << 8)) >> 2;
+        p = yVs + ((x >> 1) << 1);
+        let V = (VH[p] + (VH[p + 1] << 8)) >> 2;
+        bgr = YUV2RGB(Y, U, V);
+        let r = (bgr >> 0) & 0xFF;
+        let g = (bgr >> 8) & 0xFF;
+        let b = (bgr >> 16) & 0xFF;
+        let index = (Math.imul(y, w) + x) << 2;
+        I[index + 0] = r;
+        I[index + 1] = g;
+        I[index + 2] = b;
+        I[index + 3] = 255;
+      }
+    }
+} else {
+    for (let y = 0; y < h; y++) {
+      let yYs = y * Ys;
+      let yUs = (y >> 1) * Us;
+      let yVs = (y >> 1) * Vs;
+      for (let x = 0; x < w; x++) {
+        let Y = YH[yYs + x];
+        let U = UH[yUs + (x >> 1)];
+        let V = VH[yVs + (x >> 1)];
+        bgr = YUV2RGB(Y, U, V);
+        let r = (bgr >> 0) & 0xFF;
+        let g = (bgr >> 8) & 0xFF;
+        let b = (bgr >> 16) & 0xFF;
+        let index = (Math.imul(y, w) + x) << 2;
+        I[index + 0] = r;
+        I[index + 1] = g;
+        I[index + 2] = b;
+        I[index + 3] = 255;
+      }
+    }
+  }
+  return imageData;
+}
+
+function makeCanvas(image: FrameImage): HTMLCanvasElement {
+  var canvas = document.createElement("canvas");
+  var imageData = createImageData(image);
+  canvas.width = imageData.width;
+  canvas.height = imageData.height;
+  var ctx = canvas.getContext("2d");
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
+
 export function makePattern(uri: string, scale: number, ready: (canvas: HTMLCanvasElement) => void) {
   let image = new Image();
   image.onload = function () {
@@ -95,44 +213,6 @@ function generateHeatColors() {
   }
 }
 generateHeatColors();
-
-export function clamp(v, a, b) {
-  if (v < a) {
-    v = a;
-  }
-  if (v > b) {
-    v = b;
-  }
-  return v;
-}
-
-let YUV2RGB_TABLE = new Uint32Array(256 * 256 * 256);
-
-function YUV2RGB(y, u, v) {
-  return YUV2RGB_TABLE[(y << 16) | (u << 8) | v];
-}
-
-function computeYUV2RGB(y, u, v) {
-  let rTmp = y + (1.370705 * (v - 128));
-  let gTmp = y - (0.698001 * (v - 128)) - (0.337633 * (u - 128));
-  let bTmp = y + (1.732446 * (u - 128));
-  let r = clamp(rTmp | 0, 0, 255) | 0;
-  let g = clamp(gTmp | 0, 0, 255) | 0;
-  let b = clamp(bTmp | 0, 0, 255) | 0;
-  return (b << 16) | (g << 8) | (r << 0);
-}
-
-function buildYUVTable() {
-  for (let y = 0; y < 256; y++) {
-    for (let u = 0; u < 256; u++) {
-      for (let v = 0; v < 256; v++) {
-        YUV2RGB_TABLE[(y << 16) | (u << 8) | v] = computeYUV2RGB(y, u, v);
-      }
-    }
-  }
-}
-
-buildYUVTable();
 
 export class AccountingSymbol {
   constructor(public name: string, public bits: number, public samples: number, public x: number, public y: number) {
@@ -253,7 +333,18 @@ export class AnalyzerFrame {
   predictionModeHist: Histogram;
   uvPredictionModeHist: Histogram;
   skipHist: Histogram;
-  image: HTMLCanvasElement;
+  frameImage: FrameImage;
+  canvasImage: HTMLCanvasElement;
+  get image() : HTMLCanvasElement {
+    if (this.canvasImage) {
+      return this.canvasImage;
+    }
+    // Make canvas elements lazily, this speeds up loading.
+    this.canvasImage = makeCanvas(this.frameImage);
+    // Free frame image data, we don't need it anymore.
+    this.frameImage = null;
+    return this.canvasImage;
+  }
   config: string;
   blockSizeLog2Map: [number, number][];
   transformSizeLog2Map: [number, number][];
@@ -634,7 +725,7 @@ export class Decoder {
           self.frames.push(frame);
         }
         if (self.shouldReadImageData) {
-          frames[frames.length - 1].image = self.makeCanvas(e.data.payload.image);
+          frames[frames.length - 1].frameImage = e.data.payload.image;
         }
         resolve(frames);
       });
@@ -645,15 +736,6 @@ export class Decoder {
         shouldReadImageData
       });
     });
-  }
-
-  makeCanvas(imageData: ImageData): HTMLCanvasElement {
-    var canvas = document.createElement("canvas");
-    canvas.width = imageData.width;
-    canvas.height = imageData.height;
-    var ctx = canvas.getContext("2d");
-    ctx.putImageData(imageData, 0, 0);
-    return canvas;
   }
 
   static loadDecoder(url: string): Promise<Decoder> {
