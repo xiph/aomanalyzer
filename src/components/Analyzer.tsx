@@ -367,6 +367,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   playInterval: any;
 
   showLayersInZoom: boolean;
+  lockSelection: boolean;
   layerAlpha: number;
   shareUrl: string;
   showShareUrlDialog: boolean;
@@ -575,6 +576,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       decodeFrameCount: 1,
       activeTab: 0,
       showLayersInZoom: false,
+      lockSelection: true,
       layerAlpha: 1,
       shareUrl: "",
       showShareUrlDialog: false
@@ -851,7 +853,10 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       this.setState({showLayersInZoom: !this.state.showLayersInZoom} as any);
       e.preventDefault();
     });
-
+    Mousetrap.bind(['x'], (e) => {
+      this.setState({lockSelection: !this.state.lockSelection} as any);
+      e.preventDefault();
+    });
     let self = this;
     function toggle(name, event) {
       self.toggleLayer(name);
@@ -928,7 +933,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         event.clientY - rect.top
       );
     }
-    if (click) {
+    if (click || !this.state.lockSelection) {
       this.mousePosition = getMousePosition(this.overlayCanvas, event);
       this.mouseZoomPosition = this.mousePosition;
       this.updateBlockInfo();
@@ -1308,6 +1313,11 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
                       label="Show Layers in Zoom: Z"
                       checked={this.state.showLayersInZoom}
                       onCheck={(event, value) => this.setState({ showLayersInZoom: value } as any)}
+                    />
+                    <Checkbox
+                      label="Lock Selection: X"
+                      checked={this.state.lockSelection}
+                      onCheck={(event, value) => this.setState({ lockSelection: value } as any)}
                     />
                     <div className="componentHeader">Layer Alpha</div>
                     <Slider min={0} max={1} step={0.1} defaultValue={1} value={this.state.layerAlpha}
