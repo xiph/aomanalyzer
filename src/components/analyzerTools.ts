@@ -1,6 +1,8 @@
 declare let DecoderModule: any;
 declare let TextDecoder: any;
 
+export const TRACE_RENDERING = 0;
+
 let YUV2RGB_TABLE = new Uint32Array(256 * 256 * 256);
 function YUV2RGB(y, u, v) {
   return YUV2RGB_TABLE[(y << 16) | (u << 8) | v];
