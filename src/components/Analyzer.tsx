@@ -1192,17 +1192,17 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
           let names = Accounting.getSortedSymbolNames(frames.map(frame => frame.accounting));
           bitLayerToolbar = <Toolbar>
             <ToolbarGroup firstChild={true} >
-              <DropDownMenu animated={false} style={{ width: 150 }} autoWidth={false} value={this.state.showBitsScale} onChange={(event, index, value) => this.setState({ showBitsScale: value } as any)}>
+              <DropDownMenu style={{ width: 150 }} autoWidth={false} value={this.state.showBitsScale} onChange={(event, index, value) => this.setState({ showBitsScale: value } as any)}>
                 <MenuItem value="frame" primaryText="Frame Relative" />
                 <MenuItem value="video" primaryText="Video Relative" />
                 <MenuItem value="videos" primaryText="Video Relative (all)" />
               </DropDownMenu>
-              <DropDownMenu animated={false} style={{ width: 150 }} autoWidth={false} value={this.state.showBitsMode} onChange={(event, index, value) => this.setState({ showBitsMode: value } as any)}>
+              <DropDownMenu style={{ width: 150 }} autoWidth={false} value={this.state.showBitsMode} onChange={(event, index, value) => this.setState({ showBitsMode: value } as any)}>
                 <MenuItem value="linear" primaryText="Single Color" />
                 <MenuItem value="heat" primaryText="Heat Map" />
                 <MenuItem value="heat-opaque" primaryText="Heat Map (Opaque)" />
               </DropDownMenu>
-              <DropDownMenu animated={false} style={{ width: 150 }} autoWidth={false} value={this.state.showBitsFilter} onChange={(event, index, value) => this.setState({ showBitsFilter: value } as any)}>
+              <DropDownMenu style={{ width: 150 }} autoWidth={false} value={this.state.showBitsFilter} onChange={(event, index, value) => this.setState({ showBitsFilter: value } as any)}>
                 <MenuItem value="" primaryText="None" />
                 {
                   names.map(name => <MenuItem key={name} value={name} primaryText={name} />)
