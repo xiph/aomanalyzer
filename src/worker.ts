@@ -10,6 +10,9 @@ onmessage = function (e) {
         importScripts.apply(self, e.data.payload);
         load(e.data.payload[0], (nativeModule) => {
           native = nativeModule;
+          // TODO: Remove after a while. For backwards compatibility, older
+          // analyzer files may not have compression.
+          native._set_compress && native._set_compress(1);
           let buildConfig;
           if (!native._get_aom_codec_build_config) {
             buildConfig = "N/A";
@@ -57,6 +60,7 @@ interface Native {
   _get_frame_height(): number;
   _open_file(): number;
   _set_layers(layers: number): number;
+  _set_compress(compress: number): number;
   _get_aom_codec_build_config(): number;
   FS: any;
   HEAPU8: Uint8Array;

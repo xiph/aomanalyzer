@@ -391,7 +391,51 @@ function getHistogramFromJson(json: any, name: string): Histogram {
   return new Histogram(counts, json[name + "Map"]);
 }
 
+
+/**
+ * JSON arrays are RLE encoded. ..., x, [12], ... means that x repeats itself
+ * an additional 12 times. The RLE marker is a single element array.
+ */
+function uncompressArray(src: any []) {
+  let pre;
+  let dst = [];
+  for (let i = 0; i < src.length; i++) {
+    if (Array.isArray(src[i]) && src[i].length == 1) {
+      let count = src[i][0];
+      for (let j = 0; j < count; j++) {
+        dst.push(pre);
+      }
+      pre = undefined;
+    } else {
+      pre = src[i];
+      dst.push(pre);
+    }
+  }
+  return dst;
+}
+
+function uncompress(arrays) {
+  if (!arrays) {
+    return;
+  }
+  for (let i = 0; i < arrays.length; i++) {
+    arrays[i] = uncompressArray(arrays[i]);
+  }
+}
+
 function readFrameFromJson(json): AnalyzerFrame {
+  uncompress(json["blockSize"]);
+  uncompress(json["transformSize"]);
+  uncompress(json["transformType"]);
+  uncompress(json["mode"]);
+  uncompress(json["uv_mode"]);
+  uncompress(json["skip"]);
+  uncompress(json["filter"]);
+  uncompress(json["cdef_level"]);
+  uncompress(json["cdef_strength"]);
+  uncompress(json["motionVectors"]);
+  uncompress(json["referenceFrame"]);
+
   let frame = new AnalyzerFrame();
   frame.json = json;
   frame.accounting = getAccountingFromJson(json, "symbols");
