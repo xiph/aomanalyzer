@@ -2,6 +2,12 @@ declare var importScripts;
 declare var TextDecoder;
 declare var DecoderModule;
 
+function assert(c: boolean, message: string = "") {
+  if (!c) {
+    throw new Error(message);
+  }
+}
+
 onmessage = function (e) {
   // console.log("Worker: " + e.data.command);
   switch (e.data.command) {
@@ -42,6 +48,11 @@ onmessage = function (e) {
       break;
     case "openFileBytes":
       openFileBytes(e.data.payload);
+      break;
+    case "releaseFrameBuffers":
+      releaseFrameBuffer(e.data.payload.Y);
+      releaseFrameBuffer(e.data.payload.U);
+      releaseFrameBuffer(e.data.payload.V);
       break;
   }
 }
@@ -120,14 +131,41 @@ function openFileBytes(buffer: Uint8Array) {
   native._open_file();
 }
 
+var bufferPool: ArrayBuffer [] = [];
+
+function releaseFrameBuffer(buffer: ArrayBuffer) {
+  if (bufferPool.length < 64) {
+    bufferPool.push(buffer);
+  }
+}
+
+function getReleasedBuffer(byteLength: number) {
+  let i;
+  for (i = 0; i < bufferPool.length; i++) {
+    if (bufferPool[i].byteLength === byteLength) {
+      return bufferPool.splice(i, 1)[0];
+    }
+  }
+  return null;
+}
+
 function readPlane(plane) {
   let p = native._get_plane(plane);
   let stride = native._get_plane_stride(plane);
   let depth = native._get_bit_depth();
   let width = native._get_frame_width();
   let height = native._get_frame_height();
+
+  let byteLength = stride * width;
+  let buffer = getReleasedBuffer(byteLength);
+  if (buffer) {
+    // Copy into released buffer.
+    new Uint8Array(buffer).set(native.HEAPU8.subarray(p, p + byteLength));
+  } else {
+    buffer = native.HEAPU8.slice(p, p + byteLength).buffer;
+  }
   return {
-    buffer: native.HEAPU8.slice(p, p + stride * width),
+    buffer: buffer,
     stride,
     depth,
     width,
@@ -144,10 +182,11 @@ function readImage() {
 }
 
 function readFrame(e) {
+  let s = performance.now();
   if (native._read_frame() != 0) {
     postMessage({
       command: "readFrameResult",
-      payload: { json: null },
+      payload: { json: null, decodeTime: performance.now() - s },
       id: e.data.id
     }, undefined);
     return null;
@@ -156,15 +195,18 @@ function readFrame(e) {
   if (e.data.shouldReadImageData) {
     image = readImage();
   }
-  postMessage({
+  self.postMessage({
     command: "readFrameResult",
-    payload: { json, image },
+    payload: { json, image, decodeTime: performance.now() - s },
     id: e.data.id
-  }, undefined, image ? [
+  }, image ? [
     image.Y.buffer,
     image.U.buffer,
     image.V.buffer
-  ] : undefined);
+  ] : undefined as any);
+  assert(image.Y.buffer.byteLength === 0 &&
+         image.U.buffer.byteLength === 0 &&
+         image.V.buffer.byteLength === 0, "Buffers must be transferred.");
 }
 
 function setLayers(e) {

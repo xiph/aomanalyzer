@@ -33,7 +33,7 @@ function buildYUVTable() {
 buildYUVTable();
 
 export interface FrameImagePlane {
-  buffer: Uint8Array,
+  buffer: ArrayBuffer,
   depth: number;
   width: number;
   height: number;
@@ -51,9 +51,9 @@ function createImageData(image: FrameImage) {
   let h = image.Y.height;
   let depth = image.Y.depth;
 
-  let YH = image.Y.buffer;
-  let UH = image.U.buffer;
-  let VH = image.V.buffer;
+  let YH = new Uint8Array(image.Y.buffer);
+  let UH = new Uint8Array(image.U.buffer);
+  let VH = new Uint8Array(image.V.buffer);
 
   let Ys = image.Y.stride;
   let Us = image.U.stride;
@@ -134,7 +134,7 @@ export function makePattern(uri: string, scale: number, ready: (canvas: HTMLCanv
   }
   image.src = uri;
 }
-export function assert(c: boolean, message: string = "") {
+export function assert(c: any, message: string = "") {
   if (!c) {
     throw new Error(message);
   }
@@ -336,6 +336,7 @@ export class AnalyzerFrame {
   uvPredictionModeHist: Histogram;
   skipHist: Histogram;
   frameImage: FrameImage;
+  decodeTime: number;
   canvasImage: HTMLCanvasElement;
   get image() : HTMLCanvasElement {
     if (this.canvasImage) {
@@ -751,6 +752,24 @@ export class Decoder {
     this.workerCallbacks[id] = fn;
   }
 
+  /**
+   * Transfer buffers back to the worker thread so they can be reused. This reduces
+   * memory pressure.
+   */
+  releaseFrameImageBuffers(frameImage: FrameImage) {
+    this.worker.postMessage({
+      command: "releaseFrameBuffers",
+      payload: {
+        Y: frameImage.Y.buffer,
+        U: frameImage.U.buffer,
+        V: frameImage.V.buffer
+      }
+    }, [frameImage.Y.buffer, frameImage.U.buffer, frameImage.V.buffer]);
+    assert(frameImage.Y.buffer.byteLength === 0 &&
+           frameImage.U.buffer.byteLength === 0 &&
+           frameImage.V.buffer.byteLength === 0, "Buffers must be transferred.");
+  }
+
   readFrame(): Promise<AnalyzerFrame[]> {
     let worker = this.worker;
     let self = this;
@@ -773,6 +792,7 @@ export class Decoder {
         if (self.shouldReadImageData) {
           frames[frames.length - 1].frameImage = e.data.payload.image;
         }
+        frames[frames.length - 1].decodeTime = e.data.payload.decodeTime;
         resolve(frames);
       });
       let shouldReadImageData = self.shouldReadImageData;

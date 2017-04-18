@@ -2,6 +2,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { LoaderComponent } from "./components/Loader";
+import { PlayerComponent } from "./components/Player";
 import { LocalAnalyzerComponent } from "./components/LocalAnalyzer";
 
 // since the export is a function, this is the only actual correct way:
@@ -51,6 +52,7 @@ let local = parameters.local | 0;
 let blind = parameters.blind | 0;
 let split = parameters.split | 0;
 let bench = parameters.bench | 0;
+let player = parameters.player | 0;
 let benchmark = parameters.benchmark | 0;
 
 /**
@@ -105,7 +107,21 @@ let overrideTheme = {
 let theme = getMuiTheme(darkBaseTheme, overrideTheme);
 // let theme = getMuiTheme(lightBaseTheme, overrideTheme);
 
-if (local || pairs.length == 0) {
+if (player) {
+  ReactDOM.render(
+    <MuiThemeProvider muiTheme={theme}>
+      {/*<div className="splitVerticalContainer">*/}
+        {/*<div className="splitVerticalContent">*/}
+          <PlayerComponent video={pairs[0]} bench={bench}/>
+        {/*</div>*/}
+        {/*<div className="splitVerticalContent">
+          <PlayerComponent/>
+        </div>*/}
+      {/*</div>*/}
+    </MuiThemeProvider>,
+    document.getElementById("analyzer-app")
+  );
+} else if (local || pairs.length == 0) {
   ReactDOM.render(
     <MuiThemeProvider muiTheme={theme}>
       <LocalAnalyzerComponent/>
