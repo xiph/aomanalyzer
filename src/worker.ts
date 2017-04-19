@@ -159,6 +159,10 @@ function readPlane(plane) {
   if (depth == 10) {
     stride >>= 1;
   }
+  if (plane > 0) {
+    width >>= 1;
+    height >>= 1;
+  }
   let byteLength = height * stride;
   var buffer = getReleasedBuffer(byteLength);
   if (depth == 8 && buffer) {
