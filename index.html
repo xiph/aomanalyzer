@@ -195,8 +195,15 @@
       margin-top: 16px;
     }
 
-    .playerCanvas {
+    .playerCanvasContainer {
       width: 100%;
+      height: calc(100% - 10px);
+      overflow: auto;
+    }
+    .playerCanvas {
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      pointer-events: none;
     }
     .playerTableContainer {
       padding: 8px;
@@ -204,6 +211,48 @@
       font-family: 'Roboto';
       font-size: 14px;
       color: #CCCCCC;
+    }
+
+    .playerCenterContainer {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    .playerCenterContent {
+      margin: auto;
+      position: absolute;
+      color: white;
+      width: 256px;
+      height: 256px;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      font-family: 'Roboto';
+      text-align: center;
+    }
+
+    .playerSplitVerticalContent {
+      width: 100%;
+      overflow: auto;
+    }
+
+    .playerSplitVerticalContainer {
+      overflow: hidden;
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      height: calc(100% - 56px);
+    }
+
+    .playerLabel {
+      position: absolute;
+      color: #FFFFFF;
+      font-size: 32px;
+      font-family: 'Roboto';
+      font-weight: bold;
+      padding: 10px;
+      background-color: rgba(20, 20, 20, 0.8);
     }
   </style>
 </head>

@@ -2,7 +2,8 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { LoaderComponent } from "./components/Loader";
-import { PlayerComponent } from "./components/Player";
+import { PlayerSplitComponent, PlayerComponent } from "./components/Player";
+
 import { LocalAnalyzerComponent } from "./components/LocalAnalyzer";
 
 // since the export is a function, this is the only actual correct way:
@@ -110,14 +111,7 @@ let theme = getMuiTheme(darkBaseTheme, overrideTheme);
 if (player) {
   ReactDOM.render(
     <MuiThemeProvider muiTheme={theme}>
-      {/*<div className="splitVerticalContainer">*/}
-        {/*<div className="splitVerticalContent">*/}
-          <PlayerComponent video={pairs[0]} bench={bench}/>
-        {/*</div>*/}
-        {/*<div className="splitVerticalContent">
-          <PlayerComponent/>
-        </div>*/}
-      {/*</div>*/}
+      <PlayerSplitComponent videos={pairs} vote={true}/>
     </MuiThemeProvider>,
     document.getElementById("analyzer-app")
   );
