@@ -50,6 +50,7 @@ function createImageData(image: FrameImage) {
   let w = image.Y.width;
   let h = image.Y.height;
   let depth = image.Y.depth;
+  assert(depth == 8);
 
   let YH = new Uint8Array(image.Y.buffer);
   let UH = new Uint8Array(image.U.buffer);
@@ -64,48 +65,23 @@ function createImageData(image: FrameImage) {
 
   let p = 0;
   let bgr = 0;
-  if (depth == 10) {
-    for (let y = 0; y < h; y++) {
-      let yYs = y * Ys;
-      let yUs = (y >> 1) * Us;
-      let yVs = (y >> 1) * Vs;
-      for (let x = 0; x < w; x++) {
-        p = yYs + (x << 1);
-        let Y = (YH[p] + (YH[p + 1] << 8)) >> 2;
-        p = yUs + ((x >> 1) << 1);
-        let U = (UH[p] + (UH[p + 1] << 8)) >> 2;
-        p = yVs + ((x >> 1) << 1);
-        let V = (VH[p] + (VH[p + 1] << 8)) >> 2;
-        bgr = YUV2RGB(Y, U, V);
-        let r = (bgr >> 0) & 0xFF;
-        let g = (bgr >> 8) & 0xFF;
-        let b = (bgr >> 16) & 0xFF;
-        let index = (Math.imul(y, w) + x) << 2;
-        I[index + 0] = r;
-        I[index + 1] = g;
-        I[index + 2] = b;
-        I[index + 3] = 255;
-      }
-    }
-} else {
-    for (let y = 0; y < h; y++) {
-      let yYs = y * Ys;
-      let yUs = (y >> 1) * Us;
-      let yVs = (y >> 1) * Vs;
-      for (let x = 0; x < w; x++) {
-        let Y = YH[yYs + x];
-        let U = UH[yUs + (x >> 1)];
-        let V = VH[yVs + (x >> 1)];
-        bgr = YUV2RGB(Y, U, V);
-        let r = (bgr >> 0) & 0xFF;
-        let g = (bgr >> 8) & 0xFF;
-        let b = (bgr >> 16) & 0xFF;
-        let index = (Math.imul(y, w) + x) << 2;
-        I[index + 0] = r;
-        I[index + 1] = g;
-        I[index + 2] = b;
-        I[index + 3] = 255;
-      }
+  for (let y = 0; y < h; y++) {
+    let yYs = y * Ys;
+    let yUs = (y >> 1) * Us;
+    let yVs = (y >> 1) * Vs;
+    for (let x = 0; x < w; x++) {
+      let Y = YH[yYs + x];
+      let U = UH[yUs + (x >> 1)];
+      let V = VH[yVs + (x >> 1)];
+      bgr = YUV2RGB(Y, U, V);
+      let r = (bgr >> 0) & 0xFF;
+      let g = (bgr >> 8) & 0xFF;
+      let b = (bgr >> 16) & 0xFF;
+      let index = (Math.imul(y, w) + x) << 2;
+      I[index + 0] = r;
+      I[index + 1] = g;
+      I[index + 2] = b;
+      I[index + 3] = 255;
     }
   }
   return imageData;

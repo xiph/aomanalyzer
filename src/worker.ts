@@ -151,21 +151,37 @@ function getReleasedBuffer(byteLength: number) {
 
 function readPlane(plane) {
   let p = native._get_plane(plane);
+  let HEAPU8 = native.HEAPU8;
   let stride = native._get_plane_stride(plane);
   let depth = native._get_bit_depth();
   let width = native._get_frame_width();
   let height = native._get_frame_height();
-
-  let byteLength = stride * width;
-  let buffer = getReleasedBuffer(byteLength);
-  if (buffer) {
+  if (depth == 10) {
+    stride >>= 1;
+  }
+  let byteLength = height * stride;
+  var buffer = getReleasedBuffer(byteLength);
+  if (depth == 8 && buffer) {
     // Copy into released buffer.
-    new Uint8Array(buffer).set(native.HEAPU8.subarray(p, p + byteLength));
+    new Uint8Array(buffer).set(HEAPU8.subarray(p, p + byteLength));
   } else {
-    buffer = native.HEAPU8.slice(p, p + byteLength).buffer;
+    if (depth == 10) {
+      // Convert to 8 bit depth.
+      let tmpBuffer = buffer ? new Uint8Array(buffer) : new Uint8Array(byteLength);
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          let offset = y * (stride << 1) + (x << 1);
+          tmpBuffer[y * stride + x] = (HEAPU8[p + offset] + (HEAPU8[p + offset + 1] << 8)) >> 2;
+        }
+      }
+      buffer = tmpBuffer.buffer;
+      depth = 8;
+    } else {
+      buffer = HEAPU8.slice(p, p + byteLength).buffer;
+    }
   }
   return {
-    buffer: buffer,
+    buffer,
     stride,
     depth,
     width,
