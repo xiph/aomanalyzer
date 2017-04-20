@@ -2,7 +2,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { LoaderComponent } from "./components/Loader";
-import { PlayerSplitComponent, PlayerComponent } from "./components/Player";
+import { PlayerSplitComponent } from "./components/PlayerSplit";
 
 import { LocalAnalyzerComponent } from "./components/LocalAnalyzer";
 
