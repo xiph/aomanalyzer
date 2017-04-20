@@ -290,7 +290,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     }
     let frame = this.frameBuffer.shift();
     this.state.decoder.releaseFrameImageBuffers(frame.frameImage);
-    this.sink.freeFrameTexture(frame.frameImage.hashCode);
+    //this.sink.freeFrameTexture(frame.frameImage.hashCode);
     frame.frameImage = null; // Release Buffer
     this.setState({ baseFrameOffset: this.state.baseFrameOffset + 1 } as any);
   }
