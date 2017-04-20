@@ -41,18 +41,17 @@ function prepareBuffer(image: FrameImage) {
   };
 }
 
-
 interface PlayerComponentProps {
   video: { decoderUrl: string, videoUrl: string, decoderName: string };
   bench: number;
-  showDetails: boolean;
+  areDetailsVisible: boolean;
   onScroll?: (top: number, left: number) => void;
-  fit?: boolean;
+  shouldFitWidth?: boolean;
   scale?: number;
   scrollTop?: number;
   scrollLeft?: number;
-  label: string;
-  loop: boolean;
+  labelPrefix?: string;
+  isLooping: boolean;
 }
 
 export class PlayerComponent extends React.Component<PlayerComponentProps, {
@@ -69,7 +68,8 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     scrollTop: 0,
     scrollLeft: 0,
     label: "",
-    loop: false
+    loop: false,
+    shouldFitWidth: true
   } as any;
 
   canvasContainer: HTMLDivElement;
@@ -236,7 +236,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       if (this.fetchBuffer.length) {
         this.evictFrame();
         this.forceUpdate();
-      } else if (this.props.loop) {
+      } else if (this.props.isLooping) {
         this.setState({ frameOffset: 0 } as any);
       }
       return;
@@ -283,16 +283,19 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       lastClientX = e.clientX;
       lastClientY = e.clientY;
       mouseDown = true;
+      console.log("down"  + " : " + this.props.labelPrefix);
     });
     el.addEventListener("mouseup", (e: MouseEvent) => {
+      mouseDown = false;
+    });
+    el.addEventListener("mouseout", (e: MouseEvent) => {
       mouseDown = false;
     });
     el.addEventListener("mousemove", (e: MouseEvent) => {
       if (mouseDown) {
         let dx = -lastClientX + (lastClientX = e.clientX);
         let dy = -lastClientY + (lastClientY = e.clientY);
-        el.scrollLeft -= dx;
-        el.scrollTop -= dy;
+        this.props.onScroll && this.props.onScroll(el.scrollTop - dy, el.scrollLeft - dx);
       }
     });
   }
@@ -324,18 +327,20 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       </div>
     }
     let canvasStyle: any = {};
-    if (this.props.fit) {
+    if (this.props.shouldFitWidth) {
       canvasStyle.width = (this.props.scale * 100) + "%";
     } else {
       canvasStyle.width = (this.canvas.width * this.props.scale) + "px";
     }
     return <div className="maxWidthAndHeight">
-      <div className="playerLabel">{this.props.label} {this.state.baseFrameOffset + 1 + this.state.frameOffset}</div>
+      { this.props.labelPrefix &&
+        <div className="playerLabel">{this.props.labelPrefix} {this.state.baseFrameOffset + 1 + this.state.frameOffset}</div>
+      }
       <div className="playerCanvasContainer" ref={(self: any) => this.mountCanvasContainer(self)}>
         <canvas className="playerCanvas" ref={(self: any) => this.canvas = self} style={canvasStyle} />
       </div>
       <LinearProgress style={{ borderRadius: "0px" }} color={red800} mode="determinate" value={this.frameBuffer.length} min={0} max={this.state.maxFrameBufferSize} />
-      {this.props.showDetails && this.state.decoder &&
+      {this.props.areDetailsVisible && this.state.decoder &&
         <div className="playerTableContainer">
           <Table>
             <TableBody displayRowCheckbox={false}>

@@ -21,34 +21,33 @@ import { PlayerComponent } from './Player';
 const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 interface PlayerSplitComponentProps {
   videos: { decoderUrl: string, videoUrl: string, decoderName: string }[]
-  vote: boolean
+  isVotingEnabled: boolean
 }
 
 export class PlayerSplitComponent extends React.Component<PlayerSplitComponentProps, {
   scale: number;
-  fit: boolean;
+  shouldFitWidth: boolean;
   playing: boolean;
   focus: number;
-  scrollOriginIndex: number;
   scrollTop: number;
   scrollLeft: number;
   showVoterIDDialog: boolean;
   voterID: string;
-  loop: boolean;
+  isLooping: boolean;
 }> {
   constructor() {
     super();
     this.state = {
       scale: 1,
-      fit: true,
       playing: false,
       focus: -1,
       scrollTop: 0,
       scrollLeft: 0,
       showVoterIDDialog: false,
       voterID: "XYZ",
-      loop: false
-    } as any;
+      isLooping: false,
+      shouldFitWidth: true
+    };
   }
   players: PlayerComponent[] = [];
   playPause() {
@@ -81,7 +80,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       this.resetFrameOffset();
     });
     Mousetrap.bind(['f'], () => {
-      this.setState({ fit: !this.state.fit } as any);
+      this.setState({ shouldFitWidth: !this.state.shouldFitWidth } as any);
     });
     Mousetrap.bind([']'], () => {
       this.zoom(1);
@@ -114,7 +113,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     this.players[index] = player;
   }
   onScroll(index: number, top: number, left: number) {
-    this.setState({ scrollOriginIndex: index, scrollTop: top, scrollLeft: left } as any);
+    this.setState({ scrollTop: top, scrollLeft: left } as any);
   }
   onVote(index: number) {
     this.setState({showVoterIDDialog: true} as any);
@@ -126,23 +125,32 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
           onScroll={this.onScroll.bind(this, i)}
           video={video}
           bench={0}
-          showDetails={false}
-          fit={this.state.fit}
+          areDetailsVisible={false}
+          shouldFitWidth={this.state.shouldFitWidth}
           scale={this.state.scale}
           scrollTop={this.state.scrollTop}
           scrollLeft={this.state.scrollLeft}
-          label={ABC[i]}
-          loop={this.state.loop}
+          labelPrefix={ABC[i]}
+          isLooping={this.state.isLooping}
         />
       </div>
     })
     let voteButtons = null;
-    if (this.props.vote) {
-      voteButtons = this.props.videos.map((video, i) => {
-        return <RaisedButton key={i} label={ABC[i] + " is better"} onTouchTap={this.onVote.bind(this, i)} />
-      })
-      voteButtons.push(<RaisedButton key="tie" label={"Tie"} onTouchTap={this.onVote.bind(this, -1)} />)
+    let buttonStyle = {
+      marginLeft: 4,
+      marginRight: 4
     }
+    if (this.props.isVotingEnabled) {
+      voteButtons = this.props.videos.map((video, i) => {
+        return <RaisedButton style={buttonStyle} key={i} label={ABC[i]} onTouchTap={this.onVote.bind(this, i)} />
+      })
+      voteButtons.push(<RaisedButton style={buttonStyle} key="tie" label={"Tie"} onTouchTap={this.onVote.bind(this, -1)} />)
+    }
+    let toggleButtons = this.props.videos.map((video, i) => {
+      return <RaisedButton style={buttonStyle} primary={this.state.focus === i} key={i} label={ABC[i]} onTouchTap={() => this.setState({ focus: i } as any)}/>
+    });
+    toggleButtons.push(<RaisedButton style={buttonStyle} primary={this.state.focus === -1} key="split" label={"Split"} onTouchTap={(event, focus) => this.setState({ focus: -1 } as any)} />);
+
     return <div className="maxWidthAndHeight">
       <Dialog modal={true}
         title="Voter ID"
@@ -178,12 +186,13 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
           <IconButton onClick={this.zoom.bind(this, +1)} tooltip="Zoom In: ]" tooltipPosition="top-center">
             <FontIcon className="material-icons md-24">zoom_in</FontIcon>
           </IconButton>
-          <Toggle style={{maxWidth: 120}} labelPosition="right" toggled={this.state.fit} onToggle={(event, fit) => this.setState({fit} as any)}
+          <Toggle style={{maxWidth: 120}} labelPosition="right" toggled={this.state.shouldFitWidth} onToggle={(event, shouldFitWidth) => this.setState({shouldFitWidth} as any)}
             label="Fit Width"
           />
-          <Toggle style={{maxWidth: 120}} labelPosition="right" toggled={this.state.loop} onToggle={(event, loop) => this.setState({loop} as any)}
+          <Toggle style={{maxWidth: 120}} labelPosition="right" toggled={this.state.isLooping} onToggle={(event, isLooping) => this.setState({isLooping} as any)}
             label="Loop"
           />
+          {toggleButtons}
           {/*<span className="splitTextContent" style={{ width: "256px" }}>
             Frame: {this.state.activeFrame + 1} of {this.props.groups[0].length}
           </span>*/}

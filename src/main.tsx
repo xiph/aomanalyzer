@@ -111,7 +111,7 @@ let theme = getMuiTheme(darkBaseTheme, overrideTheme);
 if (player) {
   ReactDOM.render(
     <MuiThemeProvider muiTheme={theme}>
-      <PlayerSplitComponent videos={pairs} vote={true}/>
+      <PlayerSplitComponent videos={pairs} isVotingEnabled={true}/>
     </MuiThemeProvider>,
     document.getElementById("analyzer-app")
   );
