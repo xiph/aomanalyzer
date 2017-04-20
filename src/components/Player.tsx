@@ -15,15 +15,16 @@ import FlatButton from 'material-ui/FlatButton';
 import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from 'material-ui/Table';
 import Toggle from 'material-ui/Toggle';
 import TextField from 'material-ui/TextField';
+import { YUVCanvas } from '../YUVCanvas';
 
 declare var dragscroll;
 const MAX_FRAME_BUFFER_SIZE = 60;
 const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-declare var YCbCrFrameSink;
-
 function prepareBuffer(image: FrameImage) {
   return {
+    hashCode: image.hashCode,
+
     strideY: image.Y.stride,
     bytesY: new Uint8Array(image.Y.buffer),
 
@@ -240,7 +241,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
   canvasContainer: HTMLDivElement;
   canvas: HTMLCanvasElement;
   decoder: Decoder;
-  sink: any;
+  sink: YUVCanvas;
 
   playerInterval: number;
   fetchPumpInterval: number;
@@ -289,6 +290,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     }
     let frame = this.frameBuffer.shift();
     this.state.decoder.releaseFrameImageBuffers(frame.frameImage);
+    this.sink.freeFrameTexture(frame.frameImage.hashCode);
     frame.frameImage = null; // Release Buffer
     this.setState({ baseFrameOffset: this.state.baseFrameOffset + 1 } as any);
   }
@@ -363,7 +365,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       let image = frames[0].frameImage;
       this.canvas.width = image.Y.width;
       this.canvas.height = image.Y.height;
-      this.sink = new YCbCrFrameSink(this.canvas, {
+      this.sink = new YUVCanvas(this.canvas, {
         picX: 0, picY: 0, picWidth: image.Y.width, picHeight: image.Y.height
       });
       this.forceUpdate();

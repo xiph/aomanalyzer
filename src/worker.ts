@@ -195,6 +195,7 @@ function readPlane(plane) {
 
 function readImage() {
   return {
+    hashCode: Math.random() * 1000000 | 0,
     Y: readPlane(0),
     U: readPlane(1),
     V: readPlane(2)

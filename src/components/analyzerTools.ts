@@ -41,6 +41,7 @@ export interface FrameImagePlane {
 }
 
 export interface FrameImage {
+  hashCode: number,
   Y: FrameImagePlane,
   U: FrameImagePlane,
   V: FrameImagePlane
