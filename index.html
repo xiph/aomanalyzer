@@ -198,9 +198,8 @@
     .playerCanvasContainer {
       width: 100%;
       height: calc(100% - 10px);
-      overflow: auto;
-      cursor: grab;
-      cursor: -webkit-grab;
+      cursor: grab; cursor: -webkit-grab;
+      overflow: hidden;
     }
     .playerCanvas {
       image-rendering: pixelated;
@@ -255,6 +254,19 @@
       font-weight: bold;
       padding: 10px;
       background-color: rgba(20, 20, 20, 0.8);
+    }
+
+    .playerStep {
+      color: #FFFFFF;
+      font-size: 14px;
+      line-height: 2;
+    }
+    .playerShortcut {
+      color: white;
+      font-weight: bold;
+      font-family: 'Roboto Mono', monospace;
+      padding: 4px;
+      background-color: #212121;
     }
   </style>
 </head>

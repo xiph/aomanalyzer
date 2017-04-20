@@ -18,10 +18,30 @@ import TextField from 'material-ui/TextField';
 import { YUVCanvas } from '../YUVCanvas';
 import { PlayerComponent } from './Player';
 
+import {
+  Step,
+  Stepper,
+  StepLabel,
+  StepContent,
+} from 'material-ui/Stepper';
+
 const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 interface PlayerSplitComponentProps {
   videos: { decoderUrl: string, videoUrl: string, decoderName: string }[]
   isVotingEnabled: boolean
+  isBlind: boolean;
+}
+
+function generateUUID() { // Public Domain/MIT
+  var d = new Date().getTime();
+  if (typeof performance !== 'undefined' && typeof performance.now === 'function'){
+    d += performance.now(); //use high-precision timer if available
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    var r = (d + Math.random() * 16) % 16 | 0;
+    d = Math.floor(d / 16);
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
 }
 
 export class PlayerSplitComponent extends React.Component<PlayerSplitComponentProps, {
@@ -31,10 +51,25 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
   focus: number;
   scrollTop: number;
   scrollLeft: number;
+  voteIndex: number;
   showVoterIDDialog: boolean;
   voterID: string;
   isLooping: boolean;
+
+  directionsStepIndex: number;
 }> {
+  startTime = performance.now();
+  metrics = {
+    date: new Date(),
+    time: 0,
+    play: 0,
+    zoom: 0,
+    stepForward: 0,
+    stepBackward: 0,
+    focus: 0,
+    reset: 0,
+    drag: 0
+  };
   constructor() {
     super();
     this.state = {
@@ -44,15 +79,18 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       scrollTop: 0,
       scrollLeft: 0,
       showVoterIDDialog: false,
-      voterID: "XYZ",
+      voterID: localStorage["voterID"] || generateUUID(),
       isLooping: false,
-      shouldFitWidth: true
+      shouldFitWidth: false,
+      directionsStepIndex: localStorage["directionsStepIndex"] | 0,
+      voteIndex: -1
     };
   }
   players: PlayerComponent[] = [];
   playPause() {
     this.setState({ playing: !this.state.playing } as any);
     this.players.forEach(player => player.playPause());
+    this.metrics.play ++;
   }
   advanceOffset(forward: boolean, userTriggered = true) {
     this.players.forEach(player => {
@@ -60,9 +98,15 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       player.pauseIfPlaying();
       this.setState({ playing: false } as any);
     });
+    if (forward) {
+      this.metrics.stepForward ++;
+    } else {
+      this.metrics.stepBackward ++;
+    }
   }
   resetFrameOffset() {
     this.players.forEach(player => player.resetFrameOffset());
+    this.metrics.reset ++;
   }
   componentDidMount() {
     Mousetrap.bind(['space'], (e) => {
@@ -91,12 +135,20 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     Mousetrap.bind(['`'], () => {
       setFocus(-1);
     });
+    Mousetrap.bind(['s'], () => {
+      setFocus(-1);
+    });
+    Mousetrap.bind(['k'], () => {
+      localStorage.clear();
+      console.log("Cleared Local Storage");
+    });
     let self = this;
     function setFocus(focus: number) {
       self.setState({ focus } as any);
+      this.metrics.focus ++;
     }
     for (let i = 1; i <= this.props.videos.length; i++) {
-      Mousetrap.bind([String(i)], setFocus.bind(this, i - 1));
+      Mousetrap.bind([String(i), ABC[i - 1].toLowerCase()], setFocus.bind(this, i - 1));
     }
   }
   zoom(delta: number) {
@@ -108,6 +160,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       scrollTop: this.state.scrollTop * ratio,
       scrollLeft: this.state.scrollLeft * ratio
     } as any);
+    this.metrics.zoom ++;
   }
   mountPlayer(index: number, player: PlayerComponent) {
     this.players[index] = player;
@@ -116,7 +169,62 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     this.setState({ scrollTop: top, scrollLeft: left } as any);
   }
   onVote(index: number) {
-    this.setState({showVoterIDDialog: true} as any);
+    this.setState({voteIndex: index, showVoterIDDialog: true} as any);
+  }
+
+  handleNext() {
+    const {directionsStepIndex} = this.state;
+    this.setState({
+      directionsStepIndex: directionsStepIndex + 1
+    } as any);
+    localStorage["directionsStepIndex"] = directionsStepIndex + 1;
+  };
+  handlePrev() {
+    const {directionsStepIndex} = this.state;
+    if (directionsStepIndex > 0) {
+      this.setState({directionsStepIndex: directionsStepIndex - 1} as any);
+    }
+    localStorage["directionsStepIndex"] = directionsStepIndex - 1;
+  };
+
+  renderStepActions(step) {
+    const {directionsStepIndex} = this.state;
+    return (
+      <div style={{margin: '12px 0'}}>
+        <RaisedButton
+          label={directionsStepIndex >= 2 ? 'Finish' : 'Next'}
+          disableTouchRipple={true}
+          disableFocusRipple={true}
+          primary={true}
+          onTouchTap={this.handleNext.bind(this)}
+          style={{marginRight: 12}}
+        />
+        {step > 0 && (
+          <FlatButton
+            label="Back"
+            disabled={directionsStepIndex === 0}
+            disableTouchRipple={true}
+            disableFocusRipple={true}
+            onTouchTap={this.handlePrev.bind(this)}
+          />
+        )}
+      </div>
+    );
+  }
+  showDirections() {
+    this.setState({directionsStepIndex: 0} as any);
+    localStorage["directionsStepIndex"] = 0;
+  }
+  onVoterIDChange(event, value: string) {
+    this.setState({voterID: value} as any);
+    localStorage["voterID"] = value;
+  }
+  onSubmitVote() {
+    this.setState({showVoterIDDialog: false} as any);
+    console.log(this.props.videos[this.state.voteIndex]);
+
+    this.metrics.time = performance.now() - this.startTime;
+    console.log(this.metrics);
   }
   render() {
     let panes = this.props.videos.map((video, i) => {
@@ -153,21 +261,86 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
 
     return <div className="maxWidthAndHeight">
       <Dialog modal={true}
+        title="Directions"
+        open={this.state.directionsStepIndex < 3}
+      >
+        <Stepper activeStep={this.state.directionsStepIndex} orientation="vertical">
+            <Step>
+              <StepLabel style={{color: "white"}}>Introduction</StepLabel>
+              <StepContent className="playerStep">
+                <p>
+                  This tool helps us understand how various compression techniques affect perceptual image quality.
+                </p>
+                {this.renderStepActions(0)}
+              </StepContent>
+            </Step>
+            <Step>
+              <StepLabel style={{color: "white"}}>Comparing Videos</StepLabel>
+              <StepContent className="playerStep">
+                <p>
+                  Two or more videos will be loaded side by side. Please not that the videos may take a while to fully download and decompress.
+                  You can pan / zoom and step through frames backwards and forwards.
+                  We recommend that you get familiar with the keyboard shortcuts to navigate.
+                </p>
+                <div>
+                  <span className="playerShortcut">{'<'}</span>, <span className="playerShortcut">{'>'}</span> Step Backwards and Forwards
+                </div>
+                <div>
+                  <span className="playerShortcut">R</span> Rewind
+                </div>
+                <div>
+                  <span className="playerShortcut">SPACE</span> Play/Pause
+                </div>
+                <div>
+                  <span className="playerShortcut">1</span>, <span className="playerShortcut">2</span> or <span className="playerShortcut">A</span>, <span className="playerShortcut">B</span> Toggle Between Videos
+                </div>
+                <div>
+                  <span className="playerShortcut">~</span> or <span className="playerShortcut">S</span> Split Screen
+                </div>
+                <div>
+                  <span className="playerShortcut">F</span> Fit Width
+                </div>
+                <div>
+                  <span className="playerShortcut">[</span> , <span className="playerShortcut">]</span> Zoom Out / In
+                </div>
+                {this.renderStepActions(1)}
+              </StepContent>
+            </Step>
+            <Step>
+              <StepLabel style={{color: "white"}}>Submit your vote</StepLabel>
+              <StepContent className="playerStep">
+                <p>
+                  After carefully inspecting the videos, please vote on which you prefer more.
+                  If you have no preference, select <span className="playerShortcut">TIE</span>.
+                </p>
+                {this.renderStepActions(2)}
+              </StepContent>
+            </Step>
+          </Stepper>
+      </Dialog>
+      <Dialog modal={true}
         title="Voter ID"
         open={this.state.showVoterIDDialog}
         actions={[<FlatButton
-          label="Ok"
+          label="Cancel"
+          onTouchTap={() => this.setState({showVoterIDDialog: false} as any)}
+        />,
+        <FlatButton
+          label="Vote"
           primary={true}
-          onTouchTap={() => { this.setState({showVoterIDDialog: false} as any) }}
+          onTouchTap={this.onSubmitVote.bind(this)}
         />]}
       >
-      <TextField defaultValue={this.state.voterID} style={{width: "100%"}}/>
+      <TextField name="voterID" value={this.state.voterID} onChange={this.onVoterIDChange.bind(this)} style={{width: "100%"}}/>
       </Dialog>
       <div className="playerSplitVerticalContainer">
         {panes}
       </div>
       <Toolbar>
         <ToolbarGroup firstChild={true}>
+          <IconButton onClick={this.showDirections.bind(this)} tooltip="Help" tooltipPosition="top-center">
+            <FontIcon className="material-icons md-24">help</FontIcon>
+          </IconButton>
           <IconButton onClick={this.resetFrameOffset.bind(this)} tooltip="Replay: r" tooltipPosition="top-center">
             <FontIcon className="material-icons md-24">replay</FontIcon>
           </IconButton>
@@ -192,13 +365,16 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
           <Toggle style={{maxWidth: 120}} labelPosition="right" toggled={this.state.isLooping} onToggle={(event, isLooping) => this.setState({isLooping} as any)}
             label="Loop"
           />
-          {toggleButtons}
           {/*<span className="splitTextContent" style={{ width: "256px" }}>
             Frame: {this.state.activeFrame + 1} of {this.props.groups[0].length}
           </span>*/}
         </ToolbarGroup>
         <ToolbarGroup>
-          <ToolbarTitle text="Vote" />
+          <ToolbarTitle text="View" />
+          {toggleButtons}
+        </ToolbarGroup>
+        <ToolbarGroup>
+          <ToolbarTitle text="Vote For" />
           {voteButtons}
         </ToolbarGroup>
       </Toolbar>

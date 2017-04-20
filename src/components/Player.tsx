@@ -283,13 +283,17 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       lastClientX = e.clientX;
       lastClientY = e.clientY;
       mouseDown = true;
-      console.log("down"  + " : " + this.props.labelPrefix);
+      // TODO: Chrome needs a prefix, but it's also behaving strangely when updating the cursor.
+      // I didn't investigate this too much.
+      el.style.cursor = "grabbing";
     });
     el.addEventListener("mouseup", (e: MouseEvent) => {
       mouseDown = false;
+      el.style.cursor = "grab";
     });
     el.addEventListener("mouseout", (e: MouseEvent) => {
       mouseDown = false;
+      el.style.cursor = "grab";
     });
     el.addEventListener("mousemove", (e: MouseEvent) => {
       if (mouseDown) {
@@ -329,7 +333,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     let canvasStyle: any = {};
     if (this.props.shouldFitWidth) {
       canvasStyle.width = (this.props.scale * 100) + "%";
-    } else {
+    } else if (this.canvas) {
       canvasStyle.width = (this.canvas.width * this.props.scale) + "px";
     }
     return <div className="maxWidthAndHeight">
