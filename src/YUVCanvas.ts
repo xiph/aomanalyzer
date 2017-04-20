@@ -14,24 +14,126 @@ function hashString(s: string) {
   }
   return hashValue >>> 0;
 }
+function compileShader(gl: any, type: number, source: string) {
+  let shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    let err = gl.getShaderInfoLog(shader);
+    gl.deleteShader(shader);
+    throw new Error('GL shader compilation for ' + type + ' failed: ' + err);
+  }
+  return shader;
+}
+function compileProgram(gl: any, vertSource: string, fragSource: string) {
+  let vs = compileShader(gl, gl.VERTEX_SHADER, vertSource);
+  let fs = compileShader(gl, gl.FRAGMENT_SHADER, fragSource);
+  let program = gl.createProgram();
+  gl.attachShader(program, vs);
+  gl.attachShader(program, fs);
+  gl.deleteShader(vs);
+  gl.deleteShader(fs);
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    var err = gl.getProgramInfoLog(program);
+    gl.deleteProgram(program);
+    throw new Error('GL program linking failed: ' + err);
+  }
+  return program;
+}
+
+const kUseLinearFiltering: boolean = false;
+
 export class YUVCanvas {
-  gl: WebGLRenderingContext;
-  program: WebGLProgram;
-  vertexShader: WebGLShader;
-  fragmentShader: WebGLShader;
-  rectangle = new Float32Array([
-    // First triangle (top left, clockwise)
-    -1.0, +1.0,
-    +1.0, +1.0,
-    -1.0, -1.0,
-    // Second triangle (bottom right, clockwise)
-    -1.0, -1.0,
-    +1.0, +1.0,
-    +1.0, -1.0
-  ]);
+  gl: any;
+  //rgbTextures: {[index: number]: WebGLTexture} = {};
+  firstRun: boolean = true;
+
   constructor(public canvas: HTMLCanvasElement, public videoInfo: any) {
-    this.gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    let creationAttribs = {
+      antialias: false,
+      alpha: false,
+      depth: false,
+      stencil: false,
+    };
+    this.gl = canvas.getContext('webgl2', creationAttribs);
     assert(this.gl, "WebGL is Unavailable");
+    let gl = this.gl;
+
+    let vertSource = `
+attribute vec2 aPosition; // [0, 1]
+varying vec2 vTexCoord;
+void main() {
+  gl_Position = vec4(2.0*aPosition - 1.0, 0, 1); // [-1, 1]
+  gl_Position.y *= -1.0;
+  vTexCoord = aPosition;
+}
+    `;
+    /*
+    For [0,1] instead of [0,255], and to 5 places:
+    [R]   [1.16438,  0.00000,  1.79274]   [ Y - 0.06275]
+    [G] = [1.16438, -0.21325, -0.53291] x [Cb - 0.50196]
+    [B]   [1.16438,  2.11240,  0.00000]   [Cr - 0.50196]
+    */
+    let fragSource = `
+precision mediump float;
+uniform sampler2D uTextureY;
+uniform sampler2D uTextureCb;
+uniform sampler2D uTextureCr;
+varying vec2 vTexCoord;
+const vec3 kBias = vec3(0.06275, 0.50196, 0.50196);
+// Column-major:
+const mat3 kYcbcrToRgb_709 = mat3(1.16438, 1.16438, 1.16438,
+                                  0.00000,-0.21325, 2.11240,
+                                  1.79274,-0.53291, 0.00000);
+void main() {
+  float y = texture2D(uTextureY, vTexCoord).r; // premultipy the Y...
+  float cb = texture2D(uTextureCb, vTexCoord).r;
+  float cr = texture2D(uTextureCr, vTexCoord).r;
+  vec3 ycbcr = vec3(y, cb, cr) - kBias;
+  vec3 rgb = kYcbcrToRgb_709 * ycbcr;
+  gl_FragColor = vec4(rgb, 1);
+}
+    `;
+
+    let program = compileProgram(gl, vertSource, fragSource);
+    program.aPosition = gl.getAttribLocation(program, 'aPosition');
+    program.uTexture = [
+      gl.getUniformLocation(program, 'uTextureY'),
+      gl.getUniformLocation(program, 'uTextureCb'),
+      gl.getUniformLocation(program, 'uTextureCr'),
+    ];
+    gl.useProgram(program);
+    this.checkError();
+
+    for (let i = 0; i < 3; i++) {
+      assert(program.uTexture[i], "missing program.uTexture[" + i + "]");
+      gl.uniform1i(program.uTexture[i], i);
+      gl.activeTexture(gl.TEXTURE0 + i);
+      gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+      if (kUseLinearFiltering) {
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      } else {
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      }
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }
+    this.checkError();
+
+    let vertData = [
+      0, 0,
+      1, 0,
+      0, 1,
+      1, 1,
+    ];
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertData), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(program.aPosition, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(program.aPosition);
+    this.checkError();
   }
   checkError() {
     let err = this.gl.getError();
@@ -39,511 +141,81 @@ export class YUVCanvas {
       console.error("WebGL Error " + err);
     }
   }
-  compileShader(type: number, source: string) {
-    let gl = this.gl;
-    var shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      var err = gl.getShaderInfoLog(shader);
-      gl.deleteShader(shader);
-      throw new Error('GL shader compilation for ' + type + ' failed: ' + err);
-    }
-    return shader;
-  }
-  textures: {[index: number]: WebGLTexture} = {};
-  attachTexture(hashCode: number, name: string, register: number, index: number, width: number, height: number, data: Uint8Array): WebGLTexture {
-    let texture;
-    let needsUpload = true;
-    let gl = this.gl;
-    hashCode += hashString(name);
-    if (this.textures[hashCode]) {
-      // Reuse & update the existing texture
-      texture = this.textures[hashCode];
-      needsUpload = false;
-    } else {
-      this.textures[hashCode] = texture = gl.createTexture();
-      this.checkError();
-      needsUpload = true;
-    }
-    gl.activeTexture(register);
-    this.checkError();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    this.checkError();
-    let s = performance.now();
-    if (needsUpload) {
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        0, // mip level
-        gl.RGBA, // internal format
-        width, height,
-        0, // border
-        gl.RGBA, // format
-        gl.UNSIGNED_BYTE, //type
-        data // data!
-      );
-    }
-    this.checkError();
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); this.checkError();
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); this.checkError();
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); this.checkError();
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); this.checkError();
-    gl.uniform1i(gl.getUniformLocation(this.program, name), index); this.checkError();
-    return texture;
-  }
-  init(yCbCrBuffer) {
-    let gl = this.gl;
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    this.vertexShader = this.compileShader(gl.VERTEX_SHADER, `
-    attribute vec2 aPosition;
-    attribute vec2 aLumaPosition;
-    attribute vec2 aChromaPosition;
-    varying vec2 vLumaPosition;
-    varying vec2 vChromaPosition;
-    void main() {
-      gl_Position = vec4(aPosition, 0, 1);
-      vLumaPosition = aLumaPosition;
-      vChromaPosition = aChromaPosition;
-    }
-    `);
-    this.fragmentShader = this.compileShader(gl.FRAGMENT_SHADER, `
-    // inspired by https://github.com/mbebenita/Broadway/blob/master/Player/canvas.js
-    // extra 'stripe' texture fiddling to work around IE 11's lack of gl.LUMINANCE or gl.ALPHA textures
-    precision mediump float;
-    uniform sampler2D uStripeLuma;uniform sampler2D uStripeChroma;
-    uniform sampler2D uTextureY;
-    uniform sampler2D uTextureCb;
-    uniform sampler2D uTextureCr;
-    varying vec2 vLumaPosition;
-    varying vec2 vChromaPosition;
-    void main() {
-      // Y, Cb, and Cr planes are mapped into a pseudo-RGBA texture
-      // so we can upload them without expanding the bytes on IE 11
-      // which doesn't allow LUMINANCE or ALPHA textures.
-      // The stripe textures mark which channel to keep for each pixel.
-      vec4 vStripeLuma = texture2D(uStripeLuma, vLumaPosition);
-      vec4 vStripeChroma = texture2D(uStripeChroma, vChromaPosition);
-      // Each texture extraction will contain the relevant value in one
-      // channel only.
-      vec4 vY = texture2D(uTextureY, vLumaPosition) * vStripeLuma;
-      vec4 vCb = texture2D(uTextureCb, vChromaPosition) * vStripeChroma;
-      vec4 vCr = texture2D(uTextureCr, vChromaPosition) * vStripeChroma;
-      // Now assemble that into a YUV vector, and premultipy the Y...
-      vec3 YUV = vec3(
-        (vY.x  + vY.y  + vY.z  + vY.w) * 1.1643828125,
-        (vCb.x + vCb.y + vCb.z + vCb.w),
-        (vCr.x + vCr.y + vCr.z + vCr.w));
-      // And convert that to RGB!
-      gl_FragColor = vec4(
-        YUV.x + 1.59602734375 * YUV.z - 0.87078515625,
-        YUV.x - 0.39176171875 * YUV.y - 0.81296875 * YUV.z + 0.52959375,
-        YUV.x + 2.017234375   * YUV.y - 1.081390625, 1);
-      }
-    `);
-    this.program = gl.createProgram();
-    gl.attachShader(this.program, this.vertexShader); this.checkError();
-    gl.attachShader(this.program, this.fragmentShader); this.checkError();
-    gl.linkProgram(this.program);
-    if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
-      var err = gl.getProgramInfoLog(this.program);
-      gl.deleteProgram(this.program);
-      throw new Error('GL program linking failed: ' + err);
-    }
-    gl.useProgram(this.program);
-    this.checkError();
-    function buildStripe(width) {
-      var out = new Uint32Array(width);
-      for (var i = 0; i < width; i += 4) {
-        out[i] = 0x000000ff;
-        out[i + 1] = 0x0000ff00;
-        out[i + 2] = 0x00ff0000;
-        out[i + 3] = 0xff000000;
-      }
-      return new Uint8Array(out.buffer);
-    }
-    this.attachTexture(
-      123,
-      'uStripeLuma',
-      gl.TEXTURE0,
-      0,
-      yCbCrBuffer.strideY,
-      1,
-      buildStripe(yCbCrBuffer.strideY)
-    );
-    this.attachTexture(
-      234,
-      'uStripeChroma',
-      gl.TEXTURE1,
-      1,
-      yCbCrBuffer.strideCb,
-      1,
-      buildStripe(yCbCrBuffer.strideCb)
-    );
-  }
-
-  freeFrameTexture(hashCode: number) {
-    let gl = this.gl;
-    let textures = this.textures;
-    function free(name: string) {
-      let hash = hashCode + hashString(name);
-      let texture = textures[hash];
-      // assert(texture);
-      if (texture) {
-        gl.deleteTexture(texture);
-        delete textures[hash];
-      }
-    }
-    free("uTextureY");
-    free("uTextureCb");
-    free("uTextureCr");
-  }
-
   drawFrame(yCbCrBuffer) {
-    if (!this.program) {
-      this.init(yCbCrBuffer);
-    }
     let gl = this.gl;
-    //
-    // Set up geometry
-    //
-    let buffer = gl.createBuffer();
-    this.checkError();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    this.checkError();
-    gl.bufferData(gl.ARRAY_BUFFER, this.rectangle, gl.STATIC_DRAW);
-    this.checkError();
-    var positionLocation = gl.getAttribLocation(this.program, 'aPosition');
-    this.checkError();
-    gl.enableVertexAttribArray(positionLocation);
-    this.checkError();
-    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-    this.checkError();
-    let self = this;
-    // Set up the texture geometry...
-    function setupTexturePosition(varname, texWidth, texHeight) {
-      // Warning: assumes that the stride for Cb and Cr is the same size in output pixels
-      var textureX0 = self.videoInfo.picX / texWidth;
-      var textureX1 = (self.videoInfo.picX + self.videoInfo.picWidth) / texWidth;
-      var textureY0 = self.videoInfo.picY / yCbCrBuffer.height;
-      var textureY1 = (self.videoInfo.picY + self.videoInfo.picHeight) / texHeight;
-      var textureRectangle = new Float32Array([
-        textureX0, textureY0,
-        textureX1, textureY0,
-        textureX0, textureY1,
-        textureX0, textureY1,
-        textureX1, textureY0,
-        textureX1, textureY1
-      ]);
-      var texturePositionBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, texturePositionBuffer);
-      self.checkError();
-      gl.bufferData(gl.ARRAY_BUFFER, textureRectangle, gl.STATIC_DRAW);
-      self.checkError();
-      var texturePositionLocation = gl.getAttribLocation(self.program, varname);
-      self.checkError();
-      gl.enableVertexAttribArray(texturePositionLocation);
-      self.checkError();
-      gl.vertexAttribPointer(texturePositionLocation, 2, gl.FLOAT, false, 0, 0);
-      self.checkError();
+
+    if (this.firstRun ||
+        gl.drawingBufferWidth != yCbCrBuffer.width ||
+        gl.drawingBufferHeight != yCbCrBuffer.height)
+    {
+      this.firstRun = false;
+      console.log('Resizing to:', yCbCrBuffer.width, yCbCrBuffer.height);
+
+      gl.canvas.width = yCbCrBuffer.width;
+      gl.canvas.height = yCbCrBuffer.height;
+      assert(gl.drawingBufferWidth == yCbCrBuffer.width, "bad drawingbufferWidth");
+      assert(gl.drawingBufferHeight == yCbCrBuffer.height, "bad drawingbufferHeight");
+      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+      gl.activeTexture(gl.TEXTURE0);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8,
+                    yCbCrBuffer.width,
+                    yCbCrBuffer.height,
+                    0, gl.RED, gl.UNSIGNED_BYTE, null);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8,
+                    yCbCrBuffer.width >> yCbCrBuffer.hdec,
+                    yCbCrBuffer.height >> yCbCrBuffer.vdec,
+                    0, gl.RED, gl.UNSIGNED_BYTE, null);
+      gl.activeTexture(gl.TEXTURE2);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8,
+                    yCbCrBuffer.width >> yCbCrBuffer.hdec,
+                    yCbCrBuffer.height >> yCbCrBuffer.vdec,
+                    0, gl.RED, gl.UNSIGNED_BYTE, null);
     }
-    setupTexturePosition('aLumaPosition', yCbCrBuffer.strideY, yCbCrBuffer.height);
-    setupTexturePosition('aChromaPosition', yCbCrBuffer.strideCb << yCbCrBuffer.hdec, yCbCrBuffer.height);
-    // Create the textures...
-    var textureY = this.attachTexture(
-      yCbCrBuffer.hashCode,
-      'uTextureY',
-      gl.TEXTURE2,
-      2,
-      yCbCrBuffer.strideY / 4,
-      yCbCrBuffer.height,
-      yCbCrBuffer.bytesY
-    );
-    var textureCb = this.attachTexture(
-      yCbCrBuffer.hashCode,
-      'uTextureCb',
-      gl.TEXTURE3,
-      3,
-      yCbCrBuffer.strideCb / 4,
-      yCbCrBuffer.height >> yCbCrBuffer.vdec,
-      yCbCrBuffer.bytesCb
-    );
-    var textureCr = this.attachTexture(
-      yCbCrBuffer.hashCode,
-      'uTextureCr',
-      gl.TEXTURE4,
-      4,
-      yCbCrBuffer.strideCr / 4,
-      yCbCrBuffer.height >> yCbCrBuffer.vdec,
-      yCbCrBuffer.bytesCr
-    );
-    // Aaaaand draw stuff.
-    gl.drawArrays(gl.TRIANGLES, 0, this.rectangle.length / 2);
+
+    /*
+    for (var key in yCbCrBuffer) {
+      console.log(key, yCbCrBuffer[key]);
+    }
+    */
+
+    const start = performance.now();
+    let lap_last = start;
+    function lap() {
+      let now = performance.now();
+      const diff = now - lap_last;
+      lap_last = now;
+      return diff.toFixed(2);
+    }
+
+    // Update
+    gl.activeTexture(gl.TEXTURE0);
+    gl.pixelStorei(gl.UNPACK_ROW_LENGTH, yCbCrBuffer.strideY);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0,
+                     yCbCrBuffer.width,
+                     yCbCrBuffer.height,
+                     gl.RED, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesY);
+    console.log('upload Y:', lap());
+    gl.activeTexture(gl.TEXTURE1);
+    gl.pixelStorei(gl.UNPACK_ROW_LENGTH, yCbCrBuffer.strideCb);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0,
+                     yCbCrBuffer.width >> yCbCrBuffer.hdec,
+                     yCbCrBuffer.height >> yCbCrBuffer.vdec,
+                     gl.RED, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesCb);
+    console.log('upload Cb:', lap());
+    gl.activeTexture(gl.TEXTURE2);
+    gl.pixelStorei(gl.UNPACK_ROW_LENGTH, yCbCrBuffer.strideCr);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0,
+                     yCbCrBuffer.width >> yCbCrBuffer.hdec,
+                     yCbCrBuffer.height >> yCbCrBuffer.vdec,
+                     gl.RED, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesCr);
+    console.log('upload Cr:', lap());
+
+    // Draw
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    console.log('draw:', lap());
+    console.log('total:', (performance.now() - start).toFixed(2));
     this.checkError();
   };
 }
-
-// /**
-//  * Warning: canvas must not have been used for 2d drawing prior!
-//  *
-//  * @param HTMLCanvasElement canvas
-//  * @constructor
-//  */
-// function YCbCrFrameSink(canvas, videoInfo) {
-//   var self = this,
-//     gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl'),
-//     debug = false; // swap this to enable more error checks, which can slow down rendering
-//   if (gl == null) {
-//     throw new Error('WebGL unavailable');
-//   }
-//   console.log('Using WebGL canvas for video drawing');
-//   // GL!
-//   function checkError() {
-//     if (debug) {
-//       err = gl.getError();
-//       if (err != 0) {
-//         throw new Error("GL error " + err);
-//       }
-//     }
-//   }
-//   function compileShader(type, source) {
-//     var shader = gl.createShader(type);
-//     gl.shaderSource(shader, source);
-//     gl.compileShader(shader);
-//     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-//       var err = gl.getShaderInfoLog(shader);
-//       gl.deleteShader(shader);
-//       throw new Error('GL shader compilation for ' + type + ' failed: ' + err);
-//     }
-//     return shader;
-//   }
-//   var vertexShader,
-//     fragmentShader,
-//     program,
-//     buffer,
-//     err;
-//   var rectangle = new Float32Array([
-//     // First triangle (top left, clockwise)
-//     -1.0, +1.0,
-//     +1.0, +1.0,
-//     -1.0, -1.0,
-//     // Second triangle (bottom right, clockwise)
-//     -1.0, -1.0,
-//     +1.0, +1.0,
-//     +1.0, -1.0
-//   ]);
-//   var textures = {};
-//   function attachTexture(hashCode, name, register, index, width, height, data) {
-//     var texture;
-//     var needsUpload = true;
-//     if (textures[hashCode]) {
-//       // Reuse & update the existing texture
-//       texture = textures[hashCode];
-//       needsUpload = false;
-//     } else {
-//       textures[hashCode] = texture = gl.createTexture();
-//       needsUpload = true;
-//     }
-//     checkError();
-//     gl.activeTexture(register);
-//     checkError();
-//     gl.bindTexture(gl.TEXTURE_2D, texture);
-//     checkError();
-//     let s = performance.now();
-//     if (needsUpload) {
-//       gl.texImage2D(
-//         gl.TEXTURE_2D,
-//         0, // mip level
-//         gl.RGBA, // internal format
-//         width, height,
-//         0, // border
-//         gl.RGBA, // format
-//         gl.UNSIGNED_BYTE, //type
-//         data // data!
-//       );
-//     }
-//     checkError();
-//     // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); checkError();
-//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); checkError();
-//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); checkError();
-//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); checkError();
-//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); checkError();
-//     gl.uniform1i(gl.getUniformLocation(program, name), index);
-//     checkError();
-//     return texture;
-//   }
-//   function init(yCbCrBuffer) {
-//     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-//     vertexShader = compileShader(gl.VERTEX_SHADER, `
-//     attribute vec2 aPosition;
-//     attribute vec2 aLumaPosition;
-//     attribute vec2 aChromaPosition;
-//     varying vec2 vLumaPosition;
-//     varying vec2 vChromaPosition;
-//     void main() {
-//       gl_Position = vec4(aPosition, 0, 1);
-//       vLumaPosition = aLumaPosition;
-//       vChromaPosition = aChromaPosition;
-//     }
-//     `);
-//     fragmentShader = compileShader(gl.FRAGMENT_SHADER, `
-//     // inspired by https://github.com/mbebenita/Broadway/blob/master/Player/canvas.js
-//     // extra 'stripe' texture fiddling to work around IE 11's lack of gl.LUMINANCE or gl.ALPHA textures
-//     precision mediump float;
-//     uniform sampler2D uStripeLuma;uniform sampler2D uStripeChroma;
-//     uniform sampler2D uTextureY;
-//     uniform sampler2D uTextureCb;
-//     uniform sampler2D uTextureCr;
-//     varying vec2 vLumaPosition;
-//     varying vec2 vChromaPosition;
-//     void main() {
-//       // Y, Cb, and Cr planes are mapped into a pseudo-RGBA texture
-//       // so we can upload them without expanding the bytes on IE 11
-//       // which doesn't allow LUMINANCE or ALPHA textures.
-//       // The stripe textures mark which channel to keep for each pixel.
-//       vec4 vStripeLuma = texture2D(uStripeLuma, vLumaPosition);
-//       vec4 vStripeChroma = texture2D(uStripeChroma, vChromaPosition);
-//       // Each texture extraction will contain the relevant value in one
-//       // channel only.
-//       vec4 vY = texture2D(uTextureY, vLumaPosition) * vStripeLuma;
-//       vec4 vCb = texture2D(uTextureCb, vChromaPosition) * vStripeChroma;
-//       vec4 vCr = texture2D(uTextureCr, vChromaPosition) * vStripeChroma;
-//       // Now assemble that into a YUV vector, and premultipy the Y...
-//       vec3 YUV = vec3(
-//         (vY.x  + vY.y  + vY.z  + vY.w) * 1.1643828125,
-//         (vCb.x + vCb.y + vCb.z + vCb.w),
-//         (vCr.x + vCr.y + vCr.z + vCr.w));
-//       // And convert that to RGB!
-//       gl_FragColor = vec4(
-//         YUV.x + 1.59602734375 * YUV.z - 0.87078515625,
-//         YUV.x - 0.39176171875 * YUV.y - 0.81296875 * YUV.z + 0.52959375,
-//         YUV.x + 2.017234375   * YUV.y - 1.081390625, 1);
-//       }
-//     `);
-//     program = gl.createProgram();
-//     gl.attachShader(program, vertexShader);
-//     checkError();
-//     gl.attachShader(program, fragmentShader);
-//     checkError();
-//     gl.linkProgram(program);
-//     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-//       var err = gl.getProgramInfoLog(program);
-//       gl.deleteProgram(program);
-//       throw new Error('GL program linking failed: ' + err);
-//     }
-//     gl.useProgram(program);
-//     checkError();
-//     function buildStripe(width) {
-//       var out = new Uint32Array(width);
-//       for (var i = 0; i < width; i += 4) {
-//         out[i] = 0x000000ff;
-//         out[i + 1] = 0x0000ff00;
-//         out[i + 2] = 0x00ff0000;
-//         out[i + 3] = 0xff000000;
-//       }
-//       return new Uint8Array(out.buffer);
-//     }
-//     attachTexture(
-//       123,
-//       'uStripeLuma',
-//       gl.TEXTURE0,
-//       0,
-//       yCbCrBuffer.strideY,
-//       1,
-//       buildStripe(yCbCrBuffer.strideY)
-//     );
-//     attachTexture(
-//       234,
-//       'uStripeChroma',
-//       gl.TEXTURE1,
-//       1,
-//       yCbCrBuffer.strideCb,
-//       1,
-//       buildStripe(yCbCrBuffer.strideCb)
-//     );
-//   }
-//   self.freeFrameTexture = function (hashCode) {
-//     delete textures[hashCode];
-//   }
-//   self.drawFrame = function (yCbCrBuffer) {
-//     if (!program) {
-//       init(yCbCrBuffer);
-//     }
-//     // Set up the rectangle and draw it
-//     //
-//     // Set up geometry
-//     //
-//     buffer = gl.createBuffer();
-//     checkError();
-//     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-//     checkError();
-//     gl.bufferData(gl.ARRAY_BUFFER, rectangle, gl.STATIC_DRAW);
-//     checkError();
-//     var positionLocation = gl.getAttribLocation(program, 'aPosition');
-//     checkError();
-//     gl.enableVertexAttribArray(positionLocation);
-//     checkError();
-//     gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-//     checkError();
-//     // Set up the texture geometry...
-//     function setupTexturePosition(varname, texWidth, texHeight) {
-//       // Warning: assumes that the stride for Cb and Cr is the same size in output pixels
-//       var textureX0 = videoInfo.picX / texWidth;
-//       var textureX1 = (videoInfo.picX + videoInfo.picWidth) / texWidth;
-//       var textureY0 = videoInfo.picY / yCbCrBuffer.height;
-//       var textureY1 = (videoInfo.picY + videoInfo.picHeight) / texHeight;
-//       var textureRectangle = new Float32Array([
-//         textureX0, textureY0,
-//         textureX1, textureY0,
-//         textureX0, textureY1,
-//         textureX0, textureY1,
-//         textureX1, textureY0,
-//         textureX1, textureY1
-//       ]);
-//       var texturePositionBuffer = gl.createBuffer();
-//       gl.bindBuffer(gl.ARRAY_BUFFER, texturePositionBuffer);
-//       checkError();
-//       gl.bufferData(gl.ARRAY_BUFFER, textureRectangle, gl.STATIC_DRAW);
-//       checkError();
-//       var texturePositionLocation = gl.getAttribLocation(program, varname);
-//       checkError();
-//       gl.enableVertexAttribArray(texturePositionLocation);
-//       checkError();
-//       gl.vertexAttribPointer(texturePositionLocation, 2, gl.FLOAT, false, 0, 0);
-//       checkError();
-//     }
-//     setupTexturePosition('aLumaPosition', yCbCrBuffer.strideY, yCbCrBuffer.height);
-//     setupTexturePosition('aChromaPosition', yCbCrBuffer.strideCb << yCbCrBuffer.hdec, yCbCrBuffer.height);
-//     // Create the textures...
-//     var textureY = attachTexture(
-//       yCbCrBuffer.hashCode,
-//       'uTextureY',
-//       gl.TEXTURE2,
-//       2,
-//       yCbCrBuffer.strideY / 4,
-//       yCbCrBuffer.height,
-//       yCbCrBuffer.bytesY
-//     );
-//     var textureCb = attachTexture(
-//       yCbCrBuffer.hashCode,
-//       'uTextureCb',
-//       gl.TEXTURE3,
-//       3,
-//       yCbCrBuffer.strideCb / 4,
-//       yCbCrBuffer.height >> yCbCrBuffer.vdec,
-//       yCbCrBuffer.bytesCb
-//     );
-//     var textureCr = attachTexture(
-//       yCbCrBuffer.hashCode,
-//       'uTextureCr',
-//       gl.TEXTURE4,
-//       4,
-//       yCbCrBuffer.strideCr / 4,
-//       yCbCrBuffer.height >> yCbCrBuffer.vdec,
-//       yCbCrBuffer.bytesCr
-//     );
-//     // Aaaaand draw stuff.
-//     gl.drawArrays(gl.TRIANGLES, 0, rectangle.length / 2);
-//     checkError();
-//   };
-//   return self;
-// }
