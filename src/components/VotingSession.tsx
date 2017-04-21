@@ -6,6 +6,18 @@ import LinearProgress from 'material-ui/LinearProgress';
 import {PlayerSplitComponent} from "./PlayerSplit";
 import {deepOrangeA400} from 'material-ui/styles/colors';
 
+function shuffle(array: any[], count: number) {
+  // Shuffle Indices
+  for (let j = 0; j < count; j++) {
+    let a = Math.random() * array.length | 0;
+    let b = Math.random() * array.length | 0;
+    let t = array[a];
+    array[a] = array[b];
+    array[b] = t;
+  }
+  return array;
+}
+
 interface VotingSessionComponentProps {
   /**
    * Sets of videos to vote on.
@@ -15,10 +27,16 @@ interface VotingSessionComponentProps {
     videoUrl: string,
     decoderName: string
   }[][];
+
   /**
    * Description to show on the first screen.
    */
   description?: string;
+
+  /**
+   * Whether to randomize voting.
+   */
+  isBlind?: boolean;
 }
 
 /**
@@ -27,6 +45,11 @@ interface VotingSessionComponentProps {
 export class VotingSessionComponent extends React.Component < VotingSessionComponentProps, {
   index : number
 } > {
+  public static defaultProps: VotingSessionComponentProps = {
+    description: "",
+    isBlind: true
+  } as any;
+
   constructor() {
     super();
     this.state = {
@@ -52,16 +75,19 @@ export class VotingSessionComponent extends React.Component < VotingSessionCompo
           () => this.next()
         } />]}>
         <p>
-          You will be asked to vote on {videos.length} set(s) of videos. {' '}
+          You will be asked to vote on {videos.length} sets of videos. {' '}
           {this.props.description}
         </p>
       </Dialog>
     } else if (index < videos.length) {
+      let videosToVoteOn = videos[index];
+      if (this.props.isBlind) {
+        videosToVoteOn = shuffle(videosToVoteOn.slice(), 16);
+      }
       body = <PlayerSplitComponent
         key={this.state.index}
-        videos={videos[index]}
+        videos={videosToVoteOn}
         isVotingEnabled={true}
-        isBlind={true}
         onVoted={() => {
         this.next();
       }}/>

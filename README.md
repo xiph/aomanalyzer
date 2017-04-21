@@ -95,3 +95,15 @@ The analyzer uses a JavaScript decoder to decode video frames and extract inform
 Note that the `build_inspector.sh` shell script doesn't look at the current build configuration, so you'll need to edit it to add your own configure options. (Because of limitations in the web platform, the decoder must be configured with `--disable-multithread --disable-runtime-cpu-detect --target=generic-gnu` because threading and SIMD is not yet supported in JavaScript.)
 
 If something goes wrong, you can clean the build by deleting the `.inspect` directory and try again.
+
+## URL Parameters
+
+### Decoders / Videos
+
+Video decoder/file pairs are constructed from a sequence of `decoder` and `file` URL parameters. For example, the URL string `decoder=A&file=X&file=Y&decoder=B&file=X` will construct 3 pairs: `A:X`, `A:Y` and `B:X`.
+
+### Voting
+
+  - `blind`: Whether to randomize the videos shown to the user.
+  - `vote`: A comma separated string of video decoder/file pairs to vote on. For example, the string `0:1,1:2` indicates that there should be two votes, the first between `A:X` and `A:Y`, and the second between `A:Y` and `B:X`. The voting tool can also be used to vote on more than 2 videos at a time (the string `0:1:2:1,1:2` is also valid.)
+  - `voteDescription`: A optional message to show on the first voting screen.

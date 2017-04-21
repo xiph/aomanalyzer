@@ -116,7 +116,7 @@ if (player || vote) {
   });
   ReactDOM.render(
     <MuiThemeProvider muiTheme={theme}>
-      <VotingSessionComponent videos={videos} description={voteDescription}/>
+      <VotingSessionComponent videos={videos} description={voteDescription} isBlind={!!blind}/>
     </MuiThemeProvider>,
     document.getElementById("analyzer-app")
   );

@@ -30,7 +30,6 @@ const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 interface PlayerSplitComponentProps {
   videos: { decoderUrl: string, videoUrl: string, decoderName: string }[]
   isVotingEnabled: boolean
-  isBlind: boolean;
   onVoted?: () => void;
 }
 
