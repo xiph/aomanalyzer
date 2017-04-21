@@ -13,7 +13,7 @@ import CircularProgress from 'material-ui/CircularProgress';
 import RaisedButton from 'material-ui/RaisedButton';
 import FlatButton from 'material-ui/FlatButton';
 import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from 'material-ui/Table';
-import Toggle from 'material-ui/Toggle';
+// import Toggle from 'material-ui/Toggle';
 import TextField from 'material-ui/TextField';
 import { YUVCanvas } from '../YUVCanvas';
 import { PlayerComponent } from './Player';
@@ -47,6 +47,7 @@ function generateUUID() { // Public Domain/MIT
 export class PlayerSplitComponent extends React.Component<PlayerSplitComponentProps, {
   scale: number;
   shouldFitWidth: boolean;
+  isFullScreen: boolean;
   playing: boolean;
   focus: number;
   scrollTop: number;
@@ -59,6 +60,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
   directionsStepIndex: number;
 }> {
   startTime = performance.now();
+  // Metrics are submitted along with the vote.
   metrics = {
     date: new Date(),
     time: 0,
@@ -68,22 +70,26 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     stepBackward: 0,
     focus: 0,
     reset: 0,
-    drag: 0
+    drag: 0,
+    devicePixelRatio: undefined,
+    scale: undefined,
+    isFullScreen: undefined
   };
   constructor() {
     super();
     this.state = {
-      scale: 1,
+      scale: 1 / window.devicePixelRatio,
       playing: false,
       focus: -1,
       scrollTop: 0,
       scrollLeft: 0,
       showVoterIDDialog: false,
       voterID: localStorage["voterID"] || generateUUID(),
-      isLooping: false,
+      isLooping: true,
       shouldFitWidth: false,
       directionsStepIndex: localStorage["directionsStepIndex"] | 0,
-      voteIndex: -1
+      voteIndex: -1,
+      isFullScreen: false
     };
   }
   players: PlayerComponent[] = [];
@@ -108,6 +114,40 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     this.players.forEach(player => player.resetFrameOffset());
     this.metrics.reset ++;
   }
+  toggleShouldFitWidth() {
+    this.setState({ shouldFitWidth: !this.state.shouldFitWidth } as any);
+  }
+  toggleIsLooping() {
+    this.setState({ isLooping: !this.state.isLooping } as any);
+  }
+  toggleFullScreen() {
+    function exitFullscreen() {
+      if(document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if((document as any).mozCancelFullScreen) {
+        (document as any).mozCancelFullScreen();
+      } else if(document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    }
+    function launchIntoFullscreen(element) {
+      if(element.requestFullscreen) {
+        element.requestFullscreen();
+      } else if(element.mozRequestFullScreen) {
+        element.mozRequestFullScreen();
+      } else if(element.webkitRequestFullscreen) {
+        element.webkitRequestFullscreen();
+      } else if(element.msRequestFullscreen) {
+        element.msRequestFullscreen();
+      }
+    }
+    if (this.state.isFullScreen) {
+      exitFullscreen();
+    } else {
+      launchIntoFullscreen(document.documentElement);
+    }
+    this.setState({ isFullScreen: !this.state.isFullScreen } as any);
+  }
   componentDidMount() {
     Mousetrap.bind(['space'], (e) => {
       this.playPause();
@@ -124,13 +164,13 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       this.resetFrameOffset();
     });
     Mousetrap.bind(['f'], () => {
-      this.setState({ shouldFitWidth: !this.state.shouldFitWidth } as any);
+      this.toggleShouldFitWidth();
     });
     Mousetrap.bind([']'], () => {
-      this.zoom(1);
+      this.zoom(2);
     });
     Mousetrap.bind(['['], () => {
-      this.zoom(-1)
+      this.zoom(0.5)
     });
     Mousetrap.bind(['`'], () => {
       setFocus(-1);
@@ -145,18 +185,19 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     let self = this;
     function setFocus(focus: number) {
       self.setState({ focus } as any);
-      this.metrics.focus ++;
+      self.metrics.focus ++;
     }
     for (let i = 1; i <= this.props.videos.length; i++) {
       Mousetrap.bind([String(i), ABC[i - 1].toLowerCase()], setFocus.bind(this, i - 1));
     }
   }
-  zoom(delta: number) {
+  zoom(multiplier: number) {
     let scale = this.state.scale;
-    let newScale = Math.max(1, Math.min(32, scale + delta));
+    let newScale = Math.max(0.25, Math.min(32, scale * multiplier));
     let ratio = newScale / scale;
     this.setState({
       scale: newScale,
+      shouldFitWidth: false,
       scrollTop: this.state.scrollTop * ratio,
       scrollLeft: this.state.scrollLeft * ratio
     } as any);
@@ -221,10 +262,39 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
   }
   onSubmitVote() {
     this.setState({showVoterIDDialog: false} as any);
-    console.log(this.props.videos[this.state.voteIndex]);
-
-    this.metrics.time = performance.now() - this.startTime;
-    console.log(this.metrics);
+    let vote = {
+      id: this.state.voterID,
+      videos: [], metrics: this.metrics
+    };
+    this.props.videos.forEach(video => {
+      vote.videos.push({decoder: video.decoderName, video: video.videoUrl});
+    })
+    if (this.state.voteIndex >= 0) {
+      vote.videos[this.state.voteIndex].selected = true;
+    }
+    vote.metrics.time = performance.now() - this.startTime;
+    vote.metrics.devicePixelRatio = window.devicePixelRatio;
+    vote.metrics.scale = this.state.scale;
+    vote.metrics.isFullScreen = this.state.isFullScreen;
+    function sendRequest(object: any, ok: (any), error: (any)) {
+      var self = this;
+      var xhr = new XMLHttpRequest();
+      xhr.addEventListener("load", function () {
+        ok.call(this);
+      });
+      xhr.addEventListener("error", function (e) {
+        error.call(this);
+      });
+      xhr.open("POST", "//arewecompressedyet.com/subjective/vote", true);
+      xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+      xhr.send(JSON.stringify(object));
+    }
+    sendRequest(vote, () => {
+      console.log("Sent");
+    }, (e) => {
+      alert("Something went wrong while submitting your vote.");
+    });
+    console.log(vote);
   }
   render() {
     let panes = this.props.videos.map((video, i) => {
@@ -339,7 +409,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       <Toolbar>
         <ToolbarGroup firstChild={true}>
           <IconButton onClick={this.showDirections.bind(this)} tooltip="Help" tooltipPosition="top-center">
-            <FontIcon className="material-icons md-24">help</FontIcon>
+            <FontIcon className="material-icons md-24">info_outline</FontIcon>
           </IconButton>
           <IconButton onClick={this.resetFrameOffset.bind(this)} tooltip="Replay: r" tooltipPosition="top-center">
             <FontIcon className="material-icons md-24">replay</FontIcon>
@@ -353,21 +423,23 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
           <IconButton onClick={this.advanceOffset.bind(this, true)} tooltip="Next: ." tooltipPosition="top-center">
             <FontIcon className="material-icons md-24">skip_next</FontIcon>
           </IconButton>
-          <IconButton onClick={this.zoom.bind(this, -1)} tooltip="Zoom Out: [" tooltipPosition="top-center">
+          <IconButton onClick={this.zoom.bind(this, 1 / 2)} tooltip="Zoom Out: [" tooltipPosition="top-center">
             <FontIcon className="material-icons md-24">zoom_out</FontIcon>
           </IconButton>
-          <IconButton onClick={this.zoom.bind(this, +1)} tooltip="Zoom In: ]" tooltipPosition="top-center">
+          <IconButton onClick={this.zoom.bind(this, 2)} tooltip="Zoom In: ]" tooltipPosition="top-center">
             <FontIcon className="material-icons md-24">zoom_in</FontIcon>
           </IconButton>
-          <Toggle style={{maxWidth: 120}} labelPosition="right" toggled={this.state.shouldFitWidth} onToggle={(event, shouldFitWidth) => this.setState({shouldFitWidth} as any)}
-            label="Fit Width"
-          />
-          <Toggle style={{maxWidth: 120}} labelPosition="right" toggled={this.state.isLooping} onToggle={(event, isLooping) => this.setState({isLooping} as any)}
-            label="Loop"
-          />
-          {/*<span className="splitTextContent" style={{ width: "256px" }}>
-            Frame: {this.state.activeFrame + 1} of {this.props.groups[0].length}
-          </span>*/}
+          <IconButton onClick={() => this.toggleIsLooping()} tooltip="Loop" tooltipPosition="top-center">
+            <FontIcon color={this.state.isLooping ? deepOrange500 : undefined } className="material-icons md-24">loop</FontIcon>
+          </IconButton>
+          <IconButton onClick={() => this.toggleShouldFitWidth()} tooltip="Fit Width" tooltipPosition="top-center">
+            <FontIcon color={this.state.shouldFitWidth ? deepOrange500 : undefined } className="material-icons md-24">aspect_ratio</FontIcon>
+          </IconButton>
+          <IconButton onClick={() => this.toggleFullScreen()} tooltip="Full Screen" tooltipPosition="top-center">
+            <FontIcon color={this.state.isFullScreen ? deepOrange500 : undefined } className="material-icons md-24">
+              { this.state.isFullScreen ? "fullscreen_exit" : "fullscreen" }
+            </FontIcon>
+          </IconButton>
         </ToolbarGroup>
         <ToolbarGroup>
           <ToolbarTitle text="View" />

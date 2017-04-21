@@ -1,18 +1,8 @@
+const trace = false;
 function assert(c: any, message: string = "") {
   if (!c) {
     throw new Error(message);
   }
-}
-function hashString(s: string) {
-  let hashValue = 0;
-  if (s.length === 0) {
-    return hashValue;
-  }
-  for (let i = 0; i < s.length; i++) {
-    hashValue = ((hashValue << 5) - hashValue) + s.charCodeAt(i);
-    hashValue |= 0;
-  }
-  return hashValue >>> 0;
 }
 function compileShader(gl: any, type: number, source: string) {
   let shader = gl.createShader(type);
@@ -57,7 +47,7 @@ export class YUVCanvas {
       stencil: false,
     };
     this.gl = canvas.getContext('webgl2', creationAttribs);
-    assert(this.gl, "WebGL is Unavailable");
+    assert(this.gl, "WebGL 2 is Unavailable");
     let gl = this.gl;
 
     let vertSource = `
@@ -149,7 +139,7 @@ void main() {
         gl.drawingBufferHeight != yCbCrBuffer.height)
     {
       this.firstRun = false;
-      console.log('Resizing to:', yCbCrBuffer.width, yCbCrBuffer.height);
+      trace && console.log('Resizing to:', yCbCrBuffer.width, yCbCrBuffer.height);
 
       gl.canvas.width = yCbCrBuffer.width;
       gl.canvas.height = yCbCrBuffer.height;
@@ -174,19 +164,13 @@ void main() {
                     0, gl.RED, gl.UNSIGNED_BYTE, null);
     }
 
-    /*
-    for (var key in yCbCrBuffer) {
-      console.log(key, yCbCrBuffer[key]);
-    }
-    */
-
     const start = performance.now();
-    let lap_last = start;
-    function lap() {
+    let lastLapTime = start;
+    function lap(name: string) {
       let now = performance.now();
-      const diff = now - lap_last;
-      lap_last = now;
-      return diff.toFixed(2);
+      const diff = now - lastLapTime;
+      lastLapTime = now;
+      trace && console.log(diff.toFixed(2) + " ms");
     }
 
     // Update
@@ -196,26 +180,25 @@ void main() {
                      yCbCrBuffer.width,
                      yCbCrBuffer.height,
                      gl.RED, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesY);
-    console.log('upload Y:', lap());
+    lap("Upload Y");
     gl.activeTexture(gl.TEXTURE1);
     gl.pixelStorei(gl.UNPACK_ROW_LENGTH, yCbCrBuffer.strideCb);
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0,
                      yCbCrBuffer.width >> yCbCrBuffer.hdec,
                      yCbCrBuffer.height >> yCbCrBuffer.vdec,
                      gl.RED, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesCb);
-    console.log('upload Cb:', lap());
+    lap("Upload Cb");
     gl.activeTexture(gl.TEXTURE2);
     gl.pixelStorei(gl.UNPACK_ROW_LENGTH, yCbCrBuffer.strideCr);
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0,
                      yCbCrBuffer.width >> yCbCrBuffer.hdec,
                      yCbCrBuffer.height >> yCbCrBuffer.vdec,
                      gl.RED, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesCr);
-    console.log('upload Cr:', lap());
-
+    lap("Upload Cr");
     // Draw
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    console.log('draw:', lap());
-    console.log('total:', (performance.now() - start).toFixed(2));
+    lap("Draw");
+    trace && console.log('total:', (performance.now() - start).toFixed(2));
     this.checkError();
   };
 }

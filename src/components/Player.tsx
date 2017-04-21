@@ -64,7 +64,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
   frameOffset: number;
 }> {
   public static defaultProps: PlayerComponentProps = {
-    scale: 1,
+    scale: 1 / window.devicePixelRatio,
     scrollTop: 0,
     scrollLeft: 0,
     label: "",
@@ -124,7 +124,6 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     }
     let frame = this.frameBuffer.shift();
     this.state.decoder.releaseFrameImageBuffers(frame.frameImage);
-    //this.sink.freeFrameTexture(frame.frameImage.hashCode);
     frame.frameImage = null; // Release Buffer
     this.setState({ baseFrameOffset: this.state.baseFrameOffset + 1 } as any);
   }
@@ -331,14 +330,18 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       </div>
     }
     let canvasStyle: any = {};
+    let scaleLabel = "";
     if (this.props.shouldFitWidth) {
-      canvasStyle.width = (this.props.scale * 100) + "%";
+      canvasStyle.width = "100%";
+      scaleLabel = " Fit Width";
     } else if (this.canvas) {
       canvasStyle.width = (this.canvas.width * this.props.scale) + "px";
+      // scaleLabel = " " + this.props.scale + "X" + (window.devicePixelRatio * this.props.scale) + " : 1";
+      scaleLabel = ` ${(window.devicePixelRatio * this.props.scale) + ":1"}`;
     }
     return <div className="maxWidthAndHeight">
       { this.props.labelPrefix &&
-        <div className="playerLabel">{this.props.labelPrefix} {this.state.baseFrameOffset + 1 + this.state.frameOffset}</div>
+        <div className="playerLabel">{this.props.labelPrefix}{this.state.baseFrameOffset + 1 + this.state.frameOffset} {scaleLabel}</div>
       }
       <div className="playerCanvasContainer" ref={(self: any) => this.mountCanvasContainer(self)}>
         <canvas className="playerCanvas" ref={(self: any) => this.canvas = self} style={canvasStyle} />
