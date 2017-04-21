@@ -286,7 +286,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       xhr.addEventListener("error", function (e) {
         error.call(this);
       });
-      xhr.open("POST", "//subjective/vote", true);
+      xhr.open("POST", "/subjective/vote", true);
       xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
       xhr.send(JSON.stringify(object));
     }
