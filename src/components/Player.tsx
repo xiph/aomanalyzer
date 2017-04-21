@@ -303,36 +303,28 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       return;
     }
     this.canvasContainer = el;
-    el.onscroll = () => {
-      if (this.ignoreNextScrollEvent) {
-        this.ignoreNextScrollEvent = false;
-        return;
-      }
-      this.props.onScroll && this.props.onScroll(el.scrollTop, el.scrollLeft);
-    };
+    let label = this.props.labelPrefix;
     let lastClientX;
     let lastClientY;
     let mouseDown = false;
     el.addEventListener("mousedown", (e: MouseEvent) => {
-      lastClientX = e.clientX;
-      lastClientY = e.clientY;
+      lastClientX = e.clientX - el.offsetLeft;
+      lastClientY = e.clientY - el.offsetTop;
       mouseDown = true;
       // TODO: Chrome needs a prefix, but it's also behaving strangely when updating the cursor.
       // I didn't investigate this too much.
       el.style.cursor = "grabbing";
     });
-    el.addEventListener("mouseup", (e: MouseEvent) => {
+    document.documentElement.addEventListener("mouseup", (e: MouseEvent) => {
       mouseDown = false;
       el.style.cursor = "grab";
     });
-    el.addEventListener("mouseout", (e: MouseEvent) => {
-      mouseDown = false;
-      el.style.cursor = "grab";
-    });
-    el.addEventListener("mousemove", (e: MouseEvent) => {
+    document.documentElement.addEventListener("mousemove", (e: MouseEvent) => {
       if (mouseDown) {
-        let dx = -lastClientX + (lastClientX = e.clientX);
-        let dy = -lastClientY + (lastClientY = e.clientY);
+        var X = e.pageX - el.offsetLeft;
+        var Y = e.pageY - el.offsetTop;
+        let dx = -lastClientX + (lastClientX = X);
+        let dy = -lastClientY + (lastClientY = Y);
         this.props.onScroll && this.props.onScroll(el.scrollTop - dy, el.scrollLeft - dx);
       }
     });

@@ -22,7 +22,6 @@ export class VotingSessionComponent extends React.Component<VotingSessionCompone
   }
   render() {
     let customContentStyle = {
-      width: '1200',
       maxWidth: 'none'
     };
     let index = this.state.index;
