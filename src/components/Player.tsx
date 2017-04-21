@@ -376,7 +376,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     }
     return <div className="maxWidthAndHeight">
       { this.props.labelPrefix &&
-        <div className="playerLabel">{this.props.labelPrefix}{this.state.baseFrameOffset + 1 + this.state.frameOffset} {scaleLabel}</div>
+        <div className="playerLabel">{this.props.labelPrefix} {this.state.baseFrameOffset + 1 + this.state.frameOffset} {scaleLabel}</div>
       }
       <div className="playerCanvasContainer" ref={(self: any) => this.mountCanvasContainer(self)}>
         <canvas className="playerCanvas" ref={(self: any) => this.canvas = self} style={canvasStyle} />

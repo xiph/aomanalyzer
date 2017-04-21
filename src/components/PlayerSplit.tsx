@@ -234,14 +234,6 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     const {directionsStepIndex} = this.state;
     return (
       <div style={{margin: '12px 0'}}>
-        <RaisedButton
-          label={directionsStepIndex >= 4 ? 'Finish' : 'Next'}
-          disableTouchRipple={true}
-          disableFocusRipple={true}
-          primary={true}
-          onTouchTap={this.handleNext.bind(this)}
-          style={{marginRight: 12}}
-        />
         {step > 0 && (
           <FlatButton
             label="Back"
@@ -249,8 +241,16 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
             disableTouchRipple={true}
             disableFocusRipple={true}
             onTouchTap={this.handlePrev.bind(this)}
+            style={{marginRight: 12}}
           />
         )}
+        <RaisedButton
+          label={directionsStepIndex >= 3 ? 'Finish' : 'Next'}
+          disableTouchRipple={true}
+          disableFocusRipple={true}
+          primary={true}
+          onTouchTap={this.handleNext.bind(this)}
+        />
       </div>
     );
   }
@@ -338,11 +338,9 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       width: '1200',
       maxWidth: 'none'
     };
-
     return <div className="maxWidthAndHeight">
       <Dialog
-        repositionOnUpdate={false}
-        bodyStyle={{backgroundColor: this.state.directionsStepIndex === 1 ? "black" : undefined}}
+        bodyStyle={{backgroundColor: "black"}}
         contentStyle={customContentStyle}
         modal={true}
         title="Directions"
@@ -416,6 +414,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
               <p>
                 After carefully inspecting the videos, please vote on which you prefer more.
                 If you have no preference, select <span className="playerShortcut">TIE</span>.
+                Click the Information button on the bottom left to return to this panel.
               </p>
               {this.renderStepActions(3)}
             </div>
