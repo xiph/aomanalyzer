@@ -19,6 +19,8 @@ import { YUVCanvas } from '../YUVCanvas';
 import { PlayerComponent } from './Player';
 import { CalibrateComponent } from './Calibrate'
 
+declare const Mousetrap;
+
 import {
   Step,
   Stepper,
