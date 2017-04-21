@@ -13,10 +13,11 @@ import CircularProgress from 'material-ui/CircularProgress';
 import RaisedButton from 'material-ui/RaisedButton';
 import FlatButton from 'material-ui/FlatButton';
 import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from 'material-ui/Table';
-// import Toggle from 'material-ui/Toggle';
+
 import TextField from 'material-ui/TextField';
 import { YUVCanvas } from '../YUVCanvas';
 import { PlayerComponent } from './Player';
+import { CalibrateComponent } from './Calibrate'
 
 import {
   Step,
@@ -64,20 +65,20 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
   metrics = {
     date: new Date(),
     time: 0,
-    play: 0,
-    zoom: 0,
-    stepForward: 0,
-    stepBackward: 0,
-    focus: 0,
-    reset: 0,
+    playCount: 0,
+    zoomCount: 0,
+    stepForwardCount: 0,
+    stepBackwardCount: 0,
+    focusCount: 0,
+    resetCount: 0,
     drag: 0,
     devicePixelRatio: undefined,
-    scale: undefined,
-    isFullScreen: undefined
+    state: undefined,
+    playerDecodeStats: undefined
   };
   constructor() {
     super();
-    this.state = {
+    this.metrics.state = this.state = {
       scale: 1 / window.devicePixelRatio,
       playing: false,
       focus: -1,
@@ -96,7 +97,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
   playPause() {
     this.setState({ playing: !this.state.playing } as any);
     this.players.forEach(player => player.playPause());
-    this.metrics.play ++;
+    this.metrics.playCount ++;
   }
   advanceOffset(forward: boolean, userTriggered = true) {
     this.players.forEach(player => {
@@ -105,14 +106,14 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       this.setState({ playing: false } as any);
     });
     if (forward) {
-      this.metrics.stepForward ++;
+      this.metrics.stepForwardCount ++;
     } else {
-      this.metrics.stepBackward ++;
+      this.metrics.stepBackwardCount ++;
     }
   }
   resetFrameOffset() {
     this.players.forEach(player => player.resetFrameOffset());
-    this.metrics.reset ++;
+    this.metrics.resetCount ++;
   }
   toggleShouldFitWidth() {
     this.setState({ shouldFitWidth: !this.state.shouldFitWidth } as any);
@@ -185,7 +186,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     let self = this;
     function setFocus(focus: number) {
       self.setState({ focus } as any);
-      self.metrics.focus ++;
+      self.metrics.focusCount ++;
     }
     for (let i = 1; i <= this.props.videos.length; i++) {
       Mousetrap.bind([String(i), ABC[i - 1].toLowerCase()], setFocus.bind(this, i - 1));
@@ -201,7 +202,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       scrollTop: this.state.scrollTop * ratio,
       scrollLeft: this.state.scrollLeft * ratio
     } as any);
-    this.metrics.zoom ++;
+    this.metrics.zoomCount ++;
   }
   mountPlayer(index: number, player: PlayerComponent) {
     this.players[index] = player;
@@ -233,7 +234,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     return (
       <div style={{margin: '12px 0'}}>
         <RaisedButton
-          label={directionsStepIndex >= 2 ? 'Finish' : 'Next'}
+          label={directionsStepIndex >= 4 ? 'Finish' : 'Next'}
           disableTouchRipple={true}
           disableFocusRipple={true}
           primary={true}
@@ -274,8 +275,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     }
     vote.metrics.time = performance.now() - this.startTime;
     vote.metrics.devicePixelRatio = window.devicePixelRatio;
-    vote.metrics.scale = this.state.scale;
-    vote.metrics.isFullScreen = this.state.isFullScreen;
+    vote.metrics.playerDecodeStats = this.players.map(player => player.getAllFrameDecodeStats());
     function sendRequest(object: any, ok: (any), error: (any)) {
       var self = this;
       var xhr = new XMLHttpRequest();
@@ -329,64 +329,92 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     });
     toggleButtons.push(<RaisedButton style={buttonStyle} primary={this.state.focus === -1} key="split" label={"Split"} onTouchTap={(event, focus) => this.setState({ focus: -1 } as any)} />);
 
+    let customContentStyle = {
+      width: '1200',
+      maxWidth: 'none'
+    };
+
+
     return <div className="maxWidthAndHeight">
-      <Dialog modal={true}
+      <Dialog
+        repositionOnUpdate={false}
+        contentStyle={customContentStyle}
+        modal={true}
         title="Directions"
-        open={this.state.directionsStepIndex < 3}
+        open={this.state.directionsStepIndex < 4}
       >
-        <Stepper activeStep={this.state.directionsStepIndex} orientation="vertical">
+        <Stepper width={1024} activeStep={this.state.directionsStepIndex}>
             <Step>
               <StepLabel style={{color: "white"}}>Introduction</StepLabel>
-              <StepContent className="playerStep">
-                <p>
-                  This tool helps us understand how various compression techniques affect perceptual image quality.
-                </p>
-                {this.renderStepActions(0)}
-              </StepContent>
+            </Step>
+            <Step>
+              <StepLabel style={{color: "white"}}>Calibrate</StepLabel>
             </Step>
             <Step>
               <StepLabel style={{color: "white"}}>Comparing Videos</StepLabel>
-              <StepContent className="playerStep">
-                <p>
-                  Two or more videos will be loaded side by side. Please not that the videos may take a while to fully download and decompress.
-                  You can pan / zoom and step through frames backwards and forwards.
-                  We recommend that you get familiar with the keyboard shortcuts to navigate.
-                </p>
-                <div>
-                  <span className="playerShortcut">{'<'}</span>, <span className="playerShortcut">{'>'}</span> Step Backwards and Forwards
-                </div>
-                <div>
-                  <span className="playerShortcut">R</span> Rewind
-                </div>
-                <div>
-                  <span className="playerShortcut">SPACE</span> Play/Pause
-                </div>
-                <div>
-                  <span className="playerShortcut">1</span>, <span className="playerShortcut">2</span> or <span className="playerShortcut">A</span>, <span className="playerShortcut">B</span> Toggle Between Videos
-                </div>
-                <div>
-                  <span className="playerShortcut">~</span> or <span className="playerShortcut">S</span> Split Screen
-                </div>
-                <div>
-                  <span className="playerShortcut">F</span> Fit Width
-                </div>
-                <div>
-                  <span className="playerShortcut">[</span> , <span className="playerShortcut">]</span> Zoom Out / In
-                </div>
-                {this.renderStepActions(1)}
-              </StepContent>
             </Step>
             <Step>
               <StepLabel style={{color: "white"}}>Submit your vote</StepLabel>
-              <StepContent className="playerStep">
-                <p>
-                  After carefully inspecting the videos, please vote on which you prefer more.
-                  If you have no preference, select <span className="playerShortcut">TIE</span>.
-                </p>
-                {this.renderStepActions(2)}
-              </StepContent>
             </Step>
           </Stepper>
+          { this.state.directionsStepIndex === 0 &&
+            <div className="playerStep">
+              <p>
+                This tool helps engineers understand how various compression techniques affect perceived image quality.
+              </p>
+              {this.renderStepActions(0)}
+            </div>
+          }
+          { this.state.directionsStepIndex === 1 &&
+            <div className="playerStep">
+              <p>
+                All squares should be distinguishable from the background. Increase your screen's brightness level, or use a monitor
+                where this is the case.
+              </p>
+              <CalibrateComponent width={1100} height={256}/>
+              {this.renderStepActions(1)}
+            </div>
+          }
+          { this.state.directionsStepIndex === 2 &&
+            <div className="playerStep">
+              <p>
+                Two or more videos will be loaded side by side. Please not that the videos may take a while to fully download and decompress.
+                You can pan / zoom and step through frames backwards and forwards.
+                We recommend that you get familiar with the keyboard shortcuts to navigate.
+              </p>
+              <div>
+                <span className="playerShortcut">{'<'}</span>, <span className="playerShortcut">{'>'}</span> Step Backwards and Forwards
+              </div>
+              <div>
+                <span className="playerShortcut">R</span> Rewind
+              </div>
+              <div>
+                <span className="playerShortcut">SPACE</span> Play/Pause
+              </div>
+              <div>
+                <span className="playerShortcut">1</span>, <span className="playerShortcut">2</span> or <span className="playerShortcut">A</span>, <span className="playerShortcut">B</span> Toggle Between Videos
+              </div>
+              <div>
+                <span className="playerShortcut">~</span> or <span className="playerShortcut">S</span> Split Screen
+              </div>
+              <div>
+                <span className="playerShortcut">F</span> Fit Width
+              </div>
+              <div>
+                <span className="playerShortcut">[</span> , <span className="playerShortcut">]</span> Zoom Out / In
+              </div>
+              {this.renderStepActions(2)}
+            </div>
+          }
+          { this.state.directionsStepIndex === 3 &&
+            <div className="playerStep">
+              <p>
+                After carefully inspecting the videos, please vote on which you prefer more.
+                If you have no preference, select <span className="playerShortcut">TIE</span>.
+              </p>
+              {this.renderStepActions(3)}
+            </div>
+          }
       </Dialog>
       <Dialog modal={true}
         title="Voter ID"

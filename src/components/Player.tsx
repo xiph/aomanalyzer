@@ -406,7 +406,11 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     </div>;
   }
 
-  getFrameDecodeStats(start, end) {
+  getAllFrameDecodeStats() {
+    return this.getFrameDecodeStats(0, this.frames.length);
+  }
+
+  getFrameDecodeStats(start: number, end: number) {
     let sum = 0;
     let max = Number.MIN_VALUE;
     let min = Number.MAX_VALUE;
@@ -427,7 +431,8 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       avg,
       min,
       max,
-      std
+      std,
+      count: frames.length
     };
   }
 }
