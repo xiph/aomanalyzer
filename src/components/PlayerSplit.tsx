@@ -43,7 +43,14 @@ function generateUUID() { // Public Domain/MIT
     var r = (d + Math.random() * 16) % 16 | 0;
     d = Math.floor(d / 16);
     return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-  });
+  }).toUpperCase();
+}
+
+function isUUID(uuid: string) {
+  if (uuid.length != 36) {
+    return false;
+  }
+  return true;
 }
 
 export class PlayerSplitComponent extends React.Component<PlayerSplitComponentProps, {
@@ -56,7 +63,9 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
   scrollLeft: number;
   voteIndex: number;
   showVoterIDDialog: boolean;
+  showVoterIDRegistration: boolean;
   voterID: string;
+  voterEmail: String;
   isLooping: boolean;
 
   directionsStepIndex: number;
@@ -86,7 +95,9 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       scrollTop: 0,
       scrollLeft: 0,
       showVoterIDDialog: false,
-      voterID: localStorage["voterID"] || generateUUID(),
+      showVoterIDRegistration: false,
+      voterID: localStorage["voterID"] || "",
+      voterEmail: localStorage["voterEmail"] || "",
       isLooping: true,
       shouldFitWidth: false,
       directionsStepIndex: localStorage["directionsStepIndex"] | 0,
@@ -262,11 +273,15 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     this.setState({voterID: value} as any);
     localStorage["voterID"] = value;
   }
+  onVoterEmailChange(event, value: string) {
+    this.setState({voterEmail: value} as any);
+    localStorage["voterEmail"] = value;
+  }
   onSubmitVote() {
     this.setState({showVoterIDDialog: false} as any);
     let vote = {
       id: generateUUID(),
-      voter: this.state.voterID,
+      voter: this.state.voterID || generateUUID(),
       videos: [], metrics: this.metrics
     };
     this.props.videos.forEach(video => {
@@ -294,7 +309,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     sendRequest(vote, () => {
       console.log("Sent");
     }, (e) => {
-      alert("Something went wrong while submitting your vote.");
+      console.error("Something went wrong while submitting your vote.");
     });
     console.log(vote);
     if (this.props.onVoted) {
@@ -335,7 +350,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     toggleButtons.push(<RaisedButton style={buttonStyle} primary={this.state.focus === -1} key="split" label={"Split"} onTouchTap={(event, focus) => this.setState({ focus: -1 } as any)} />);
 
     let customContentStyle = {
-      width: '1200',
+      width: '1200px',
       maxWidth: 'none'
     };
     return <div className="maxWidthAndHeight">
@@ -371,8 +386,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
           { this.state.directionsStepIndex === 1 &&
             <div className="playerStep">
               <p>
-                All squares should be distinguishable from the background. Increase your screen's brightness level, or use a monitor
-                where this is the case.
+                All squares should be distinguishable from the background. Increase your screen's brightness level or use a different monitor.
               </p>
               <CalibrateComponent width={1100} height={256}/>
               {this.renderStepActions(1)}
@@ -423,17 +437,35 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       <Dialog modal={true}
         title="Voter ID"
         open={this.state.showVoterIDDialog}
-        actions={[<FlatButton
-          label="Cancel"
-          onTouchTap={() => this.setState({showVoterIDDialog: false} as any)}
+        actions={[
+        this.state.showVoterIDRegistration ?
+        <FlatButton
+          label={"Request Voter ID"}
+          disabled={!this.state.voterEmail}
+          onTouchTap={() => this.setState({showVoterIDRegistration: false} as any)}
+        /> :
+        <FlatButton
+          label={"Register"}
+          onTouchTap={() => this.setState({
+            showVoterIDRegistration: true,
+            voterID: generateUUID()
+          } as any)}
         />,
         <FlatButton
-          label="Vote"
+          label="Cancel"
+          onTouchTap={() => this.setState({showVoterIDRegistration: false, showVoterIDDialog: false} as any)}
+        />,
+        <FlatButton
+          label={this.state.voterID ? "Vote" : "Vote Anonymously"}
           primary={true}
+          disabled={!!this.state.voterID && !isUUID(this.state.voterID)}
           onTouchTap={this.onSubmitVote.bind(this)}
         />]}
       >
-      <TextField name="voterID" value={this.state.voterID} onChange={this.onVoterIDChange.bind(this)} style={{width: "100%"}}/>
+      { this.state.showVoterIDRegistration ?
+        <TextField floatingLabelText="E-mail" floatingLabelFixed={true} name="registerID" value={this.state.voterEmail} onChange={this.onVoterEmailChange.bind(this)} style={{width: "100%"}}/> :
+        <TextField floatingLabelText="Voter ID" floatingLabelFixed={true} name="voterID" value={this.state.voterID} onChange={this.onVoterIDChange.bind(this)} style={{width: "100%"}}/>
+      }
       </Dialog>
       <div className="playerSplitVerticalContainer">
         {panes}

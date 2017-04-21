@@ -55,6 +55,8 @@ let blind = parameters.blind | 0;
 let split = parameters.split | 0;
 let bench = parameters.bench | 0;
 let player = parameters.player | 0;
+let vote = parameters.vote;
+let voteDescription = parameters.voteDescription || "";
 let benchmark = parameters.benchmark | 0;
 
 /**
@@ -108,10 +110,13 @@ let overrideTheme = {
 
 let theme = getMuiTheme(darkBaseTheme, overrideTheme);
 
-if (player) {
+if (player || vote) {
+  let videos = vote.split(",").map(x => {
+    return x.split(":").map(y => pairs[y|0]);
+  });
   ReactDOM.render(
     <MuiThemeProvider muiTheme={theme}>
-      <VotingSessionComponent videos={[pairs, pairs]}/>
+      <VotingSessionComponent videos={videos} description={voteDescription}/>
     </MuiThemeProvider>,
     document.getElementById("analyzer-app")
   );

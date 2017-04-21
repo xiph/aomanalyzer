@@ -1,16 +1,32 @@
 import * as React from "react";
 
-import { PlayerSplitComponent } from "./PlayerSplit";
-import Dialog from 'material-ui/Dialog';
 import FlatButton from 'material-ui/FlatButton';
+import Dialog from 'material-ui/Dialog';
+import LinearProgress from 'material-ui/LinearProgress';
+import {PlayerSplitComponent} from "./PlayerSplit";
+import {deepOrangeA400} from 'material-ui/styles/colors';
 
 interface VotingSessionComponentProps {
-  videos: { decoderUrl: string, videoUrl: string, decoderName: string }[][]
+  /**
+   * Sets of videos to vote on.
+   */
+  videos : {
+    decoderUrl: string,
+    videoUrl: string,
+    decoderName: string
+  }[][];
+  /**
+   * Description to show on the first screen.
+   */
+  description?: string;
 }
 
-export class VotingSessionComponent extends React.Component<VotingSessionComponentProps, {
-  index: number
-}> {
+/**
+ * Walks through a sequence of votes.
+ */
+export class VotingSessionComponent extends React.Component < VotingSessionComponentProps, {
+  index : number
+} > {
   constructor() {
     super();
     this.state = {
@@ -18,49 +34,50 @@ export class VotingSessionComponent extends React.Component<VotingSessionCompone
     };
   }
   next() {
-    this.setState({index: this.state.index + 1});
+    this.setState({
+      index: this.state.index + 1
+    });
   }
   render() {
-    let customContentStyle = {
-      maxWidth: 'none'
-    };
     let index = this.state.index;
     let videos = this.props.videos;
+    let body;
     if (index < 0) {
-      return <Dialog
-        repositionOnUpdate={false}
-        contentStyle={customContentStyle}
+      body = <Dialog
+        repositionOnUpdate={true}
         modal={true}
         title="Vote"
         open={true}
-        actions={[<FlatButton
-          label="Let's Begin"
-          onTouchTap={() => this.next()}
-        />]}
-      >
-      <p>
-        You will be presented with {videos.length} set(s) of videos.
-      </p>
+        actions={[< FlatButton label = "Let's Begin" onTouchTap = {
+          () => this.next()
+        } />]}>
+        <p>
+          You will be asked to vote on {videos.length} set(s) of videos. {' '}
+          {this.props.description}
+        </p>
       </Dialog>
-    }
-
-    if (index < videos.length) {
-      return <PlayerSplitComponent key={this.state.index} videos={videos[index]} isVotingEnabled={true} isBlind={true} onVoted={() => {
+    } else if (index < videos.length) {
+      body = <PlayerSplitComponent
+        key={this.state.index}
+        videos={videos[index]}
+        isVotingEnabled={true}
+        isBlind={true}
+        onVoted={() => {
         this.next();
       }}/>
-    };
-
-    return <Dialog
-      repositionOnUpdate={false}
-      contentStyle={customContentStyle}
-      modal={true}
-      title="Thank You"
-      open={true}
-    >
-    <p>
-      Your vote counts!
-    </p>
-    </Dialog>
+    } else {
+      body = <Dialog repositionOnUpdate={true} modal={true} title="Thank You" open={true}>
+        <p>
+          Your vote counts!
+        </p>
+      </Dialog>
+    }
+    return <div className="votingSessionContainer">
+      <LinearProgress
+        color={deepOrangeA400}
+        mode="determinate"
+        value={this.state.index}
+        max={videos.length}/> {body}
+    </div>
   }
-
 }
