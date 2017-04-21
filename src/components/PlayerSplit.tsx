@@ -264,7 +264,8 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
   onSubmitVote() {
     this.setState({showVoterIDDialog: false} as any);
     let vote = {
-      id: this.state.voterID,
+      id: generateUUID(),
+      voter: this.state.voterID,
       videos: [], metrics: this.metrics
     };
     this.props.videos.forEach(video => {
