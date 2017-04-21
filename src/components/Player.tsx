@@ -20,6 +20,13 @@ import { YUVCanvas } from '../YUVCanvas';
 declare var dragscroll;
 const MAX_FRAME_BUFFER_SIZE = 60;
 
+function fixedRatio(n: number) {
+  if ((n | 0) == n) {
+    return String(n);
+  }
+  return n.toFixed(2);
+}
+
 function prepareBuffer(image: FrameImage) {
   return {
     hashCode: image.hashCode,
@@ -79,6 +86,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
 
   playerInterval: number;
   fetchPumpInterval: number;
+  drainFetchPumpInterval: number;
 
   constructor() {
     super();
@@ -114,7 +122,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     let self = this;
     this.playerInterval = setInterval(() => {
       self.advanceOffset(true, false);
-      self.forceUpdate();
+      self.forceUpdateIfMounted();
     }, 1000 / this.state.decoder.frameRate);
   }
 
@@ -127,6 +135,11 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     frame.frameImage = null; // Release Buffer
     this.setState({ baseFrameOffset: this.state.baseFrameOffset + 1 } as any);
   }
+
+  /**
+   * Not the React way.
+   */
+  isComponentMounted: boolean = false;
 
   componentDidMount() {
     this.setState({ status: "Loading Decoder" } as any);
@@ -141,6 +154,21 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
         this.initialize(decoder);
       });
     });
+    this.isComponentMounted = true;
+  }
+
+  componentWillUnmount() {
+    this.pauseIfPlaying();
+    this.stopFetchPump();
+    this.isComponentMounted = false;
+  }
+
+  forceUpdateIfMounted() {
+    if (this.isComponentMounted) {
+      this.forceUpdate();
+    } else {
+      console.warn("Shouldn't be updating anymore.");
+    }
   }
 
   fetchRequestsInFlight = 0;
@@ -154,11 +182,10 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       assert(frames.length === 1);
       this.fetchRequestsInFlight--;
       this.fetchBuffer.push(frames[0]);
-      this.forceUpdate();
+      this.forceUpdateIfMounted();
     }).catch(() => {
       this.fetchRequestsInFlight--;
-      clearInterval(this.fetchPumpInterval);
-      this.fetchPumpInterval = 0;
+      this.stopFetchPump();
     });
     this.fetchRequestsInFlight++;
   }
@@ -172,9 +199,17 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     }, 1);
 
     // Fill frame buffer.
-    setInterval(() => {
+    this.drainFetchPumpInterval = setInterval(() => {
       this.drainFetchBuffer();
     }, 1);
+  }
+
+  stopFetchPump() {
+    clearInterval(this.fetchPumpInterval);
+    this.fetchPumpInterval = 0;
+
+    clearInterval(this.drainFetchPumpInterval);
+    this.drainFetchPumpInterval = 0;
   }
 
   drainFetchBuffer() {
@@ -201,7 +236,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       this.sink = new YUVCanvas(this.canvas, {
         picX: 0, picY: 0, picWidth: image.Y.width, picHeight: image.Y.height
       });
-      this.forceUpdate();
+      this.forceUpdateIfMounted();
       this.startFetchPump();
       if (this.props.bench) {
         this.playPause();
@@ -234,7 +269,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     if (forward && this.state.frameOffset == this.frameBuffer.length - 1) {
       if (this.fetchBuffer.length) {
         this.evictFrame();
-        this.forceUpdate();
+        this.forceUpdateIfMounted();
       } else if (this.props.isLooping) {
         this.setState({ frameOffset: 0 } as any);
       }
@@ -337,7 +372,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     } else if (this.canvas) {
       canvasStyle.width = (this.canvas.width * this.props.scale) + "px";
       // scaleLabel = " " + this.props.scale + "X" + (window.devicePixelRatio * this.props.scale) + " : 1";
-      scaleLabel = ` ${(window.devicePixelRatio * this.props.scale) + ":1"}`;
+      scaleLabel = ` ${fixedRatio(window.devicePixelRatio * this.props.scale) + ":1"}`;
     }
     return <div className="maxWidthAndHeight">
       { this.props.labelPrefix &&

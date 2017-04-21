@@ -3,6 +3,7 @@ import * as ReactDOM from "react-dom";
 
 import { LoaderComponent } from "./components/Loader";
 import { PlayerSplitComponent } from "./components/PlayerSplit";
+import { VotingSessionComponent } from "./components/VotingSession";
 
 import { LocalAnalyzerComponent } from "./components/LocalAnalyzer";
 
@@ -106,12 +107,11 @@ let overrideTheme = {
 };
 
 let theme = getMuiTheme(darkBaseTheme, overrideTheme);
-// let theme = getMuiTheme(lightBaseTheme, overrideTheme);
 
 if (player) {
   ReactDOM.render(
     <MuiThemeProvider muiTheme={theme}>
-      <PlayerSplitComponent videos={pairs} isVotingEnabled={true} isBlind={!!blind}/>
+      <VotingSessionComponent videos={[pairs, pairs]}/>
     </MuiThemeProvider>,
     document.getElementById("analyzer-app")
   );

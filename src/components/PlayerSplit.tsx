@@ -31,6 +31,7 @@ interface PlayerSplitComponentProps {
   videos: { decoderUrl: string, videoUrl: string, decoderName: string }[]
   isVotingEnabled: boolean
   isBlind: boolean;
+  onVoted?: () => void;
 }
 
 function generateUUID() { // Public Domain/MIT
@@ -296,6 +297,9 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       alert("Something went wrong while submitting your vote.");
     });
     console.log(vote);
+    if (this.props.onVoted) {
+      this.props.onVoted();
+    }
   }
   render() {
     let panes = this.props.videos.map((video, i) => {
@@ -335,10 +339,10 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       maxWidth: 'none'
     };
 
-
     return <div className="maxWidthAndHeight">
       <Dialog
         repositionOnUpdate={false}
+        bodyStyle={{backgroundColor: this.state.directionsStepIndex === 1 ? "black" : undefined}}
         contentStyle={customContentStyle}
         modal={true}
         title="Directions"
@@ -379,7 +383,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
           { this.state.directionsStepIndex === 2 &&
             <div className="playerStep">
               <p>
-                Two or more videos will be loaded side by side. Please not that the videos may take a while to fully download and decompress.
+                Two or more videos will be loaded side by side. Please note that the videos may take a while to fully download and decompress.
                 You can pan / zoom and step through frames backwards and forwards.
                 We recommend that you get familiar with the keyboard shortcuts to navigate.
               </p>
