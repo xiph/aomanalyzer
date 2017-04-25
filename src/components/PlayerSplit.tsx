@@ -68,7 +68,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
   voterID: string;
   voterEmail: String;
   isLooping: boolean;
-
+  playersInitialized: boolean [];
   directionsStepIndex: number;
 }> {
   startTime = performance.now();
@@ -103,7 +103,8 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       shouldFitWidth: false,
       directionsStepIndex: localStorage["directionsStepIndex"] | 0,
       voteIndex: -1,
-      isFullScreen: false
+      isFullScreen: false,
+      playersInitialized: []
     };
   }
   players: PlayerComponent[] = [];
@@ -317,6 +318,11 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       this.props.onVoted();
     }
   }
+  onInitialized(i: number) {
+    let { playersInitialized } = this.state;
+    playersInitialized[i] = true;
+    this.setState({playersInitialized} as any);
+  }
   render() {
     let panes = this.props.videos.map((video, i) => {
       return <div key={i} className="playerSplitVerticalContent" style={{ display: (this.state.focus >= 0 && this.state.focus != i) ? "none" : "" }}>
@@ -331,6 +337,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
           scrollLeft={this.state.scrollLeft}
           labelPrefix={ABC[i]}
           isLooping={this.state.isLooping}
+          onInitialized={this.onInitialized.bind(this, i)}
         />
       </div>
     })
@@ -341,9 +348,15 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     }
     if (this.props.isVotingEnabled) {
       voteButtons = this.props.videos.map((video, i) => {
-        return <RaisedButton style={buttonStyle} key={i} label={ABC[i]} onTouchTap={this.onVote.bind(this, i)} />
-      })
-      voteButtons.push(<RaisedButton style={buttonStyle} key="tie" label={"Tie"} onTouchTap={this.onVote.bind(this, -1)} />)
+        return <RaisedButton disabled={!this.state.playersInitialized[i]} style={buttonStyle} key={i} label={ABC[i]} onTouchTap={this.onVote.bind(this, i)} />
+      });
+      let allInitialized = true;
+      this.props.videos.forEach((video, i) => {
+        if (!this.state.playersInitialized[i]) {
+          allInitialized = false;
+        }
+      });
+      voteButtons.push(<RaisedButton disabled={!allInitialized} style={buttonStyle} key="tie" label={"Tie"} onTouchTap={this.onVote.bind(this, -1)} />)
     }
     let toggleButtons = this.props.videos.map((video, i) => {
       return <RaisedButton style={buttonStyle} primary={this.state.focus === i} key={i} label={ABC[i]} onTouchTap={() => this.setState({ focus: i } as any)}/>

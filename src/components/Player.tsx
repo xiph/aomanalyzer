@@ -59,6 +59,7 @@ interface PlayerComponentProps {
   scrollLeft?: number;
   labelPrefix?: string;
   isLooping: boolean;
+  onInitialized?: () => void;
 }
 
 export class PlayerComponent extends React.Component<PlayerComponentProps, {
@@ -240,6 +241,9 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       this.startFetchPump();
       if (this.props.bench) {
         this.playPause();
+      }
+      if (this.props.onInitialized) {
+        this.props.onInitialized();
       }
     });
   }
