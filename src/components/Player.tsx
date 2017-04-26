@@ -269,6 +269,16 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     return this.state.decoder;
   }
 
+  canAdvanceOffsetWithoutLooping(forward: boolean): boolean {
+    if (forward) {
+      if (this.state.frameOffset == this.frameBuffer.length - 1) {
+        return !!this.fetchBuffer.length;
+      }
+      return true;
+    }
+    return true;
+  }
+
   advanceOffset(forward: boolean, userTriggered = true) {
     if (userTriggered) {
       // this.pauseIfPlaying();
@@ -278,14 +288,14 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
         this.evictFrame();
         this.forceUpdateIfMounted();
       } else if (this.props.isLooping) {
-        this.setState({ frameOffset: 0 } as any);
+        this.resetFrameOffset();
       }
       return;
     }
-    if (!forward && this.state.frameOffset === 0) {
-      this.setState({ frameOffset: this.frameBuffer.length - 1 } as any);
-      return;
-    }
+    // if (!forward && this.state.frameOffset === 0) {
+    //   this.setState({ frameOffset: this.frameBuffer.length - 1 } as any);
+    //   return;
+    // }
     let frameOffset = this.state.frameOffset + (forward ? 1 : -1);
     if (this.frameBuffer.length) {
       frameOffset = clamp(frameOffset, 0, this.frameBuffer.length - 1);

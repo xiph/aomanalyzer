@@ -109,6 +109,9 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
   }
   players: PlayerComponent[] = [];
   playerInterval: number;
+  componentWillUnmount() {
+    this.pauseIfPlaying();
+  }
   pauseIfPlaying() {
     if (this.playerInterval) {
       clearInterval(this.playerInterval);
@@ -127,12 +130,23 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     }
     let self = this;
     this.playerInterval = setInterval(() => {
+      if (!this.players.every(player => player.canAdvanceOffsetWithoutLooping(true))) {
+        if (this.state.isLooping) {
+          this.players.forEach(player => player.resetFrameOffset());
+        }
+        return;
+      }
       this.players.forEach(player => player.advanceOffset(true, false));
     }, 1000 / frameRate);
-
     this.metrics.playCount ++;
   }
   advanceOffset(forward: boolean, userTriggered = true) {
+    if (!this.players.every(player => player.canAdvanceOffsetWithoutLooping(forward))) {
+      if (this.state.isLooping) {
+        this.players.forEach(player => player.resetFrameOffset());
+      }
+      return;
+    }
     this.pauseIfPlaying();
     this.players.forEach(player => {
       player.advanceOffset(forward, userTriggered)
