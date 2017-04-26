@@ -107,3 +107,4 @@ Video decoder/file pairs are constructed from a sequence of `decoder` and `file`
   - `blind`: Whether to randomize the videos shown to the user.
   - `vote`: A comma separated string of video decoder/file pairs to vote on. For example, the string `0:1,1:2` indicates that there should be two votes, the first between `A:X` and `A:Y`, and the second between `A:Y` and `B:X`. The voting tool can also be used to vote on more than 2 videos at a time (the string `0:1:2:1,1:2` is also valid.)
   - `voteDescription`: A optional message to show on the first voting screen.
+  - `showVoteResult`: Show the voting results on the last voting screen.

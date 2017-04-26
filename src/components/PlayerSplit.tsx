@@ -32,7 +32,7 @@ const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 interface PlayerSplitComponentProps {
   videos: { decoderUrl: string, videoUrl: string, decoderName: string }[]
   isVotingEnabled: boolean
-  onVoted?: () => void;
+  onVoted?: (vote: any) => void;
 }
 
 function generateUUID() { // Public Domain/MIT
@@ -287,7 +287,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       videos: [], metrics: this.metrics
     };
     this.props.videos.forEach(video => {
-      vote.videos.push({decoder: video.decoderName, video: video.videoUrl});
+      vote.videos.push({decoder: video.decoderUrl, video: video.videoUrl});
     })
     if (this.state.voteIndex >= 0) {
       vote.videos[this.state.voteIndex].selected = true;
@@ -313,9 +313,8 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     }, (e) => {
       console.error("Something went wrong while submitting your vote.");
     });
-    console.log(vote);
     if (this.props.onVoted) {
-      this.props.onVoted();
+      this.props.onVoted(vote);
     }
   }
   onInitialized(i: number) {

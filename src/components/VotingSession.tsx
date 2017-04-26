@@ -37,6 +37,12 @@ interface VotingSessionComponentProps {
    * Whether to randomize voting.
    */
   isBlind?: boolean;
+
+
+  /**
+   * Whether to show voting results.
+   */
+  showResult?: boolean;
 }
 
 /**
@@ -47,9 +53,10 @@ export class VotingSessionComponent extends React.Component < VotingSessionCompo
 } > {
   public static defaultProps: VotingSessionComponentProps = {
     description: "",
-    isBlind: true
+    isBlind: true,
+    showResult: false
   } as any;
-
+  votes: any [] = [];
   constructor() {
     super();
     this.state = {
@@ -60,6 +67,30 @@ export class VotingSessionComponent extends React.Component < VotingSessionCompo
     this.setState({
       index: this.state.index + 1
     });
+  }
+  renderVoteResults() {
+    let decoders = {};
+    this.votes.forEach(vote => {
+      vote.videos.forEach(video => {
+        if (!(video.decoder in decoders)) {
+          decoders[video.decoder] = 0;
+        }
+        if (video.selected) {
+          decoders[video.decoder] ++;
+        }
+      })
+    });
+    let decoderList = [];
+    for (var k in decoders) {
+      decoderList.push([k, decoders[k]]);
+    }
+    return <div className="voteResult">
+      { decoderList.map((pair, i) =>
+        <div key={i}>
+          <span>{pair[1]}</span>{': '}<span>{pair[0]}</span>
+        </div>)
+      }
+    </div>
   }
   render() {
     let index = this.state.index;
@@ -88,7 +119,8 @@ export class VotingSessionComponent extends React.Component < VotingSessionCompo
         key={this.state.index}
         videos={videosToVoteOn}
         isVotingEnabled={true}
-        onVoted={() => {
+        onVoted={(vote) => {
+          this.votes.push(vote);
         this.next();
       }}/>
     } else {
@@ -96,6 +128,9 @@ export class VotingSessionComponent extends React.Component < VotingSessionCompo
         <p>
           Your vote counts!
         </p>
+        { this.props.showResult &&
+          this.renderVoteResults()
+        }
       </Dialog>
     }
     return <div className="votingSessionContainer">

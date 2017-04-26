@@ -54,6 +54,7 @@ let local = parameters.local | 0;
 let blind = parameters.blind | 0;
 let split = parameters.split | 0;
 let bench = parameters.bench | 0;
+let showVoteResult = parameters.showVoteResult | 0;
 let player = parameters.player | 0;
 let vote = parameters.vote;
 let voteDescription = parameters.voteDescription || "";
@@ -116,7 +117,7 @@ if (player || vote) {
   });
   ReactDOM.render(
     <MuiThemeProvider muiTheme={theme}>
-      <VotingSessionComponent videos={videos} description={voteDescription} isBlind={!!blind}/>
+      <VotingSessionComponent videos={videos} description={voteDescription} isBlind={!!blind} showResult={!!showVoteResult}/>
     </MuiThemeProvider>,
     document.getElementById("analyzer-app")
   );
