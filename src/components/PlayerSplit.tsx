@@ -197,6 +197,31 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       localStorage.clear();
       console.log("Cleared Local Storage");
     });
+    const keyboardScrollSpeed = 64;
+    Mousetrap.bind(['right'], () => {
+      let { scale, scrollLeft } = this.state;
+      scrollLeft += keyboardScrollSpeed;
+      // TODO: Clamp right.
+      this.setState({scrollLeft} as any);
+    });
+    Mousetrap.bind(['left'], () => {
+      let { scale, scrollLeft } = this.state;
+      scrollLeft -= keyboardScrollSpeed;
+      if (scrollLeft < 0) scrollLeft = 0;
+      this.setState({scrollLeft} as any);
+    });
+    Mousetrap.bind(['up'], () => {
+      let { scale, scrollTop } = this.state;
+      scrollTop -= keyboardScrollSpeed;
+      if (scrollTop < 0) scrollTop = 0;
+      this.setState({scrollTop} as any);
+    });
+    Mousetrap.bind(['down'], () => {
+      let { scale, scrollTop } = this.state;
+      scrollTop += keyboardScrollSpeed;
+      // TODO: Clamp down.
+      this.setState({scrollTop} as any);
+    });
     let self = this;
     function setFocus(focus: number) {
       self.setState({ focus } as any);
@@ -432,6 +457,9 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
               </div>
               <div>
                 <span className="playerShortcut">[</span> , <span className="playerShortcut">]</span> Zoom Out / In
+              </div>
+              <div>
+                <span className="playerShortcut">Arrow Keys</span> Pan
               </div>
               {this.renderStepActions(2)}
             </div>
