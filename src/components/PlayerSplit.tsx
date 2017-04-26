@@ -108,15 +108,34 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     };
   }
   players: PlayerComponent[] = [];
+  playerInterval: number;
+  pauseIfPlaying() {
+    if (this.playerInterval) {
+      clearInterval(this.playerInterval);
+      this.playerInterval = 0;
+    }
+  }
   playPause() {
+    let frameRate = 30;
+    if (this.players.length && this.players[0].decoder) {
+      frameRate = this.players[0].decoder.frameRate;
+    }
     this.setState({ playing: !this.state.playing } as any);
-    this.players.forEach(player => player.playPause());
+    if (this.playerInterval) {
+      this.pauseIfPlaying();
+      return;
+    }
+    let self = this;
+    this.playerInterval = setInterval(() => {
+      this.players.forEach(player => player.advanceOffset(true, false));
+    }, 1000 / frameRate);
+
     this.metrics.playCount ++;
   }
   advanceOffset(forward: boolean, userTriggered = true) {
+    this.pauseIfPlaying();
     this.players.forEach(player => {
       player.advanceOffset(forward, userTriggered)
-      player.pauseIfPlaying();
       this.setState({ playing: false } as any);
     });
     if (forward) {
