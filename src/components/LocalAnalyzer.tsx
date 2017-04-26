@@ -3,6 +3,8 @@ import { localFiles, localFileProtocol } from "./analyzerTools";
 import { LoaderComponent } from "./Loader"
 import Dialog from 'material-ui/Dialog';
 import FlatButton from 'material-ui/FlatButton';
+import RaisedButton from 'material-ui/RaisedButton';
+
 import CircularProgress from 'material-ui/CircularProgress';
 import DropDownMenu from 'material-ui/DropDownMenu';
 import MenuItem from 'material-ui/MenuItem';
@@ -12,7 +14,58 @@ import IconButton from 'material-ui/IconButton';
 import FontIcon from 'material-ui/FontIcon';
 import { Toolbar, ToolbarGroup, ToolbarSeparator, ToolbarTitle } from 'material-ui/Toolbar';
 import {grey900, grey800, grey100, grey200} from 'material-ui/styles/colors';
+import Checkbox from 'material-ui/Checkbox';
+import TextField from 'material-ui/TextField';
+declare var require;
+declare var shortenUrl;
+var Select = require('react-select');
 
+
+export function daysSince(date: Date) {
+  var oneSecond = 1000;
+  var oneMinute = 60 * oneSecond;
+  var oneHour = 60 * oneMinute;
+  var oneDay = 24 * oneHour;
+  let diff = new Date().getTime() - date.getTime();
+  return Math.round(Math.abs(diff / oneDay));
+}
+
+export function secondsSince(date: Date) {
+  var oneSecond = 1000;
+  let diff = new Date().getTime() - date.getTime();
+  return Math.round(Math.abs(diff / oneSecond));
+}
+
+export function minutesSince(date: Date) {
+  var oneSecond = 1000;
+  var oneMinute = 60 * oneSecond;
+  let diff = new Date().getTime() - date.getTime();
+  return Math.round(Math.abs(diff / oneMinute));
+}
+
+export function timeSince(date: Date) {
+  var oneSecond = 1000;
+  var oneMinute = 60 * oneSecond;
+  var oneHour = 60 * oneMinute;
+  var oneDay = 24 * oneHour;
+  let diff = new Date().getTime() - date.getTime();
+  var days = Math.round(Math.abs(diff / oneDay));
+  var hours = Math.round(Math.abs(diff % oneDay) / oneHour);
+  var minutes = Math.round(Math.abs(diff % oneHour) / oneMinute);
+  let s = [];
+  if (days > 0) {
+    s.push(`${days} day${days === 1 ? "" : "s"}`);
+  }
+  if (hours > 0) {
+    s.push(`${hours} hour${hours === 1 ? "" : "s"}`);
+  }
+  if (minutes > 0) {
+    s.push(`${minutes} minute${minutes === 1 ? "" : "s"}`);
+  }
+  return s.join(", ") + " ago";
+}
+
+const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 // let baseUrl = "https://beta.arewecompressedyet.com" + '/';
 let baseUrl = "https://arewecompressedyet.com" + '/';
 
@@ -56,13 +109,15 @@ export class RunDetails extends React.Component<{
 
   }> {
   render() {
-    let info = this.props.json.info;
+    let json = this.props.json;
+    let info = json.info;
     return <div className="runDetail">
       <div>Commit: {info.commit}</div>
       <div>Nick: {info.nick}</div>
       <div>Task: {info.task}</div>
       <div>Build Options: {info.build_options}</div>
       <div>Extra Options: {info.extra_options}</div>
+      <div>Date: {new Date(json.date).toString()}: ({timeSince(new Date(json.date))})</div>
     </div>
   }
 }
@@ -73,12 +128,22 @@ export class LocalAnalyzerComponent extends React.Component<{
     listJson: any;
     slots: { runId: string, video: string, quality: number }[];
     pairs: any;
+    vote: string;
+    showVoteResult: boolean;
+    blind: boolean;
+    voteMessage: string;
+    shortURL: string;
   }> {
   constructor() {
     super();
     this.state = {
       listJson: null,
-      slots: [{ runId: "", video: "", quality: 0 }]
+      slots: [{ runId: "", video: "", quality: 0 }],
+      vote: "",
+      showVoteResult: false,
+      blind: true,
+      voteMessage: "",
+      shortURL: ""
     } as any;
   }
   loadXHR<T>(path: string, type = "json"): Promise<T> {
@@ -109,6 +174,14 @@ export class LocalAnalyzerComponent extends React.Component<{
     });
   }
   componentDidMount() {
+    // let listJson = [
+    //   {run_id: "ABC", info: {
+    //     task: "objective-1-fast"
+    //   }}
+    // ];
+    // this.setState({ listJson } as any);
+    // return;
+
     this.loadXHR(baseUrl + "list.json").then((listJson: any) => {
       listJson.sort(function (a, b) {
         return (new Date(b.date) as any) - (new Date(a.date) as any);
@@ -128,56 +201,82 @@ export class LocalAnalyzerComponent extends React.Component<{
   handleAction(value) {
 
   }
-  onChangeRun(slot, event, index, value) {
-    let slots = this.state.slots;
-    slots[slot].runId = value;
-    this.setState({ slots } as any);
+  resetURL() {
+    this.setState({shortURL: ""} as any);
   }
-  onChangeVideo(slot, event, index, value) {
+  onChangeRun(slot, option) {
     let slots = this.state.slots;
-    slots[slot].video = value;
+    slots[slot].runId = option ? option.value : undefined;
     this.setState({ slots } as any);
+    this.resetURL();
   }
-  onChangeQuality(slot, event, index, value) {
+  onChangeVideo(slot, option) {
     let slots = this.state.slots;
-    slots[slot].quality = value;
+    slots[slot].video = option ? option.value : undefined;
     this.setState({ slots } as any);
+    this.resetURL();
+  }
+  onChangeQuality(slot, option) {
+    let slots = this.state.slots;
+    slots[slot].quality = option ? option.value : undefined;
+    this.setState({ slots } as any);
+    this.resetURL();
+  }
+  onChangeVote(option) {
+    this.setState({vote: option ? option.value : undefined} as any);
+    this.resetURL();
   }
   onDeleteRun(slot) {
     let slots = this.state.slots;
     slots.splice(slot, 1);
     this.setState({ slots } as any);
+    this.resetURL();
+  }
+  onDuplicateRun(slot) {
+    let slots = this.state.slots;
+    let oldSlot = slots[slot];
+    let newSlot = { runId: oldSlot.runId, video: oldSlot.video, quality: oldSlot.quality };
+    slots.splice(slot, 0, newSlot);
+    this.setState({ slots } as any);
+    this.resetURL();
   }
   onAddRun() {
     let slots = this.state.slots;
     slots.push({ runId: "", video: "", quality: 0 });
     this.setState({ slots } as any);
+    this.resetURL();
   }
-  onSend() {
-    let pairs = this.state.slots.map(slot => {
+  onVoteMessageChange(event, value: string) {
+    this.setState({voteMessage: value} as any);
+    this.resetURL();
+  }
+  makePairs(): any {
+    return this.state.slots.map(slot => {
       let run = this.getRunById(slot.runId);
       let videoUrl = baseUrl + `runs/${run.run_id}/${run.info.task}/${slot.video}-${slot.quality}.ivf`;
       let decoderUrl = baseUrl + `runs/${run.run_id}/js/decoder.js`;
       return {decoderUrl, videoUrl};
     });
-    this.setState({pairs} as any);
+  }
+  onSend() {
+    window.open(this.createURL(), "_blank");
   }
   getRunById(runId) {
     return this.state.listJson.find(run => run.run_id === runId);
   }
-  getMenuItemsForTask(task: string) {
+  getOptionsForTask(task: string) {
     let array = tasks[task];
     if (!array) {
-      return []
+      return [];
     }
-    return array.map(video => <MenuItem key={video} value={video} primaryText={video} />)
+    return array.map(video => { return { value: video, label: video }; })
   }
-  getMenuItemsForQuality(quality: string) {
+  getOptionsForQuality(quality: string) {
     let array = [20, 32, 43, 55, 63];
     if (quality) {
       array = quality.split(" ").map(q => parseInt(q));
     }
-    return array.map(q => <MenuItem key={q} value={q} primaryText={String(q)} />)
+    return array.map(q => { return { value: q, label: q }; })
   }
   cannotAnalyze() {
     let slots = this.state.slots;
@@ -192,70 +291,202 @@ export class LocalAnalyzerComponent extends React.Component<{
     }
     return false;
   }
+  createURL() {
+    try {
+      let pairs = this.makePairs();
+      // let url = baseUrl + "analyzer.html?";
+      let url = "https://beta.arewecompressedyet.com/analyzer.html?";
+      let vote = "";
+      if (this.state.vote === "2-Way") {
+        let tmp = [];
+        for (let i = 0; i < pairs.length; i += 2) {
+          tmp.push(`${i}:${i + 1}`);
+        }
+        url += `vote=${tmp.join(",")}&`;
+      } else if (this.state.vote === "3-Way") {
+        let tmp = [];
+        for (let i = 0; i < pairs.length; i += 3) {
+          tmp.push(`${i}:${i + 1}:${i + 2}`);
+        }
+        url += `vote=${tmp.join(",")}&`;
+      } else if (this.state.vote === "N-Way") {
+        let tmp = [];
+        for (let i = 0; i < pairs.length; i++) {
+          tmp.push(`${i}`);
+        }
+        url += `vote=${tmp.join(":")}&`;
+      }
+      if (this.state.voteMessage) {
+        url += `voteDescription=${this.state.voteMessage}&`;
+      }
+      if (this.state.showVoteResult) {
+        url += `showVoteResult=${1}&`;
+      }
+      if (this.state.vote && this.state.blind) {
+        url += `blind=${1}&`;
+      }
+      if (!this.state.vote) {
+        url += `maxFrames=${4}&`;
+      }
+      return url + pairs.map(pair => `decoder=${pair.decoderUrl}&file=${pair.videoUrl}`).join("&");
+    } catch(e) {
+      return "";
+    }
+  }
+  onShortenURL() {
+    shortenUrl(this.createURL(), (shortURL) => {
+      this.setState({shortURL} as any);
+    });
+  }
   render() {
-    // playbackFrameRate={playbackFrameRate}
-    //   layers={layers}
-    //   maxFrames={maxFrames}
-    //   blind={blind}
-    if (this.state.pairs) {
-      return <LoaderComponent
-        decoderVideoUrlPairs={this.state.pairs}
-        maxFrames={4}
-      />
+    function logChange(val) {
+      console.log("Selected: " + val);
     }
     if (!this.state.listJson) {
       return <Dialog title="Downloading AWCY Runs" modal={true} open={true}>
         <CircularProgress size={40} thickness={7} />
       </Dialog>;
     } else {
-      let items = this.state.listJson.map(job => {
-        return <MenuItem key={job.run_id} value={job.run_id} label={job.run_id} primaryText={job.run_id} />
+      let runOptions = this.state.listJson.map(job => {
+        return { value: job.run_id, label: job.run_id }
       });
 
-      const paperStyle = {
-        padding: 10,
-        marginTop: 10,
-        marginBottom: 10,
-        backgroundColor: grey900
-      };
-
-      return <Dialog title="Select AWCY Runs" modal={true} open={true}>
+      return <div>
         {this.state.slots.map((_, i) => {
           let slot = this.state.slots[i];
           let run = this.getRunById(slot.runId);
 
-          return <Paper key={i} style={paperStyle}><div key={i}>
-            <SelectField fullWidth={true} floatingLabelText={"Run"} value={slot.runId} onChange={this.onChangeRun.bind(this, i)} >
-              {items}
-            </SelectField>
-            {run && <RunDetails json={run} />}
-            {run && <SelectField fullWidth={true} floatingLabelText={"Video"} value={slot.video} onChange={this.onChangeVideo.bind(this, i)} >
-              {this.getMenuItemsForTask(run.info.task)}
-            </SelectField>}
-            {run && <SelectField fullWidth={true} floatingLabelText={"Quality"} value={slot.quality} onChange={this.onChangeQuality.bind(this, i)} >
-              {this.getMenuItemsForQuality(run.info.quality)}
-            </SelectField>}
-
-            <IconButton onClick={this.onDeleteRun.bind(this, i)} tooltip="Delete run to compare.">
-              <FontIcon className="material-icons md-24">remove_circle_outline</FontIcon>
-            </IconButton>
+          return <div key={i}>
+            <div className="videoSelectionContainer">
+              <div style={{width: "16px"}} className="videoSelectionLabel">
+                {ABC[i]}
+              </div>
+              <div style={{width: "360px"}}>
+                <Select
+                  placeholder="Run"
+                  value={slot.runId}
+                  options={runOptions}
+                  onChange={this.onChangeRun.bind(this, i)}
+                />
+              </div>
+              <div style={{width: "200px"}}>
+                <Select
+                disabled={!run}
+                  placeholder="Video"
+                  value={slot.video}
+                  options={run ? this.getOptionsForTask(run.info.task) : []}
+                  onChange={this.onChangeVideo.bind(this, i)}
+                />
+              </div>
+              <div style={{width: "100px"}}>
+                <Select
+                  disabled={!run}
+                  placeholder="Quality"
+                  value={slot.quality}
+                  options={run ? this.getOptionsForQuality(run.info.quality) : []}
+                  onChange={this.onChangeQuality.bind(this, i)}
+                />
+              </div>
+              <div>
+                <RaisedButton
+                  label="Remove"
+                  disableTouchRipple={true}
+                  disableFocusRipple={true}
+                  onTouchTap={this.onDeleteRun.bind(this, i)}
+                  style={{marginRight: 12}}
+                />
+                <RaisedButton
+                  label="Duplicate"
+                  disableTouchRipple={true}
+                  disableFocusRipple={true}
+                  onTouchTap={this.onDuplicateRun.bind(this, i)}
+                  style={{marginRight: 12}}
+                />
+              </div>
+            </div>
+            <div className="videoSelectionContainer">
+              {run && <RunDetails json={run} />}
+            </div>
           </div>
-          </Paper>
         })
         }
-        <Toolbar>
+        <div className="builderContainer">
+          <div style={{width: "300px"}}>
+            <Select
+              placeholder="Vote"
+              value={this.state.vote}
+              options={
+                [{value: "2-Way", label: "2-Way: A:B, C:D, ..."},
+                {value: "3-Way", label: "3-Way: A:B:C, D:E:F, ..."},
+                {value: "N-Way", label: "N-Way: A:B:C:D ..."}]
+              }
+              onChange={this.onChangeVote.bind(this)}
+            />
+          </div>
+        </div>
+        <div className="builderContainer">
+          <Checkbox
+            disabled={!this.state.vote}
+            label="Show Vote Results"
+            checked={this.state.showVoteResult}
+            onCheck={(event, value) => {
+              this.setState({ showVoteResult: value } as any);
+              this.resetURL();
+            }}
+          />
+        </div>
+        <div className="builderContainer">
+          <Checkbox
+            disabled={!this.state.vote}
+            label="Blind"
+            checked={this.state.blind}
+            onCheck={(event, value) => {
+              this.setState({ blind: value } as any);
+              this.resetURL();
+            }}
+          />
+        </div>
+        <div className="builderContainer">
+          <TextField disabled={!this.state.vote} multiLine={false} floatingLabelText="Vote Message" floatingLabelFixed={true} name="message" value={this.state.voteMessage} style={{width: "100%"}} onChange={this.onVoteMessageChange.bind(this)}/>
+        </div>
+        <div className="builderContainer">
           <ToolbarGroup firstChild={true}>
-            <IconButton onClick={this.onAddRun.bind(this)} tooltip="Add run to compare.">
-              <FontIcon className="material-icons md-24">add_circle_outline</FontIcon>
-            </IconButton>
+            <RaisedButton
+              label="Add Run"
+              disableTouchRipple={true}
+              disableFocusRipple={true}
+              onTouchTap={this.onAddRun.bind(this)}
+              style={{marginRight: 12}}
+            />
           </ToolbarGroup>
           <ToolbarGroup>
-            <IconButton disabled={this.cannotAnalyze()} onClick={this.onSend.bind(this)} tooltip="Analyze">
-              <FontIcon className="material-icons md-24">send</FontIcon>
-            </IconButton>
+            <RaisedButton
+              label="GO"
+              disabled={this.cannotAnalyze()}
+              disableTouchRipple={true}
+              disableFocusRipple={true}
+              onTouchTap={this.onSend.bind(this)}
+              style={{marginRight: 12}}
+            />
           </ToolbarGroup>
-        </Toolbar>
-      </Dialog>
+        </div>
+        <div className="videoSelectionContainer">
+          <div className="builderURL">
+            {this.state.shortURL || this.createURL()}
+          </div>
+        </div>
+        <div className="videoSelectionContainer">
+          <div className="builderURL">
+            <RaisedButton
+              label="Shorten URL"
+              disableTouchRipple={true}
+              disableFocusRipple={true}
+              onTouchTap={this.onShortenURL.bind(this)}
+              style={{marginRight: 12}}
+            />
+          </div>
+        </div>
+      </div>
     }
   }
 }
