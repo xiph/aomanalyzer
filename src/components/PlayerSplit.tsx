@@ -217,29 +217,33 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       console.log("Cleared Local Storage");
     });
     const keyboardScrollSpeed = 64;
-    Mousetrap.bind(['right'], () => {
+    Mousetrap.bind(['right'], (e) => {
       let { scale, scrollLeft } = this.state;
       scrollLeft += keyboardScrollSpeed;
       // TODO: Clamp right.
       this.setState({scrollLeft} as any);
+      e.preventDefault();
     });
-    Mousetrap.bind(['left'], () => {
+    Mousetrap.bind(['left'], (e) => {
       let { scale, scrollLeft } = this.state;
       scrollLeft -= keyboardScrollSpeed;
       if (scrollLeft < 0) scrollLeft = 0;
       this.setState({scrollLeft} as any);
+      e.preventDefault();
     });
-    Mousetrap.bind(['up'], () => {
+    Mousetrap.bind(['up'], (e) => {
       let { scale, scrollTop } = this.state;
       scrollTop -= keyboardScrollSpeed;
       if (scrollTop < 0) scrollTop = 0;
       this.setState({scrollTop} as any);
+      e.preventDefault();
     });
-    Mousetrap.bind(['down'], () => {
+    Mousetrap.bind(['down'], (e) => {
       let { scale, scrollTop } = this.state;
       scrollTop += keyboardScrollSpeed;
       // TODO: Clamp down.
       this.setState({scrollTop} as any);
+      e.preventDefault();
     });
     let self = this;
     function setFocus(focus: number) {
