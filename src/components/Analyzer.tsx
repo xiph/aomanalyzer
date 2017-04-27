@@ -300,7 +300,7 @@ export class ModeInfoComponent extends React.Component<{
       <Table>
         <TableBody displayRowCheckbox={false}>
           <TableRow>
-            <TableRowColumn>Block</TableRowColumn><TableRowColumn style={valueStyle}>{c}x{r}</TableRowColumn>
+            <TableRowColumn>Block Position: MI (col, row)</TableRowColumn><TableRowColumn style={valueStyle}>({c}, {r})</TableRowColumn>
           </TableRow>
           <TableRow>
             <TableRowColumn>Block Size</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("blockSize")}</TableRowColumn>
