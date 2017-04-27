@@ -21,6 +21,12 @@ declare var shortenUrl;
 var Select = require('react-select');
 
 
+export interface Option {
+  label: string;
+  value: string;
+  disabled?: boolean;
+}
+
 export function daysSince(date: Date) {
   var oneSecond = 1000;
   var oneMinute = 60 * oneSecond;
@@ -63,6 +69,16 @@ export function timeSince(date: Date) {
     s.push(`${minutes} minute${minutes === 1 ? "" : "s"}`);
   }
   return s.join(", ") + " ago";
+}
+
+function unique<T>(array: Array<T>): Array<T> {
+  let result = [];
+  for (let i = 0; i < array.length; i++) {
+    if (result.indexOf(array[i]) < 0) {
+      result.push(array[i]);
+    }
+  }
+  return result;
 }
 
 const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -133,6 +149,10 @@ export class LocalAnalyzerComponent extends React.Component<{
     blind: boolean;
     voteMessage: string;
     shortURL: string;
+    taskFilter: string;
+    nickFilter: string;
+    configFilter: Option [];
+    commandLineFilter: Option [];
   }> {
   constructor() {
     super();
@@ -143,7 +163,11 @@ export class LocalAnalyzerComponent extends React.Component<{
       showVoteResult: false,
       blind: true,
       voteMessage: "",
-      shortURL: ""
+      shortURL: "",
+      taskFilter: undefined,
+      nickFilter: undefined,
+      configFilter: [],
+      commandLineFilter: []
     } as any;
   }
   loadXHR<T>(path: string, type = "json"): Promise<T> {
@@ -175,9 +199,10 @@ export class LocalAnalyzerComponent extends React.Component<{
   }
   componentDidMount() {
     // let listJson = [
-    //   {run_id: "ABC", info: {
-    //     task: "objective-1-fast"
-    //   }}
+    //   {run_id: "ABC", info: { task: "objective-1-fast", nick: "mbx", build_options: "--enable-xyz --enable-aaa", extra_options: "--enable-xyz --enable-aaa" }},
+    //   {run_id: "DEF", info: { task: "objective-2-fast", nick: "jmx", build_options: "--enable-aaa", extra_options: "--enable-xyz --enable-aaa" }},
+    //   {run_id: "GHI", info: { task: "objective-3-fast", nick: "derf", build_options: "--enable-xyz", extra_options: "--enable-xyz --enable-aaa" }},
+    //   {run_id: "JKL", info: { task: "objective-1-fast", nick: "jmx", build_options: "--enable-bbb", extra_options: "--enable-xyz --enable-aaa" }}
     // ];
     // this.setState({ listJson } as any);
     // return;
@@ -189,7 +214,7 @@ export class LocalAnalyzerComponent extends React.Component<{
       listJson = listJson.filter(job => {
         return job.status === "completed";
       });
-      listJson = listJson.slice(0, 100);
+      listJson = listJson.slice(0, 1000);
 
       // Say no to long names.
       listJson = listJson.filter(job => {
@@ -203,6 +228,22 @@ export class LocalAnalyzerComponent extends React.Component<{
   }
   resetURL() {
     this.setState({shortURL: ""} as any);
+  }
+  onChangeTaskFilter(option) {
+    let taskFilter = option ? option.value : undefined;
+    this.setState({ taskFilter } as any);
+  }
+  onChangeNickFilter(option) {
+    let nickFilter = option ? option.value : undefined;
+    this.setState({ nickFilter } as any);
+  }
+  onChangeConfigFilter(option) {
+    let configFilter = option || [];
+    this.setState({ configFilter } as any);
+  }
+  onChangeCommandLineFilter(option) {
+    let commandLineFilter = option || [];
+    this.setState({ commandLineFilter } as any);
   }
   onChangeRun(slot, option) {
     let slots = this.state.slots;
@@ -342,26 +383,106 @@ export class LocalAnalyzerComponent extends React.Component<{
     function logChange(val) {
       console.log("Selected: " + val);
     }
-    if (!this.state.listJson) {
+    let listJson = this.state.listJson;
+    if (!listJson) {
       return <Dialog title="Downloading AWCY Runs" modal={true} open={true}>
         <CircularProgress size={40} thickness={7} />
       </Dialog>;
     } else {
-      let runOptions = this.state.listJson.map(job => {
-        return { value: job.run_id, label: job.run_id }
+      let runOptions = listJson.filter(run => {
+        let pass = true;
+        if (pass && this.state.taskFilter && run.info.task !== this.state.taskFilter) {
+          pass = false;
+        }
+        if (pass && this.state.nickFilter && run.info.nick !== this.state.nickFilter) {
+          pass = false;
+        }
+        if (pass && this.state.configFilter.length) {
+          let buildOptions = run.info.build_options.split(" ").filter(x => !!x);
+          pass = this.state.configFilter.every(option => {
+            return buildOptions.indexOf(option.value) >= 0;
+          });
+        }
+        if (pass && this.state.commandLineFilter.length) {
+          let commandLineOptions = run.info.extra_options.split(" ").filter(x => !!x);
+          pass = this.state.commandLineFilter.every(option => {
+            return commandLineOptions.indexOf(option.value) >= 0;
+          });
+        }
+        return pass;
+      }).map(run => {
+        return { value: run.run_id, label: run.run_id }
+      });
+
+      let taskFilterOptions = unique(listJson.map(run => run.info.task)).map(task => {
+        return { value: task, label: task }
+      });
+
+      let nickFilterOptions = unique(listJson.map(run => run.info.nick)).map(nick => {
+        return { value: nick, label: nick }
+      });
+
+      let configFilterOptions = unique(listJson.map(run => run.info.build_options.split(" ").filter(x => !!x)).reduce((a, b) => a.concat(b))).map(option => {
+        return {value: option, label: option}
+      });
+
+      let commandLineFilterOptions = unique(listJson.map(run => run.info.extra_options.split(" ").filter(x => !!x)).reduce((a, b) => a.concat(b))).map(option => {
+        return {value: option, label: option}
       });
 
       return <div>
+        <div className="builderSection">
+          Filters
+        </div>
+        <div className="builderContainer">
+          <div style={{width: "200px"}}>
+            <Select
+              placeholder="Task Filter"
+              value={this.state.taskFilter}
+              options={taskFilterOptions}
+              onChange={this.onChangeTaskFilter.bind(this)}
+            />
+          </div>
+          <div style={{width: "200px"}}>
+            <Select
+              placeholder="Nick Filter"
+              value={this.state.nickFilter}
+              options={nickFilterOptions}
+              onChange={this.onChangeNickFilter.bind(this)}
+            />
+          </div>
+        </div>
+        <div className="builderContainer">
+          <div style={{width: "50%"}}>
+            <Select multi
+              placeholder="Config Filter"
+              value={this.state.configFilter}
+              options={configFilterOptions}
+              onChange={this.onChangeConfigFilter.bind(this)}
+            />
+          </div>
+          <div style={{width: "50%"}}>
+            <Select multi
+              placeholder="Command Line Filter"
+              value={this.state.commandLineFilter}
+              options={commandLineFilterOptions}
+              onChange={this.onChangeCommandLineFilter.bind(this)}
+            />
+          </div>
+        </div>
+        <div className="builderSection">
+          Runs ({runOptions.length})
+        </div>
         {this.state.slots.map((_, i) => {
           let slot = this.state.slots[i];
           let run = this.getRunById(slot.runId);
 
-          return <div key={i}>
-            <div className="videoSelectionContainer">
-              <div style={{width: "16px"}} className="videoSelectionLabel">
+          return <div key={i} className="builderVideoContainer">
+            <div className="builderContainer">
+              <div style={{width: "32px"}} className="videoSelectionLabel">
                 {ABC[i]}
               </div>
-              <div style={{width: "360px"}}>
+              <div style={{width: "400px"}}>
                 <Select
                   placeholder="Run"
                   value={slot.runId}
@@ -378,10 +499,10 @@ export class LocalAnalyzerComponent extends React.Component<{
                   onChange={this.onChangeVideo.bind(this, i)}
                 />
               </div>
-              <div style={{width: "100px"}}>
+              <div style={{width: "80px"}}>
                 <Select
                   disabled={!run}
-                  placeholder="Quality"
+                  placeholder="QP"
                   value={slot.quality}
                   options={run ? this.getOptionsForQuality(run.info.quality) : []}
                   onChange={this.onChangeQuality.bind(this, i)}
@@ -393,23 +514,25 @@ export class LocalAnalyzerComponent extends React.Component<{
                   disableTouchRipple={true}
                   disableFocusRipple={true}
                   onTouchTap={this.onDeleteRun.bind(this, i)}
-                  style={{marginRight: 12}}
+                  style={{marginRight: 8}}
                 />
                 <RaisedButton
                   label="Duplicate"
                   disableTouchRipple={true}
                   disableFocusRipple={true}
                   onTouchTap={this.onDuplicateRun.bind(this, i)}
-                  style={{marginRight: 12}}
                 />
               </div>
             </div>
-            <div className="videoSelectionContainer">
+            <div className="builderContainer" style={{paddingLeft: "40px"}}>
               {run && <RunDetails json={run} />}
             </div>
           </div>
         })
         }
+        <div className="builderSection">
+          Voting
+        </div>
         <div className="builderContainer">
           <div style={{width: "300px"}}>
             <Select
@@ -426,6 +549,7 @@ export class LocalAnalyzerComponent extends React.Component<{
         </div>
         <div className="builderContainer">
           <Checkbox
+            style={{width: "300px"}}
             disabled={!this.state.vote}
             label="Show Vote Results"
             checked={this.state.showVoteResult}
@@ -437,6 +561,7 @@ export class LocalAnalyzerComponent extends React.Component<{
         </div>
         <div className="builderContainer">
           <Checkbox
+            style={{width: "300px"}}
             disabled={!this.state.vote}
             label="Blind"
             checked={this.state.blind}
@@ -447,43 +572,42 @@ export class LocalAnalyzerComponent extends React.Component<{
           />
         </div>
         <div className="builderContainer">
-          <TextField disabled={!this.state.vote} multiLine={false} floatingLabelText="Vote Message" floatingLabelFixed={true} name="message" value={this.state.voteMessage} style={{width: "100%"}} onChange={this.onVoteMessageChange.bind(this)}/>
+          <TextField disabled={!this.state.vote} multiLine={false} floatingLabelText="Vote Intro Message" floatingLabelFixed={true} name="message" value={this.state.voteMessage} style={{width: "500px"}} onChange={this.onVoteMessageChange.bind(this)}/>
+        </div>
+        <div className="builderSection">
+          Tools
         </div>
         <div className="builderContainer">
-          <ToolbarGroup firstChild={true}>
+          <div>
             <RaisedButton
               label="Add Run"
               disableTouchRipple={true}
               disableFocusRipple={true}
               onTouchTap={this.onAddRun.bind(this)}
-              style={{marginRight: 12}}
+              style={{marginRight: 8}}
             />
-          </ToolbarGroup>
-          <ToolbarGroup>
-            <RaisedButton
-              label="GO"
-              disabled={this.cannotAnalyze()}
-              disableTouchRipple={true}
-              disableFocusRipple={true}
-              onTouchTap={this.onSend.bind(this)}
-              style={{marginRight: 12}}
-            />
-          </ToolbarGroup>
-        </div>
-        <div className="videoSelectionContainer">
-          <div className="builderURL">
-            {this.state.shortURL || this.createURL()}
-          </div>
-        </div>
-        <div className="videoSelectionContainer">
-          <div className="builderURL">
             <RaisedButton
               label="Shorten URL"
               disableTouchRipple={true}
               disableFocusRipple={true}
               onTouchTap={this.onShortenURL.bind(this)}
-              style={{marginRight: 12}}
+              style={{marginRight: 8}}
             />
+            <RaisedButton
+              label="Open"
+              disabled={this.cannotAnalyze()}
+              disableTouchRipple={true}
+              disableFocusRipple={true}
+              onTouchTap={this.onSend.bind(this)}
+            />
+          </div>
+        </div>
+        <div className="builderSection">
+          Analyzer Link
+        </div>
+        <div className="builderContainer">
+          <div className="builderURL">
+            {this.state.shortURL || this.createURL()}
           </div>
         </div>
       </div>
