@@ -263,8 +263,8 @@ export class LocalAnalyzerComponent extends React.Component<{
     this.setState({ slots } as any);
     this.resetURL();
   }
-  onChangeVote(option) {
-    this.setState({vote: option ? option.value : undefined} as any);
+  onChangeVote(option, value: string) {
+    this.setState({vote: value} as any);
     this.resetURL();
   }
   onDeleteRun(slot) {
@@ -278,6 +278,16 @@ export class LocalAnalyzerComponent extends React.Component<{
     let oldSlot = slots[slot];
     let newSlot = { runId: oldSlot.runId, video: oldSlot.video, quality: oldSlot.quality };
     slots.splice(slot, 0, newSlot);
+    this.setState({ slots } as any);
+    this.resetURL();
+  }
+  onMoveRun(slot, offset) {
+    if (slot + offset < 0) return;
+    let slots = this.state.slots;
+    if (slot + offset >= slots.length) return;
+    let tmp = slots[slot + offset];
+    slots[slot + offset] = slots[slot];
+    slots[slot] = tmp;
     this.setState({ slots } as any);
     this.resetURL();
   }
@@ -338,24 +348,8 @@ export class LocalAnalyzerComponent extends React.Component<{
       // let url = baseUrl + "analyzer.html?";
       let url = "https://beta.arewecompressedyet.com/analyzer.html?";
       let vote = "";
-      if (this.state.vote === "2-Way") {
-        let tmp = [];
-        for (let i = 0; i < pairs.length; i += 2) {
-          tmp.push(`${i}:${i + 1}`);
-        }
-        url += `vote=${tmp.join(",")}&`;
-      } else if (this.state.vote === "3-Way") {
-        let tmp = [];
-        for (let i = 0; i < pairs.length; i += 3) {
-          tmp.push(`${i}:${i + 1}:${i + 2}`);
-        }
-        url += `vote=${tmp.join(",")}&`;
-      } else if (this.state.vote === "N-Way") {
-        let tmp = [];
-        for (let i = 0; i < pairs.length; i++) {
-          tmp.push(`${i}`);
-        }
-        url += `vote=${tmp.join(":")}&`;
+      if (this.state.vote) {
+        url += `vote=${this.state.vote}&`;
       }
       if (this.state.voteMessage) {
         url += `voteDescription=${this.state.voteMessage}&`;
@@ -480,7 +474,7 @@ export class LocalAnalyzerComponent extends React.Component<{
           return <div key={i} className="builderVideoContainer">
             <div className="builderContainer">
               <div style={{width: "32px"}} className="videoSelectionLabel">
-                {ABC[i]}
+                {i}
               </div>
               <div style={{width: "400px"}}>
                 <Select
@@ -521,6 +515,22 @@ export class LocalAnalyzerComponent extends React.Component<{
                   disableTouchRipple={true}
                   disableFocusRipple={true}
                   onTouchTap={this.onDuplicateRun.bind(this, i)}
+                  style={{marginRight: 8}}
+                />
+                <RaisedButton
+                  label="Up"
+                  disabled={i - 1 < 0}
+                  disableTouchRipple={true}
+                  disableFocusRipple={true}
+                  onTouchTap={this.onMoveRun.bind(this, i, -1)}
+                  style={{marginRight: 8}}
+                />
+                <RaisedButton
+                  label="Down"
+                  disabled={i + 1 >= this.state.slots.length}
+                  disableTouchRipple={true}
+                  disableFocusRipple={true}
+                  onTouchTap={this.onMoveRun.bind(this, i, 1)}
                 />
               </div>
             </div>
@@ -535,16 +545,7 @@ export class LocalAnalyzerComponent extends React.Component<{
         </div>
         <div className="builderContainer">
           <div style={{width: "300px"}}>
-            <Select
-              placeholder="Vote"
-              value={this.state.vote}
-              options={
-                [{value: "2-Way", label: "2-Way: A:B, C:D, ..."},
-                {value: "3-Way", label: "3-Way: A:B:C, D:E:F, ..."},
-                {value: "N-Way", label: "N-Way: A:B:C:D ..."}]
-              }
-              onChange={this.onChangeVote.bind(this)}
-            />
+            <TextField multiLine={false} floatingLabelText="Vote Configuration: 0:1,2:3:4, ..." floatingLabelFixed={true} name="message" value={this.state.vote} style={{width: "500px"}} onChange={this.onChangeVote.bind(this)}/>
           </div>
         </div>
         <div className="builderContainer">
