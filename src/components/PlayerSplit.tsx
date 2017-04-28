@@ -588,7 +588,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
           {toggleButtons}
         </ToolbarGroup>
         <ToolbarGroup>
-          <ToolbarTitle text="Vote For" />
+          <ToolbarTitle text="Vote" />
           {voteButtons}
         </ToolbarGroup>
       </Toolbar>

@@ -85,40 +85,6 @@ function unique<T>(array: Array<T>): Array<T> {
 const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 let masterUrl = "https://arewecompressedyet.com" + '/';
 
-let tasks = {
-  "objective-1-fast": [
-    "aspen_1080p_60f.y4m",
-    "blue_sky_360p_60f.y4m",
-    "dark70p_60f.y4m",
-    "DOTA2_60f_420.y4m",
-    "ducks_take_off_1080p50_60f.y4m",
-    "gipsrestat720p_60f.y4m",
-    "kirland360p_60f.y4m",
-    "KristenAndSara_1280x720_60f.y4m",
-    "life_1080p30_60f.y4m",
-    "MINECRAFT_60f_420.y4m",
-    "Netflix_Aerial_1920x1080_60fps_8bit_420_60f.y4m",
-    "Netflix_Boat_1920x1080_60fps_8bit_420_60f.y4m",
-    "Netflix_Crosswalk_1920x1080_60fps_8bit_420_60f.y4m",
-    "Netflix_DrivingPOV_1280x720_60fps_8bit_420_60f.y4m",
-    "Netflix_FoodMarket_1920x1080_60fps_8bit_420_60f.y4m",
-    "Netflix_PierSeaside_1920x1080_60fps_8bit_420_60f.y4m",
-    "Netflix_RollerCoaster_1280x720_60fps_8bit_420_60f.y4m",
-    "Netflix_SquareAndTimelapse_1920x1080_60fps_8bit_420_60f.y4m",
-    "Netflix_TunnelFlag_1920x1080_60fps_8bit_420_60f.y4m",
-    "niklas360p_60f.y4m",
-    "red_kayak_360p_60f.y4m",
-    "rush_hour_1080p25_60f.y4m",
-    "shields_640x360_60f.y4m",
-    "speed_bag_640x360_60f.y4m",
-    "STARCRAFT_60f_420.y4m",
-    "thaloundeskmtg360p_60f.y4m",
-    "touchdown_pass_1080p_60f.y4m",
-    "vidyo1_720p_60fps_60f.y4m",
-    "vidyo4_720p_60fps_60f.y4m",
-    "wikipedia_420.y4m"
-  ]
-}
 export class RunDetails extends React.Component<{
   json: any;
 }, {
@@ -142,6 +108,7 @@ export class LocalAnalyzerComponent extends React.Component<{
 
 }, {
     listJson: any;
+    setsJson: any;
     slots: { runId: string, video: string, quality: number }[];
     pairs: any;
     vote: string;
@@ -160,6 +127,7 @@ export class LocalAnalyzerComponent extends React.Component<{
     super();
     this.state = {
       listJson: null,
+      setsJson: null,
       slots: [{ runId: "", video: "", quality: 0 }],
       vote: "",
       votingEnabled: false,
@@ -224,6 +192,10 @@ export class LocalAnalyzerComponent extends React.Component<{
         return job.run_id.length < 64;
       });
       this.setState({ listJson } as any);
+    });
+
+    this.loadXHR(masterUrl + "sets.json").then((setsJson: any) => {
+      this.setState({ setsJson } as any);
     });
   }
   handleAction(value) {
@@ -319,11 +291,14 @@ export class LocalAnalyzerComponent extends React.Component<{
     return this.state.listJson.find(run => run.run_id === runId);
   }
   getOptionsForTask(task: string) {
-    let array = tasks[task];
+    if (!this.state.setsJson || !(task in this.state.setsJson)) {
+      return [];
+    }
+    let array = this.state.setsJson[task].sources;
     if (!array) {
       return [];
     }
-    return array.map(video => { return { value: video, label: video }; })
+    return array.map(video => { return { value: video, label: video }; });
   }
   getOptionsForQuality(quality: string) {
     let array = [20, 32, 43, 55, 63];
@@ -349,19 +324,21 @@ export class LocalAnalyzerComponent extends React.Component<{
     try {
       let pairs = this.makePairs();
       let url = window.location.href + "?";
-      let vote = this.state.vote;
-      if (vote) {
-        vote = this.state.vote.split(",").map(x => x.split(":").map((y: any) => y|0).join(":")).join(",");
-        url += `vote=${vote}&`;
-      }
-      if (this.state.voteMessage) {
-        url += `voteDescription=${this.state.voteMessage}&`;
-      }
-      if (this.state.showVoteResult) {
-        url += `showVoteResult=${1}&`;
-      }
-      if (this.state.vote && this.state.blind) {
-        url += `blind=${1}&`;
+      if (this.state.votingEnabled) {
+        let vote = this.state.vote;
+        if (vote) {
+          vote = this.state.vote.split(",").map(x => x.split(":").map((y: any) => y|0).join(":")).join(",");
+          url += `vote=${vote}&`;
+        }
+        if (this.state.voteMessage) {
+          url += `voteDescription=${this.state.voteMessage}&`;
+        }
+        if (this.state.showVoteResult) {
+          url += `showVoteResult=${1}&`;
+        }
+        if (this.state.vote && this.state.blind) {
+          url += `blind=${1}&`;
+        }
       }
       if (!this.state.vote) {
         url += `maxFrames=${4}&`;
@@ -525,7 +502,7 @@ export class LocalAnalyzerComponent extends React.Component<{
               <div style={{width: "32px"}} className="videoSelectionLabel">
                 {i}
               </div>
-              <div style={{width: "400px"}}>
+              <div style={{width: "360px"}}>
                 <Select
                   placeholder="Run"
                   value={slot.runId}
@@ -533,7 +510,7 @@ export class LocalAnalyzerComponent extends React.Component<{
                   onChange={this.onChangeRun.bind(this, i)}
                 />
               </div>
-              <div style={{width: "200px"}}>
+              <div style={{width: "360px"}}>
                 <Select
                 disabled={!run}
                   placeholder="Video"
@@ -542,7 +519,7 @@ export class LocalAnalyzerComponent extends React.Component<{
                   onChange={this.onChangeVideo.bind(this, i)}
                 />
               </div>
-              <div style={{width: "80px"}}>
+              <div style={{width: "60px"}}>
                 <Select
                   disabled={!run}
                   placeholder="QP"
