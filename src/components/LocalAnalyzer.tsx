@@ -83,8 +83,7 @@ function unique<T>(array: Array<T>): Array<T> {
 }
 
 const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-// let baseUrl = "https://beta.arewecompressedyet.com" + '/';
-let baseUrl = "https://arewecompressedyet.com" + '/';
+let masterUrl = "https://arewecompressedyet.com" + '/';
 
 let tasks = {
   "objective-1-fast": [
@@ -211,7 +210,7 @@ export class LocalAnalyzerComponent extends React.Component<{
     // this.setState({ listJson } as any);
     // return;
 
-    this.loadXHR(baseUrl + "list.json").then((listJson: any) => {
+    this.loadXHR(masterUrl + "list.json").then((listJson: any) => {
       listJson.sort(function (a, b) {
         return (new Date(b.date) as any) - (new Date(a.date) as any);
       });
@@ -308,8 +307,8 @@ export class LocalAnalyzerComponent extends React.Component<{
   makePairs(): any {
     return this.state.slots.map(slot => {
       let run = this.getRunById(slot.runId);
-      let videoUrl = baseUrl + `runs/${run.run_id}/${run.info.task}/${slot.video}-${slot.quality}.ivf`;
-      let decoderUrl = baseUrl + `runs/${run.run_id}/js/decoder.js`;
+      let videoUrl = masterUrl + `runs/${run.run_id}/${run.info.task}/${slot.video}-${slot.quality}.ivf`;
+      let decoderUrl = masterUrl + `runs/${run.run_id}/js/decoder.js`;
       return {decoderUrl, videoUrl};
     });
   }
@@ -349,8 +348,7 @@ export class LocalAnalyzerComponent extends React.Component<{
   createURL() {
     try {
       let pairs = this.makePairs();
-      // let url = baseUrl + "analyzer.html?";
-      let url = "https://beta.arewecompressedyet.com/analyzer.html?";
+      let url = window.location.href + "?";
       let vote = this.state.vote;
       if (vote) {
         vote = this.state.vote.split(",").map(x => x.split(":").map((y: any) => y|0).join(":")).join(",");
