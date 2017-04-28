@@ -15,6 +15,7 @@ import FontIcon from 'material-ui/FontIcon';
 import { Toolbar, ToolbarGroup, ToolbarSeparator, ToolbarTitle } from 'material-ui/Toolbar';
 import {grey900, grey800, grey100, grey200} from 'material-ui/styles/colors';
 import Checkbox from 'material-ui/Checkbox';
+import Toggle from 'material-ui/Toggle';
 import TextField from 'material-ui/TextField';
 declare var require;
 declare var shortenUrl;
@@ -145,6 +146,8 @@ export class LocalAnalyzerComponent extends React.Component<{
     slots: { runId: string, video: string, quality: number }[];
     pairs: any;
     vote: string;
+    votingEnabled: boolean;
+    filtersEnabled: boolean;
     showVoteResult: boolean;
     blind: boolean;
     voteMessage: string;
@@ -160,6 +163,7 @@ export class LocalAnalyzerComponent extends React.Component<{
       listJson: null,
       slots: [{ runId: "", video: "", quality: 0 }],
       vote: "",
+      votingEnabled: false,
       showVoteResult: false,
       blind: true,
       voteMessage: "",
@@ -347,9 +351,10 @@ export class LocalAnalyzerComponent extends React.Component<{
       let pairs = this.makePairs();
       // let url = baseUrl + "analyzer.html?";
       let url = "https://beta.arewecompressedyet.com/analyzer.html?";
-      let vote = "";
-      if (this.state.vote) {
-        url += `vote=${this.state.vote}&`;
+      let vote = this.state.vote;
+      if (vote) {
+        vote = this.state.vote.split(",").map(x => x.split(":").map((y: any) => y|0).join(":")).join(",");
+        url += `vote=${vote}&`;
       }
       if (this.state.voteMessage) {
         url += `voteDescription=${this.state.voteMessage}&`;
@@ -373,6 +378,33 @@ export class LocalAnalyzerComponent extends React.Component<{
       this.setState({shortURL} as any);
     });
   }
+  getVoteErrorText() {
+    if (!this.state.vote) {
+      return "Required";
+    }
+    let vote = [];
+    try {
+      vote = this.state.vote.split(",").map(x => {
+        return x.split(":").map((y: any) => {
+          if (y != (y|0)) {
+            throw `Cannot parse ${y}.`;
+          }
+          return parseInt(y)
+        });
+      });
+    } catch (e) {
+      return `Syntax Error: ${e}`;
+    }
+    for (let i = 0; i < vote.length; i++) {
+      for (let j = 0; j < vote[i].length; j++) {
+        let run = vote[i][j];
+        if (!this.state.slots[run]) {
+          return `Run ${run} is missing.`;
+        }
+      }
+    }
+    return undefined;
+  }
   render() {
     function logChange(val) {
       console.log("Selected: " + val);
@@ -383,7 +415,11 @@ export class LocalAnalyzerComponent extends React.Component<{
         <CircularProgress size={40} thickness={7} />
       </Dialog>;
     } else {
+      let filtersEnabled = this.state.filtersEnabled;
       let runOptions = listJson.filter(run => {
+        if (!this.state.filtersEnabled) {
+          return true;
+        }
         let pass = true;
         if (pass && this.state.taskFilter && run.info.task !== this.state.taskFilter) {
           pass = false;
@@ -408,62 +444,77 @@ export class LocalAnalyzerComponent extends React.Component<{
         return { value: run.run_id, label: run.run_id }
       });
 
-      let taskFilterOptions = unique(listJson.map(run => run.info.task)).map(task => {
+      let taskFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.task)).map(task => {
         return { value: task, label: task }
       });
 
-      let nickFilterOptions = unique(listJson.map(run => run.info.nick)).map(nick => {
+      let nickFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.nick)).map(nick => {
         return { value: nick, label: nick }
       });
 
-      let configFilterOptions = unique(listJson.map(run => run.info.build_options.split(" ").filter(x => !!x)).reduce((a, b) => a.concat(b))).map(option => {
+      let configFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.build_options.split(" ").filter(x => !!x)).reduce((a, b) => a.concat(b))).map(option => {
         return {value: option, label: option}
       });
 
-      let commandLineFilterOptions = unique(listJson.map(run => run.info.extra_options.split(" ").filter(x => !!x)).reduce((a, b) => a.concat(b))).map(option => {
+      let commandLineFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.extra_options.split(" ").filter(x => !!x)).reduce((a, b) => a.concat(b))).map(option => {
         return {value: option, label: option}
       });
 
       return <div>
         <div className="builderSection">
-          Filters
-        </div>
-        <div className="builderContainer">
-          <div style={{width: "200px"}}>
-            <Select
-              placeholder="Task Filter"
-              value={this.state.taskFilter}
-              options={taskFilterOptions}
-              onChange={this.onChangeTaskFilter.bind(this)}
-            />
-          </div>
-          <div style={{width: "200px"}}>
-            <Select
-              placeholder="Nick Filter"
-              value={this.state.nickFilter}
-              options={nickFilterOptions}
-              onChange={this.onChangeNickFilter.bind(this)}
+          <div>
+            <Toggle
+              style={{width: "300px"}}
+              label="Filter Runs"
+              labelPosition="right"
+              toggled={this.state.filtersEnabled}
+              onToggle={(event, value) => {
+                this.setState({ filtersEnabled: value } as any);
+                this.resetURL();
+              }}
             />
           </div>
         </div>
-        <div className="builderContainer">
-          <div style={{width: "50%"}}>
-            <Select multi
-              placeholder="Config Filter"
-              value={this.state.configFilter}
-              options={configFilterOptions}
-              onChange={this.onChangeConfigFilter.bind(this)}
-            />
+        { this.state.filtersEnabled &&
+          <div>
+            <div className="builderContainer">
+              <div style={{width: "200px"}}>
+                <Select
+                  placeholder="Task Filter"
+                  value={this.state.taskFilter}
+                  options={taskFilterOptions}
+                  onChange={this.onChangeTaskFilter.bind(this)}
+                />
+              </div>
+              <div style={{width: "200px"}}>
+                <Select
+                  placeholder="Nick Filter"
+                  value={this.state.nickFilter}
+                  options={nickFilterOptions}
+                  onChange={this.onChangeNickFilter.bind(this)}
+                />
+              </div>
+            </div>
+            <div className="builderContainer">
+              <div style={{width: "50%"}}>
+                <Select multi
+                  placeholder="Config Filter"
+                  value={this.state.configFilter}
+                  options={configFilterOptions}
+                  onChange={this.onChangeConfigFilter.bind(this)}
+                />
+              </div>
+              <div style={{width: "50%"}}>
+                <Select multi
+                  placeholder="Command Line Filter"
+                  value={this.state.commandLineFilter}
+                  options={commandLineFilterOptions}
+                  onChange={this.onChangeCommandLineFilter.bind(this)}
+                />
+              </div>
+            </div>
           </div>
-          <div style={{width: "50%"}}>
-            <Select multi
-              placeholder="Command Line Filter"
-              value={this.state.commandLineFilter}
-              options={commandLineFilterOptions}
-              onChange={this.onChangeCommandLineFilter.bind(this)}
-            />
-          </div>
-        </div>
+        }
         <div className="builderSection">
           Runs ({runOptions.length})
         </div>
@@ -541,43 +592,63 @@ export class LocalAnalyzerComponent extends React.Component<{
         })
         }
         <div className="builderSection">
-          Voting
-        </div>
-        <div className="builderContainer">
-          <div style={{width: "300px"}}>
-            <TextField multiLine={false} floatingLabelText="Vote Configuration: 0:1,2:3:4, ..." floatingLabelFixed={true} name="message" value={this.state.vote} style={{width: "500px"}} onChange={this.onChangeVote.bind(this)}/>
+          <div>
+            <Toggle
+              style={{width: "300px"}}
+              label="Enable Voting"
+              labelPosition="right"
+              toggled={this.state.votingEnabled}
+              onToggle={(event, value) => {
+                this.setState({ votingEnabled: value } as any);
+                this.resetURL();
+              }}
+            />
           </div>
         </div>
-        <div className="builderContainer">
-          <Checkbox
-            style={{width: "300px"}}
-            disabled={!this.state.vote}
-            label="Show Vote Results"
-            checked={this.state.showVoteResult}
-            onCheck={(event, value) => {
-              this.setState({ showVoteResult: value } as any);
-              this.resetURL();
-            }}
-          />
-        </div>
-        <div className="builderContainer">
-          <Checkbox
-            style={{width: "300px"}}
-            disabled={!this.state.vote}
-            label="Blind"
-            checked={this.state.blind}
-            onCheck={(event, value) => {
-              this.setState({ blind: value } as any);
-              this.resetURL();
-            }}
-          />
-        </div>
-        <div className="builderContainer">
-          <TextField disabled={!this.state.vote} multiLine={false} floatingLabelText="Vote Intro Message" floatingLabelFixed={true} name="message" value={this.state.voteMessage} style={{width: "500px"}} onChange={this.onVoteMessageChange.bind(this)}/>
-        </div>
-        <div className="builderSection">
-          Tools
-        </div>
+        {this.state.votingEnabled &&
+          <div>
+            <div className="builderContainer">
+              <div style={{width: "1000px"}}>
+                <TextField errorText={this.getVoteErrorText()} multiLine={false} floatingLabelText="Vote Configuration: 0:1,2:3:4, ..." floatingLabelFixed={true} name="message" value={this.state.vote} style={{width: "1000px"}} onChange={this.onChangeVote.bind(this)}/>
+              </div>
+            </div>
+            <div className="builderContainer">
+              <div>
+              <Checkbox
+                style={{width: "300px"}}
+                label="Show Vote Results"
+                checked={this.state.showVoteResult}
+                onCheck={(event, value) => {
+                  this.setState({ showVoteResult: value } as any);
+                  this.resetURL();
+                }}
+              />
+              </div>
+              <div className="builderCaption">
+                Show vote results at the end of the voting session.
+              </div>
+            </div>
+            <div className="builderContainer">
+              <div>
+              <Checkbox
+                style={{width: "300px"}}
+                label="Blind"
+                checked={this.state.blind}
+                onCheck={(event, value) => {
+                  this.setState({ blind: value } as any);
+                  this.resetURL();
+                }}
+              />
+              </div>
+              <div className="builderCaption">
+                Randomize runs when comparing them.
+              </div>
+            </div>
+            <div className="builderContainer">
+              <TextField multiLine={false} floatingLabelText="Vote Intro Message" floatingLabelFixed={true} name="message" value={this.state.voteMessage} style={{width: "1000px"}} onChange={this.onVoteMessageChange.bind(this)}/>
+            </div>
+          </div>
+        }
         <div className="builderContainer">
           <div>
             <RaisedButton
