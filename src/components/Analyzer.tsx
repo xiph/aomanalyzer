@@ -300,7 +300,7 @@ export class ModeInfoComponent extends React.Component<{
       <Table>
         <TableBody displayRowCheckbox={false}>
           <TableRow>
-            <TableRowColumn>Block</TableRowColumn><TableRowColumn style={valueStyle}>{c}x{r}</TableRowColumn>
+            <TableRowColumn>Block Position: MI (col, row)</TableRowColumn><TableRowColumn style={valueStyle}>({c}, {r})</TableRowColumn>
           </TableRow>
           <TableRow>
             <TableRowColumn>Block Size</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("blockSize")}</TableRowColumn>
@@ -1790,7 +1790,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
           let h = 1 << sizeLog2[1];
           let C = c << miSizeLog2;
           let R = r << miSizeLog2;
-          if (w == 4 && h == 4) {
+          if (w == 4 && h == 4 || w == 2 && h == 2) {
             visitor(size, c, r, 0, 0, rect.set(C, R, w, h), 1);
             visitor(size, c, r, 0, 1, rect.set(C, R + h, w, h), 1);
             visitor(size, c, r, 1, 0, rect.set(C + w, R, w, h), 1);

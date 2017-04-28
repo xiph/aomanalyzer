@@ -17,8 +17,8 @@ import Dialog from 'material-ui/Dialog';
 declare const Mousetrap;
 
 enum SplitMode {
-  Left,
-  Right,
+  // Left,
+  // Right,
   Vertical,
   Horizontal,
   Last
@@ -59,7 +59,7 @@ export class SplitView extends React.Component<SplitViewProps, {
       activeFrame: 0,
       playInterval: null,
       lockScroll: false,
-      mode: props.mode,
+      mode: props.mode % SplitMode.Last,
       showDetails: false
     };
   }
@@ -155,7 +155,7 @@ export class SplitView extends React.Component<SplitViewProps, {
     }
     let content = null;
     switch (this.state.mode) {
-      case SplitMode.Left:
+      /*case SplitMode.Left:
         content = <div className="splitCenterContainer">
           <div ref={(self: any) => this.mountView("center", self, 0)} />
         </div>
@@ -164,7 +164,7 @@ export class SplitView extends React.Component<SplitViewProps, {
         content = <div className="splitCenterContainer">
           <div ref={(self: any) => this.mountView("center", self, 1)} />
         </div>
-        break;
+        break;*/
       case SplitMode.Vertical:
         content = <div className="splitVerticalContainer">
           <div className="splitVerticalContent" ref={(self: any) => this.mountView("left", self, 0)} />
@@ -194,8 +194,8 @@ export class SplitView extends React.Component<SplitViewProps, {
     let self = this;
     function getLabel(i) {
       switch (self.state.mode) {
-        case SplitMode.Left: return ["Visible", "Hidden"][i];
-        case SplitMode.Right: return ["Hidden", "Visible"][i];
+        // case SplitMode.Left: return ["Visible", "Hidden"][i];
+        // case SplitMode.Right: return ["Hidden", "Visible"][i];
         case SplitMode.Vertical: return ["Left", "Right", ""][i];
         case SplitMode.Horizontal: return ["Top", "Bottom", ""][i];
         default: unreachable();

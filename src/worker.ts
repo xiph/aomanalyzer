@@ -2,6 +2,12 @@ declare var importScripts;
 declare var TextDecoder;
 declare var DecoderModule;
 
+function assert(c: boolean, message: string = "") {
+  if (!c) {
+    throw new Error(message);
+  }
+}
+
 onmessage = function (e) {
   // console.log("Worker: " + e.data.command);
   switch (e.data.command) {
@@ -42,6 +48,11 @@ onmessage = function (e) {
       break;
     case "openFileBytes":
       openFileBytes(e.data.payload);
+      break;
+    case "releaseFrameBuffers":
+      releaseFrameBuffer(e.data.payload.Y);
+      releaseFrameBuffer(e.data.payload.U);
+      releaseFrameBuffer(e.data.payload.V);
       break;
   }
 }
@@ -120,14 +131,61 @@ function openFileBytes(buffer: Uint8Array) {
   native._open_file();
 }
 
+var bufferPool: ArrayBuffer [] = [];
+
+function releaseFrameBuffer(buffer: ArrayBuffer) {
+  if (bufferPool.length < 64) {
+    bufferPool.push(buffer);
+  }
+}
+
+function getReleasedBuffer(byteLength: number) {
+  let i;
+  for (i = 0; i < bufferPool.length; i++) {
+    if (bufferPool[i].byteLength === byteLength) {
+      return bufferPool.splice(i, 1)[0];
+    }
+  }
+  return null;
+}
+
 function readPlane(plane) {
   let p = native._get_plane(plane);
+  let HEAPU8 = native.HEAPU8;
   let stride = native._get_plane_stride(plane);
   let depth = native._get_bit_depth();
   let width = native._get_frame_width();
   let height = native._get_frame_height();
+  if (depth == 10) {
+    stride >>= 1;
+  }
+  if (plane > 0) {
+    width >>= 1;
+    height >>= 1;
+  }
+  let byteLength = height * stride;
+  var buffer = getReleasedBuffer(byteLength);
+  if (depth == 8 && buffer) {
+    // Copy into released buffer.
+    new Uint8Array(buffer).set(HEAPU8.subarray(p, p + byteLength));
+  } else {
+    if (depth == 10) {
+      // Convert to 8 bit depth.
+      let tmpBuffer = buffer ? new Uint8Array(buffer) : new Uint8Array(byteLength);
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          let offset = y * (stride << 1) + (x << 1);
+          tmpBuffer[y * stride + x] = (HEAPU8[p + offset] + (HEAPU8[p + offset + 1] << 8)) >> 2;
+        }
+      }
+      buffer = tmpBuffer.buffer;
+      depth = 8;
+    } else {
+      buffer = HEAPU8.slice(p, p + byteLength).buffer;
+    }
+  }
   return {
-    buffer: native.HEAPU8.slice(p, p + stride * width),
+    buffer,
     stride,
     depth,
     width,
@@ -137,6 +195,7 @@ function readPlane(plane) {
 
 function readImage() {
   return {
+    hashCode: Math.random() * 1000000 | 0,
     Y: readPlane(0),
     U: readPlane(1),
     V: readPlane(2)
@@ -144,10 +203,11 @@ function readImage() {
 }
 
 function readFrame(e) {
+  let s = performance.now();
   if (native._read_frame() != 0) {
     postMessage({
       command: "readFrameResult",
-      payload: { json: null },
+      payload: { json: null, decodeTime: performance.now() - s },
       id: e.data.id
     }, undefined);
     return null;
@@ -156,15 +216,18 @@ function readFrame(e) {
   if (e.data.shouldReadImageData) {
     image = readImage();
   }
-  postMessage({
+  self.postMessage({
     command: "readFrameResult",
-    payload: { json, image },
+    payload: { json, image, decodeTime: performance.now() - s },
     id: e.data.id
-  }, undefined, image ? [
+  }, image ? [
     image.Y.buffer,
     image.U.buffer,
     image.V.buffer
-  ] : undefined);
+  ] : undefined as any);
+  assert(image.Y.buffer.byteLength === 0 &&
+         image.U.buffer.byteLength === 0 &&
+         image.V.buffer.byteLength === 0, "Buffers must be transferred.");
 }
 
 function setLayers(e) {
