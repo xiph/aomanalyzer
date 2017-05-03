@@ -66,9 +66,10 @@ export class DownloadComponent extends React.Component<DownloadComponentProps, {
       downloadFile(this.props.video.videoUrl).then(bytes => {
         decoder.openFileBytes(bytes);
         decoder.setLayers(0);
+        this.decoder = decoder;
         this.setState({ decoder } as any);
         this.setState({ status: "Ready" } as any);
-        this.initialize(decoder);
+        this.initialize();
       });
     });
     this.isComponentMounted = true;
@@ -105,27 +106,21 @@ export class DownloadComponent extends React.Component<DownloadComponentProps, {
     }
   }
 
-  initialize(decoder: Decoder) {
-    decoder.readFrame().then(frames => {
+  dumpFrames() {
+    this.decoder.readFrame().then(frames => {
       frames.forEach(frame => {
-        let image = frames[0].frameImage; 
+        let image = frame.frameImage;
         this.dumpY4MFrame(image);
-        saveAs(this.y4m,"image.y4m",true);
       });
-      //let image = frames[0].frameImage;
-      //this.forceUpdateIfMounted();
-      //this.startFetchPump();
+        this.dumpFrames();
+    }, () => {
+      console.log('done');
+      saveAs(this.y4m,"image.y4m",true);
     });
   }
 
-  advanceOffset(forward: boolean, userTriggered = true) {
-    if (userTriggered) {
-      // this.pauseIfPlaying();
-    }
-  }
-
-  resetFrameOffset() {
-    this.setState({ frameOffset: 0 } as any);
+  initialize() {
+    this.dumpFrames();
   }
 
   ignoreNextScrollEvent = false;
