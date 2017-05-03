@@ -68,7 +68,6 @@ export class DownloadComponent extends React.Component<DownloadComponentProps, {
         decoder.setLayers(0);
         this.decoder = decoder;
         this.setState({ decoder } as any);
-        this.setState({ status: "Ready" } as any);
         this.initialize();
       });
     });
@@ -108,13 +107,14 @@ export class DownloadComponent extends React.Component<DownloadComponentProps, {
 
   dumpFrames() {
     this.decoder.readFrame().then(frames => {
+      this.setState({status: "Decoding video"} as any);
       frames.forEach(frame => {
         let image = frame.frameImage;
         this.dumpY4MFrame(image);
       });
         this.dumpFrames();
     }, () => {
-      console.log('done');
+      this.setState({status: "Complete!"} as any);
       saveAs(this.y4m,"image.y4m",true);
     });
   }
@@ -128,16 +128,21 @@ export class DownloadComponent extends React.Component<DownloadComponentProps, {
     let valueStyle = { textAlign: "right", fontSize: "12px" };
 
     let allStats, lastStats, benchStats;
-
-    if (!this.state.decoder) {
+    if (this.state.status != "Complete!") {
       return <div className="playerCenterContainer">
   <div className="playerCenterContent">
-    <CircularProgress size={40} thickness={7} /><br /><br />
+
+      <CircularProgress size={40} thickness={7} /><br /><br />
     {this.state.status}
   </div>
       </div>
+    } else {
+      return <div className="playerCenterContainer">
+        <div className="playerCenterContent">
+          {this.state.status}
+        </div>
+      </div>
     }
-    return <div>Download</div>
   }
 
 }
