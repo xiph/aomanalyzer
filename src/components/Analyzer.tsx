@@ -1166,6 +1166,12 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     document.location = this.props.decoderVideoUrlPairs[this.state.activeGroup].videoUrl;
   }
 
+  downloadY4m() {
+    let decoder = this.props.decoderVideoUrlPairs[this.state.activeGroup].decoderUrl;
+    let file = this.props.decoderVideoUrlPairs[this.state.activeGroup].videoUrl;
+    document.location = "?download=1&decoder=" + encodeURIComponent(decoder) + "&file=" + encodeURIComponent(file);
+  }
+
   render() {
     let groups = this.props.groups;
     let sidePanel = null;
@@ -1381,6 +1387,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
                 <RaisedButton primary={true} label="Feature Request" onTouchTap={this.fileIssue.bind(this, "enhancement")}/>{' '}
                 <RaisedButton secondary={true} label="File a Bug" onTouchTap={this.fileIssue.bind(this, "bug")}/>
                 <p><RaisedButton label="Download this video (ivf)" onTouchTap={this.downloadIvf.bind(this)}/></p>
+                <p><RaisedButton label="Download this video (y4m)" onTouchTap={this.downloadY4m.bind(this)}/></p>
                 <h3>Configuration</h3>
                 <p>
                   {frame.config}
