@@ -28,6 +28,7 @@ import Slider from 'material-ui/Slider';
 declare const Mousetrap;
 declare var shortenUrl;
 declare var document;
+declare var window;
 
 const SUPER_BLOCK_SIZE = 64;
 const ZOOM_WIDTH = 500;
@@ -1169,7 +1170,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   downloadY4m() {
     let decoder = this.props.decoderVideoUrlPairs[this.state.activeGroup].decoderUrl;
     let file = this.props.decoderVideoUrlPairs[this.state.activeGroup].videoUrl;
-    document.location = "?download=1&decoder=" + encodeURIComponent(decoder) + "&file=" + encodeURIComponent(file);
+    window.open("?download=1&decoder=" + encodeURIComponent(decoder) + "&file=" + encodeURIComponent(file),'_blank');
   }
 
   render() {
