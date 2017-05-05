@@ -163,7 +163,7 @@ export class LoaderComponent extends React.Component<LoaderComponentProps, {
       </div>;
     } else {
       return <div className="maxWidthAndHeight">
-        <AnalyzerView onDecodeAdditionalFrames={this.decodeAdditionalFrames.bind(this)} groups={this.state.frames} groupNames={this.state.groupNames} playbackFrameRate={this.state.playbackFrameRate} blind={this.props.blind}></AnalyzerView>
+        <AnalyzerView onDecodeAdditionalFrames={this.decodeAdditionalFrames.bind(this)} groups={this.state.frames} groupNames={this.state.groupNames} playbackFrameRate={this.state.playbackFrameRate} blind={this.props.blind} decoderVideoUrlPairs={this.props.decoderVideoUrlPairs}></AnalyzerView>
       </div>
     }
   }
