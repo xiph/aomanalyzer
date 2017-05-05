@@ -19,6 +19,7 @@ import { saveAs } from 'file-saver';
 
 interface DownloadComponentProps {
   video: { decoderUrl: string, videoUrl: string, decoderName: string };
+  filename?: string;
 }
 
 export class DownloadComponent extends React.Component<DownloadComponentProps, {
@@ -26,6 +27,7 @@ export class DownloadComponent extends React.Component<DownloadComponentProps, {
   status: string;
 }> {
   public static defaultProps: DownloadComponentProps = {
+    filename: "image.y4m"
   } as any;
 
   decoder: Decoder;
@@ -115,7 +117,7 @@ export class DownloadComponent extends React.Component<DownloadComponentProps, {
         this.dumpFrames();
     }, () => {
       this.setState({status: "Complete!"} as any);
-      saveAs(this.y4m,"image.y4m",true);
+      saveAs(this.y4m,this.props.filename,true);
     });
   }
 
