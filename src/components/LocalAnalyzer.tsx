@@ -182,9 +182,10 @@ export class LocalAnalyzerComponent extends React.Component<{
       listJson.sort(function (a, b) {
         return (new Date(b.date) as any) - (new Date(a.date) as any);
       });
-      listJson = listJson.filter(job => {
-        return job.status === "completed";
-      });
+      // Don't filter completed jobs.
+      // listJson = listJson.filter(job => {
+      //   return job.status === "completed";
+      // });
       listJson = listJson.slice(0, 1000);
 
       // Say no to long names.
