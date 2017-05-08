@@ -1,5 +1,4 @@
 import * as React from "react";
-// import { hashString, appStore, AppDispatcher, Jobs, Job, metricNames, AnalyzeFile, fileExists, analyzerBaseUrl, baseUrl } from "../../stores/Stores";
 
 import { makePattern, reverseMap, palette, hashString, makeBlockSizeLog2MapByValue, COLORS, HEAT_COLORS, Decoder, Rectangle, Size, AnalyzerFrame, loadFramesFromJson, downloadFile, Histogram, Accounting, AccountingSymbolMap, clamp, Vector, localFiles, localFileProtocol } from "./analyzerTools";
 import { HistogramComponent } from "./Histogram";
