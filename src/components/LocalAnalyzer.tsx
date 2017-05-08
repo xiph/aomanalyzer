@@ -83,7 +83,7 @@ function unique<T>(array: Array<T>): Array<T> {
 }
 
 const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-let masterUrl = '/';
+let masterUrl = window.location.origin + '/';
 
 export class RunDetails extends React.Component<{
   json: any;
