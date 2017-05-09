@@ -17,6 +17,18 @@ interface LoaderComponentProps {
   bench?: number;
 }
 
+
+function getFramesIvf(ivf: Uint8Array) {
+  const length = ivf.length;
+  let i = 32;
+  let frames = 0;
+  while (i < length) {
+    let frame_length = ivf[i] + (ivf[i+1]<<8) + (ivf[i+2]<<16) + (ivf[i+3]<<24);
+    i += 12 + frame_length;
+    frames++;
+  }
+}
+
 export class LoaderComponent extends React.Component<LoaderComponentProps, {
   frames: AnalyzerFrame[][],
   groupNames: string[],

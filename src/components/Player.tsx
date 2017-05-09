@@ -401,7 +401,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       <div className="playerCanvasContainer" ref={(self: any) => this.mountCanvasContainer(self)}>
         <canvas className="playerCanvas" ref={(self: any) => this.canvas = self} style={canvasStyle} />
       </div>
-      <LinearProgress style={{ borderRadius: "0px" }} color={red800} mode="determinate" value={this.frameBuffer.length} min={0} max={this.state.maxFrameBufferSize} />
+      <LinearProgress style={{ borderRadius: "0px" }} color={red800} mode="determinate" value={this.frameBuffer.length} min={0} max={this.state.decoder.totalFrames} />
       {this.props.areDetailsVisible && this.state.decoder &&
         <div className="playerTableContainer">
           <Table>
