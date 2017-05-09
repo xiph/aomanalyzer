@@ -190,7 +190,7 @@ export class LocalAnalyzerComponent extends React.Component<{
 
       // Say no to long names.
       listJson = listJson.filter(job => {
-        return job.run_id.length < 64;
+        return job.run_id.length < 128;
       });
       this.setState({ listJson } as any);
     });
