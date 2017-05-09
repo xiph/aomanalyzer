@@ -161,6 +161,13 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     this.pauseIfPlaying();
     this.stopFetchPump();
     this.isComponentMounted = false;
+    // Clean up to avoid leaks.
+    this.frames.length = 0;
+    this.frameBuffer.length = 0;
+    this.fetchBuffer.length = 0;
+    this.lastFrameImage = null;
+    this.state.decoder.unload();
+    this.state.decoder = null; // setState() doesn't work in componentWillUnmount.
   }
 
   forceUpdateIfMounted() {

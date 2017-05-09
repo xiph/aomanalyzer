@@ -674,6 +674,12 @@ export class Decoder {
     this.initWorker();
   }
 
+  unload() {
+    this.worker = null;
+    this.buffer = null;
+    this.frames = null;
+  }
+
   load(url): Promise<any> {
     if (url.indexOf("://") < 0) {
       url = window.location.origin + '/' + url;
@@ -764,7 +770,7 @@ export class Decoder {
           let frame = readFrameFromJson(json);
           frame.config = self.workerInfo.buildConfig;
           frames.push(frame);
-          self.frames.push(frame);
+          self.frames && self.frames.push(frame);
         }
         if (self.shouldReadImageData) {
           frames[frames.length - 1].frameImage = e.data.payload.image;
