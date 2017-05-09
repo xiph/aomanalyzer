@@ -18,7 +18,7 @@ import TextField from 'material-ui/TextField';
 import { YUVCanvas } from '../YUVCanvas';
 
 declare var dragscroll;
-const MAX_FRAME_BUFFER_SIZE = 60;
+const MAX_FRAME_BUFFER_SIZE = 300;
 
 function fixedRatio(n: number) {
   if ((n | 0) == n) {

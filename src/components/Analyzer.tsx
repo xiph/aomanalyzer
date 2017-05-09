@@ -1,5 +1,4 @@
 import * as React from "react";
-// import { hashString, appStore, AppDispatcher, Jobs, Job, metricNames, AnalyzeFile, fileExists, analyzerBaseUrl, baseUrl } from "../../stores/Stores";
 
 import { makePattern, reverseMap, palette, hashString, makeBlockSizeLog2MapByValue, COLORS, HEAT_COLORS, Decoder, Rectangle, Size, AnalyzerFrame, loadFramesFromJson, downloadFile, Histogram, Accounting, AccountingSymbolMap, clamp, Vector, localFiles, localFileProtocol } from "./analyzerTools";
 import { HistogramComponent } from "./Histogram";
@@ -27,6 +26,8 @@ import Slider from 'material-ui/Slider';
 
 declare const Mousetrap;
 declare var shortenUrl;
+declare var document;
+declare var window;
 
 const SUPER_BLOCK_SIZE = 64;
 const ZOOM_WIDTH = 500;
@@ -134,6 +135,7 @@ interface AnalyzerViewProps {
   playbackFrameRate?: number;
   blind?: number;
   onDecodeAdditionalFrames: (count: number) => void;
+  decoderVideoUrlPairs?: { decoderUrl: string, videoUrl: string, decoderName: string }[];
 }
 
 interface AlertProps {
@@ -377,7 +379,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     groupNames: null,
     playbackFrameRate: 30,
     blind: 0,
-    onDecodeAdditionalFrames: null
+    onDecodeAdditionalFrames: null,
+    decoderVideoUrlPairs: []
   };
 
   activeGroupScore: number[][];
@@ -1159,6 +1162,16 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     return options.filter(option => defaultOptions.indexOf(option) < 0).join(" ");
   }
 
+  downloadIvf() {
+    document.location = this.props.decoderVideoUrlPairs[this.state.activeGroup].videoUrl;
+  }
+
+  downloadY4m() {
+    let decoder = this.props.decoderVideoUrlPairs[this.state.activeGroup].decoderUrl;
+    let file = this.props.decoderVideoUrlPairs[this.state.activeGroup].videoUrl;
+    window.open("?download=1&decoder=" + encodeURIComponent(decoder) + "&file=" + encodeURIComponent(file),'_blank');
+  }
+
   render() {
     let groups = this.props.groups;
     let sidePanel = null;
@@ -1373,6 +1386,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
               <div className="tabContent">
                 <RaisedButton primary={true} label="Feature Request" onTouchTap={this.fileIssue.bind(this, "enhancement")}/>{' '}
                 <RaisedButton secondary={true} label="File a Bug" onTouchTap={this.fileIssue.bind(this, "bug")}/>
+                <p><RaisedButton label="Download this video (ivf)" onTouchTap={this.downloadIvf.bind(this)}/></p>
+                <p><RaisedButton label="Download this video (y4m)" onTouchTap={this.downloadY4m.bind(this)}/></p>
                 <h3>Configuration</h3>
                 <p>
                   {frame.config}

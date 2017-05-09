@@ -64,7 +64,6 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
   scrollLeft: number;
   voteIndex: number;
   showVoterIDDialog: boolean;
-  showVoterIDRegistration: boolean;
   voterID: string;
   voterEmail: String;
   isLooping: boolean;
@@ -89,6 +88,9 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
   };
   constructor() {
     super();
+    if (!localStorage["voterID"]) {
+      localStorage["voterID"] = generateUUID();
+    }
     this.metrics.state = this.state = {
       scale: 1 / window.devicePixelRatio,
       playing: false,
@@ -96,8 +98,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       scrollTop: 0,
       scrollLeft: 0,
       showVoterIDDialog: false,
-      showVoterIDRegistration: false,
-      voterID: localStorage["voterID"] || "",
+      voterID: localStorage["voterID"],
       voterEmail: localStorage["voterEmail"] || "",
       isLooping: true,
       shouldFitWidth: false,
@@ -516,34 +517,17 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
         title="Voter ID"
         open={this.state.showVoterIDDialog}
         actions={[
-        this.state.showVoterIDRegistration ?
-        <FlatButton
-          label={"Request Voter ID"}
-          disabled={!this.state.voterEmail}
-          onTouchTap={() => this.setState({showVoterIDRegistration: false} as any)}
-        /> :
-        <FlatButton
-          label={"Register"}
-          onTouchTap={() => this.setState({
-            showVoterIDRegistration: true,
-            voterID: generateUUID()
-          } as any)}
-        />,
         <FlatButton
           label="Cancel"
-          onTouchTap={() => this.setState({showVoterIDRegistration: false, showVoterIDDialog: false} as any)}
+          onTouchTap={() => this.setState({showVoterIDDialog: false} as any)}
         />,
         <FlatButton
           label={this.state.voterID ? "Vote" : "Vote Anonymously"}
           primary={true}
-          disabled={!!this.state.voterID && !isUUID(this.state.voterID)}
           onTouchTap={this.onSubmitVote.bind(this)}
         />]}
       >
-      { this.state.showVoterIDRegistration ?
-        <TextField floatingLabelText="E-mail" floatingLabelFixed={true} name="registerID" value={this.state.voterEmail} onChange={this.onVoterEmailChange.bind(this)} style={{width: "100%"}}/> :
-        <TextField floatingLabelText="Voter ID" floatingLabelFixed={true} name="voterID" value={this.state.voterID} onChange={this.onVoterIDChange.bind(this)} style={{width: "100%"}}/>
-      }
+      <TextField floatingLabelText="Voter ID" floatingLabelFixed={true} name="voterID" value={this.state.voterID} onChange={this.onVoterIDChange.bind(this)} style={{width: "100%"}}/>
       </Dialog>
       <div className="playerSplitVerticalContainer">
         {panes}
