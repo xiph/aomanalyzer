@@ -34,12 +34,24 @@ function compileProgram(gl: any, vertSource: string, fragSource: string) {
 
 const kUseLinearFiltering: boolean = false;
 
+export interface YCbCrBuffer {
+  width: number;
+  height: number;
+  vdec: number;
+  hdec: number;
+  bytesY: Uint8Array;
+  strideY: number;
+  bytesCb: Uint8Array;
+  strideCb: number;
+  bytesCr: Uint8Array;
+  strideCr: number;
+}
+
 export class YUVCanvas {
   gl: any;
-  //rgbTextures: {[index: number]: WebGLTexture} = {};
   firstRun: boolean = true;
 
-  constructor(public canvas: HTMLCanvasElement, public videoInfo: any) {
+  constructor(public canvas: HTMLCanvasElement) {
     let creationAttribs = {
       antialias: false,
       alpha: false,
@@ -131,7 +143,7 @@ void main() {
       console.error("WebGL Error " + err);
     }
   }
-  drawFrame(yCbCrBuffer) {
+  drawFrame(yCbCrBuffer: YCbCrBuffer) {
     let gl = this.gl;
 
     if (this.firstRun ||
