@@ -161,6 +161,13 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     this.pauseIfPlaying();
     this.stopFetchPump();
     this.isComponentMounted = false;
+    // Clean up to avoid leaks.
+    this.frames.length = 0;
+    this.frameBuffer.length = 0;
+    this.fetchBuffer.length = 0;
+    this.lastFrameImage = null;
+    this.state.decoder.unload();
+    this.state.decoder = null; // setState() doesn't work in componentWillUnmount.
   }
 
   forceUpdateIfMounted() {
@@ -394,7 +401,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       <div className="playerCanvasContainer" ref={(self: any) => this.mountCanvasContainer(self)}>
         <canvas className="playerCanvas" ref={(self: any) => this.canvas = self} style={canvasStyle} />
       </div>
-      <LinearProgress style={{ borderRadius: "0px" }} color={red800} mode="determinate" value={this.frameBuffer.length} min={0} max={this.state.maxFrameBufferSize} />
+      <LinearProgress style={{ borderRadius: "0px" }} color={red800} mode="determinate" value={this.frameBuffer.length} min={0} max={this.state.decoder.totalFrames} />
       {this.props.areDetailsVisible && this.state.decoder &&
         <div className="playerTableContainer">
           <Table>

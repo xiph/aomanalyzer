@@ -656,6 +656,18 @@ export class GridSize {
   }
 }
 
+function getFramesIvf(ivf: Uint8Array): number {
+  const length = ivf.length;
+  let i = 32;
+  let frames = 0;
+  while (i < length) {
+    let frame_length = ivf[i] + (ivf[i+1]<<8) + (ivf[i+2]<<16) + (ivf[i+3]<<24);
+    i += 12 + frame_length;
+    frames++;
+  }
+  return frames;
+}
+
 export class Decoder {
   worker: Worker;
   workerCallbacks = [];
@@ -664,7 +676,7 @@ export class Decoder {
   buffer: Uint8Array;
   frames: AnalyzerFrame[] = [];
   frameRate: number = 30;
-
+  totalFrames: number;
   /** Whether to read image data after decoding a frame. */
   shouldReadImageData: boolean = true;
 
@@ -672,6 +684,12 @@ export class Decoder {
     this.buffer = new Uint8Array(0);
     this.worker = worker;
     this.initWorker();
+  }
+
+  unload() {
+    this.worker = null;
+    this.buffer = null;
+    this.frames = null;
   }
 
   load(url): Promise<any> {
@@ -701,6 +719,7 @@ export class Decoder {
 
   openFileBytes(buffer: Uint8Array) {
     this.frameRate = buffer[16] | buffer[17] << 24 | buffer[18] << 16 | buffer[19] << 24;
+    this.totalFrames = getFramesIvf(buffer);
     this.buffer = buffer;
     this.worker.postMessage({
       command: "openFileBytes",
@@ -764,7 +783,7 @@ export class Decoder {
           let frame = readFrameFromJson(json);
           frame.config = self.workerInfo.buildConfig;
           frames.push(frame);
-          self.frames.push(frame);
+          self.frames && self.frames.push(frame);
         }
         if (self.shouldReadImageData) {
           frames[frames.length - 1].frameImage = e.data.payload.image;
