@@ -32,8 +32,6 @@ function compileProgram(gl: any, vertSource: string, fragSource: string) {
   return program;
 }
 
-const kUseLinearFiltering: boolean = false;
-
 export interface YCbCrBuffer {
   width: number;
   height: number;
@@ -50,7 +48,7 @@ export interface YCbCrBuffer {
 export class YUVCanvas {
   gl: any;
   firstRun: boolean = true;
-
+  useWebGL2: boolean = true;
   constructor(public canvas: HTMLCanvasElement) {
     let creationAttribs = {
       antialias: false,
@@ -59,6 +57,11 @@ export class YUVCanvas {
       stencil: false,
     };
     this.gl = canvas.getContext('webgl2', creationAttribs);
+    if (!this.gl) {
+      console.log("WebGL2 is not available, falling back on WebGL1.")
+      this.gl = canvas.getContext('webgl', creationAttribs);
+      this.useWebGL2 = false;
+    }
     assert(this.gl, "WebGL 2 is Unavailable");
     let gl = this.gl;
 
@@ -113,13 +116,8 @@ void main() {
       gl.uniform1i(program.uTexture[i], i);
       gl.activeTexture(gl.TEXTURE0 + i);
       gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-      if (kUseLinearFiltering) {
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-      } else {
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-      }
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     }
@@ -146,6 +144,13 @@ void main() {
   drawFrame(yCbCrBuffer: YCbCrBuffer) {
     let gl = this.gl;
 
+    let format = this.useWebGL2 ? gl.RED : gl.LUMINANCE;
+    let internalFormat = this.useWebGL2 ? gl.R8 : gl.LUMINANCE;
+    let width = yCbCrBuffer.width;
+    let height = yCbCrBuffer.height;
+    let hdec = yCbCrBuffer.hdec;
+    let vdec = yCbCrBuffer.vdec;
+
     if (this.firstRun ||
         gl.drawingBufferWidth != yCbCrBuffer.width ||
         gl.drawingBufferHeight != yCbCrBuffer.height)
@@ -153,27 +158,23 @@ void main() {
       this.firstRun = false;
       trace && console.log('Resizing to:', yCbCrBuffer.width, yCbCrBuffer.height);
 
-      gl.canvas.width = yCbCrBuffer.width;
-      gl.canvas.height = yCbCrBuffer.height;
+      gl.canvas.width = width;
+      gl.canvas.height = height;
       assert(gl.drawingBufferWidth == yCbCrBuffer.width, "bad drawingbufferWidth");
       assert(gl.drawingBufferHeight == yCbCrBuffer.height, "bad drawingbufferHeight");
       gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
       gl.activeTexture(gl.TEXTURE0);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8,
-                    yCbCrBuffer.width,
-                    yCbCrBuffer.height,
-                    0, gl.RED, gl.UNSIGNED_BYTE, null);
+      gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
+                    width, height, 0, format, gl.UNSIGNED_BYTE, null);
+
       gl.activeTexture(gl.TEXTURE1);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8,
-                    yCbCrBuffer.width >> yCbCrBuffer.hdec,
-                    yCbCrBuffer.height >> yCbCrBuffer.vdec,
-                    0, gl.RED, gl.UNSIGNED_BYTE, null);
+      gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
+                    width >> hdec, height >> vdec, 0, format, gl.UNSIGNED_BYTE, null);
+
       gl.activeTexture(gl.TEXTURE2);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8,
-                    yCbCrBuffer.width >> yCbCrBuffer.hdec,
-                    yCbCrBuffer.height >> yCbCrBuffer.vdec,
-                    0, gl.RED, gl.UNSIGNED_BYTE, null);
+      gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
+                    width >> hdec, height >> vdec, 0, format, gl.UNSIGNED_BYTE, null);
     }
 
     const start = performance.now();
@@ -187,25 +188,32 @@ void main() {
 
     // Update
     gl.activeTexture(gl.TEXTURE0);
-    gl.pixelStorei(gl.UNPACK_ROW_LENGTH, yCbCrBuffer.strideY);
-    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0,
-                     yCbCrBuffer.width,
-                     yCbCrBuffer.height,
-                     gl.RED, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesY);
+    if (this.useWebGL2) {
+      gl.pixelStorei(gl.UNPACK_ROW_LENGTH, yCbCrBuffer.strideY);
+    } else {
+      // We can't specify a stride with WebGL1, so make sure it's tightly packed.
+      assert(yCbCrBuffer.strideY === width);
+    }
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height,
+                     format, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesY);
     lap("Upload Y");
     gl.activeTexture(gl.TEXTURE1);
-    gl.pixelStorei(gl.UNPACK_ROW_LENGTH, yCbCrBuffer.strideCb);
-    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0,
-                     yCbCrBuffer.width >> yCbCrBuffer.hdec,
-                     yCbCrBuffer.height >> yCbCrBuffer.vdec,
-                     gl.RED, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesCb);
+    if (this.useWebGL2) {
+      gl.pixelStorei(gl.UNPACK_ROW_LENGTH, yCbCrBuffer.strideCb);
+    } else {
+      assert(yCbCrBuffer.strideCb === width >> hdec);
+    }
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width >> hdec, height >> vdec,
+                     format, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesCb);
     lap("Upload Cb");
     gl.activeTexture(gl.TEXTURE2);
-    gl.pixelStorei(gl.UNPACK_ROW_LENGTH, yCbCrBuffer.strideCr);
-    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0,
-                     yCbCrBuffer.width >> yCbCrBuffer.hdec,
-                     yCbCrBuffer.height >> yCbCrBuffer.vdec,
-                     gl.RED, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesCr);
+    if (this.useWebGL2) {
+      gl.pixelStorei(gl.UNPACK_ROW_LENGTH, yCbCrBuffer.strideCr);
+    } else {
+      assert(yCbCrBuffer.strideCr === width >> hdec);
+    }
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width >> hdec, height >> vdec,
+                     format, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesCr);
     lap("Upload Cr");
     // Draw
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
