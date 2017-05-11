@@ -240,9 +240,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       let image = frames[0].frameImage;
       this.canvas.width = image.Y.width;
       this.canvas.height = image.Y.height;
-      this.sink = new YUVCanvas(this.canvas, {
-        picX: 0, picY: 0, picWidth: image.Y.width, picHeight: image.Y.height
-      });
+      this.sink = new YUVCanvas(this.canvas);
       this.forceUpdateIfMounted();
       this.startFetchPump();
       if (this.props.bench) {

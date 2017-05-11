@@ -163,11 +163,19 @@ function readPlane(plane) {
     width >>= 1;
     height >>= 1;
   }
-  let byteLength = height * stride;
+  let byteLength = height * width;
   var buffer = getReleasedBuffer(byteLength);
   if (depth == 8 && buffer) {
     // Copy into released buffer.
-    new Uint8Array(buffer).set(HEAPU8.subarray(p, p + byteLength));
+    let tmp = new Uint8Array(buffer);
+    if (stride === width) {
+      tmp.set(HEAPU8.subarray(p, p + byteLength));
+    } else {
+      for (let i = 0; i < height; i++) {
+        tmp.set(HEAPU8.subarray(p, p + width), i * width);
+        p += stride;
+      }
+    }
   } else {
     if (depth == 10) {
       // Convert to 8 bit depth.
@@ -175,18 +183,27 @@ function readPlane(plane) {
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
           let offset = y * (stride << 1) + (x << 1);
-          tmpBuffer[y * stride + x] = (HEAPU8[p + offset] + (HEAPU8[p + offset + 1] << 8)) >> 2;
+          tmpBuffer[y * width + x] = (HEAPU8[p + offset] + (HEAPU8[p + offset + 1] << 8)) >> 2;
         }
       }
       buffer = tmpBuffer.buffer;
       depth = 8;
     } else {
-      buffer = HEAPU8.slice(p, p + byteLength).buffer;
+      if (stride === width) {
+        buffer = HEAPU8.slice(p, p + byteLength).buffer;
+      } else {
+        let tmp = new Uint8Array(byteLength);
+        for (let i = 0; i < height; i++) {
+          tmp.set(HEAPU8.subarray(p, p + width), i * width);
+          p += stride;
+        }
+        buffer = tmp.buffer;
+      }
     }
   }
   return {
     buffer,
-    stride,
+    stride: width,
     depth,
     width,
     height

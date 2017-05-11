@@ -296,7 +296,15 @@ export class ModeInfoComponent extends React.Component<{
       let b = v[1] >= 0 ? keyForValue(map, v[1]) : "N/A";
       return `${a}, ${b}`;
     }
-
+    function getCFL() {
+      if (json["cfl_alpha_idx"] === undefined) {
+        return "N/A";
+      }
+      let cfl_alpha_idx = json["cfl_alpha_idx"][r][c];
+      let cfl_alpha_sign_u = json["cfl_alpha_sign_u"][r][c];
+      let cfl_alpha_sign_v = json["cfl_alpha_sign_v"][r][c];
+      return `${cfl_alpha_idx}, ${"-+"[cfl_alpha_sign_u]}U, ${"-+"[cfl_alpha_sign_v]}V`;
+    }
     let valueStyle = { textAlign: "right", fontSize: "12px" };
     return <div>
       <Table>
@@ -330,6 +338,9 @@ export class ModeInfoComponent extends React.Component<{
           </TableRow>
           <TableRow>
             <TableRowColumn>Reference Frame</TableRowColumn><TableRowColumn style={valueStyle}>{getReferenceFrame()}</TableRowColumn>
+          </TableRow>
+          <TableRow>
+            <TableRowColumn>CFL</TableRowColumn><TableRowColumn style={valueStyle}>{getCFL()}</TableRowColumn>
           </TableRow>
         </TableBody>
       </Table>
@@ -1646,8 +1657,10 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     });
   }
   drawMode(type: string, frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
+    let skipGrid = frame.json["skip"];
     let modeGrid = frame.json[type];
     let modeMap = frame.json["modeMap"];
+    let alphaIndex = frame.json["cfl_alpha_idx"];
     let modeMapByValue = reverseMap(modeMap);
     const V_PRED = modeMap.V_PRED;
     const H_PRED = modeMap.H_PRED;
@@ -1657,6 +1670,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     const D117_PRED = modeMap.D117_PRED;
     const D153_PRED = modeMap.D153_PRED;
     const D207_PRED = modeMap.D207_PRED;
+    const DC_PRED = modeMap.DC_PRED;
 
     let scale = dst.w / src.w;
     ctx.save();
@@ -1667,9 +1681,24 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.translate(-src.x * scale, -src.y * scale);
     let lineWidth = 1;
     ctx.lineWidth = lineWidth;
+
+    ctx.globalAlpha = 1;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = String(8 * this.ratio) + "pt Courier New";
+
     this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
       bounds.multiplyScalar(scale);
       drawMode(modeGrid[r][c], bounds);
+      if (alphaIndex && type === "uv_mode" && modeGrid[r][c] === DC_PRED && !skipGrid[r][c]) {
+        if (bounds.w < 16 * this.ratio || bounds.h < 16 * this.ratio) {
+          return;
+        }
+        let o = bounds.getCenter();
+        let i = alphaIndex[r][c];
+        ctx.fillStyle = "white";
+        ctx.fillText(i, o.x, o.y);
+      }
     });
 
     function drawMode(m: number, bounds: Rectangle) {
