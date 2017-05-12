@@ -423,8 +423,7 @@ function readFrameFromJson(json): AnalyzerFrame {
   uncompress(json["motionVectors"]);
   uncompress(json["referenceFrame"]);
   uncompress(json["cfl_alpha_idx"]);
-  uncompress(json["cfl_alpha_sign_u"]);
-  uncompress(json["cfl_alpha_sign_v"]);
+  uncompress(json["cfl_alpha_sign"]);
 
   let frame = new AnalyzerFrame();
   frame.json = json;
