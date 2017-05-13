@@ -525,7 +525,7 @@ export class LocalAnalyzerComponent extends React.Component<{
                   disabled={!run}
                   placeholder="QP"
                   value={slot.quality}
-                  options={run ? this.getOptionsForQuality(run.info.quality) : []}
+                  options={run ? this.getOptionsForQuality(run.info.qualities) : []}
                   onChange={this.onChangeQuality.bind(this, i)}
                 />
               </div>
