@@ -301,8 +301,9 @@ export class ModeInfoComponent extends React.Component<{
         return "N/A";
       }
       let cfl_alpha_idx = json["cfl_alpha_idx"][r][c];
-      let cfl_alpha_sign_u = json["cfl_alpha_sign_u"][r][c];
-      let cfl_alpha_sign_v = json["cfl_alpha_sign_v"][r][c];
+      let cfl_alpha_sign = json["cfl_alpha_sign"][r][c];
+      let cfl_alpha_sign_u = cfl_alpha_sign & 1;
+      let cfl_alpha_sign_v = cfl_alpha_sign >> 1;
       return `${cfl_alpha_idx}, ${"-+"[cfl_alpha_sign_u]}U, ${"-+"[cfl_alpha_sign_v]}V`;
     }
     let valueStyle = { textAlign: "right", fontSize: "12px" };
