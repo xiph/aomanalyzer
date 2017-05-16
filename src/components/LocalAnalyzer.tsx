@@ -83,7 +83,11 @@ function unique<T>(array: Array<T>): Array<T> {
 }
 
 const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+declare var process;
 let masterUrl = window.location.origin + '/';
+if (window.location.origin.startsWith('file://') || window.location.origin.startsWith('http://localhost')) {
+  masterUrl = 'https://arewecompressedyet.com/';
+}
 
 export class RunDetails extends React.Component<{
   json: any;
