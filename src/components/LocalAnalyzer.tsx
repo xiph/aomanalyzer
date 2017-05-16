@@ -337,7 +337,7 @@ export class LocalAnalyzerComponent extends React.Component<{
   createURL() {
     try {
       let pairs = this.makePairs();
-      let url = window.location.href + "?";
+      let url = window.location.origin + window.location.pathname + "?";
       if (this.state.votingEnabled) {
         let vote = this.state.vote;
         if (vote) {
