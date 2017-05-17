@@ -83,7 +83,11 @@ function unique<T>(array: Array<T>): Array<T> {
 }
 
 const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+declare var process;
 let masterUrl = window.location.origin + '/';
+if (window.location.origin.startsWith('file://') || window.location.origin.startsWith('http://localhost')) {
+  masterUrl = 'https://arewecompressedyet.com/';
+}
 
 export class RunDetails extends React.Component<{
   json: any;
@@ -121,6 +125,7 @@ export class LocalAnalyzerComponent extends React.Component<{
     taskFilter: string;
     nickFilter: string;
     configFilter: Option [];
+    statusFilter: Option [];
     commandLineFilter: Option [];
   }> {
   constructor() {
@@ -138,7 +143,11 @@ export class LocalAnalyzerComponent extends React.Component<{
       taskFilter: undefined,
       nickFilter: undefined,
       configFilter: [],
-      commandLineFilter: []
+      statusFilter: [{
+        label: "completed", value: "completed"
+      }],
+      commandLineFilter: [],
+      filtersEnabled: true
     } as any;
   }
   loadXHR<T>(path: string, type = "json"): Promise<T> {
@@ -216,6 +225,10 @@ export class LocalAnalyzerComponent extends React.Component<{
   onChangeConfigFilter(option) {
     let configFilter = option || [];
     this.setState({ configFilter } as any);
+  }
+  onChangeStatusFilter(option) {
+    let statusFilter = option || [];
+    this.setState({ statusFilter } as any);
   }
   onChangeCommandLineFilter(option) {
     let commandLineFilter = option || [];
@@ -324,7 +337,7 @@ export class LocalAnalyzerComponent extends React.Component<{
   createURL() {
     try {
       let pairs = this.makePairs();
-      let url = window.location.href + "?";
+      let url = window.location.origin + window.location.pathname + "?";
       if (this.state.votingEnabled) {
         let vote = this.state.vote;
         if (vote) {
@@ -397,6 +410,12 @@ export class LocalAnalyzerComponent extends React.Component<{
           return true;
         }
         let pass = true;
+        if (pass && this.state.statusFilter.length) {
+          // Unlike other filters, this is an OR filter.
+          pass = this.state.statusFilter.some(option => {
+            return run.status == option.value;
+          });
+        }
         if (pass && this.state.taskFilter && run.info.task !== this.state.taskFilter) {
           pass = false;
         }
@@ -436,6 +455,10 @@ export class LocalAnalyzerComponent extends React.Component<{
         return {value: option, label: option}
       });
 
+      let statusFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.status)).map(status => {
+        return { value: status, label: status }
+      });
+
       return <div>
         <div className="builderSection">
           <div>
@@ -468,6 +491,14 @@ export class LocalAnalyzerComponent extends React.Component<{
                   value={this.state.nickFilter}
                   options={nickFilterOptions}
                   onChange={this.onChangeNickFilter.bind(this)}
+                />
+              </div>
+              <div style={{width: "300px"}}>
+                <Select multi
+                  placeholder="State Filter"
+                  value={this.state.statusFilter}
+                  options={statusFilterOptions}
+                  onChange={this.onChangeStatusFilter.bind(this)}
                 />
               </div>
             </div>

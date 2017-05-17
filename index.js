@@ -19,7 +19,7 @@ try {
   parser.addArgument(['--zoomFactor'], { defaultValue: 1, help: 'Default browser zoom. 1 default, 0.75 small, 0.5 tiny' });
   parser.addArgument(['--split'], { defaultValue: 0, help: 'Split mode: 0 none, 4 vertical' });
   parser.addArgument(['file'], { nargs: '*', help: 'Decoder or IVF file path (local path or url).' });
-  if (process.argv[0].endsWith('AOMAnalyzer')) {
+  if (process.argv[0].endsWith('AOMAnalyzer') || process.argv[0].endsWith('AOMAnalyzer.exe')) {
     cliArgs = parser.parseArgs(process.argv.slice(1));
   } else {
     cliArgs = parser.parseArgs();
