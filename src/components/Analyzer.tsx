@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { makePattern, reverseMap, palette, hashString, makeBlockSizeLog2MapByValue, COLORS, HEAT_COLORS, Decoder, Rectangle, Size, AnalyzerFrame, loadFramesFromJson, downloadFile, Histogram, Accounting, AccountingSymbolMap, clamp, Vector, localFiles, localFileProtocol } from "./analyzerTools";
+import { getColor, makePattern, reverseMap, palette, hashString, makeBlockSizeLog2MapByValue, HEAT_COLORS, Decoder, Rectangle, Size, AnalyzerFrame, loadFramesFromJson, downloadFile, Histogram, Accounting, AccountingSymbolMap, clamp, Vector, localFiles, localFileProtocol } from "./analyzerTools";
 import { HistogramComponent } from "./Histogram";
 import { TRACE_RENDERING, padLeft, log2, assert, unreachable } from "./analyzerTools";
 
@@ -1125,27 +1125,23 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     let color = null;
     switch (tab) {
       case HistogramTab.BlockSize:
-        color = palette.blockSize[name];
+        color = getColor(name, palette.blockSize);
         break;
       case HistogramTab.TransformSize:
-        color = palette.transformSize[name];
+        color = getColor(name, palette.transformSize);
         break;
       case HistogramTab.TransformType:
-        color = palette.transformType[name];
+        color = getColor(name, palette.transformType);
         break;
       case HistogramTab.PredictionMode:
       case HistogramTab.UVPredictionMode:
-        color = palette.predictionMode[name];
+        color = getColor(name, palette.predictionMode);
         break;
       case HistogramTab.Skip:
-        color = palette.skip[name];
+        color = getColor(name, palette.skip);
         break;
       default:
-        color = COLORS[hashString(name) % COLORS.length];
-    }
-    if (!color) {
-      console.warn(`No color for ${name}`);
-      return COLORS[hashString(name) % COLORS.length];
+        color = getColor(name);
     }
     return color;
   }
@@ -1523,7 +1519,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.drawBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr, bounds) => {
       ctx.save();
       if (referenceGrid[r][c][0] >= 0) {
-        ctx.fillStyle = palette.referenceFrame[referenceMapByValue[referenceGrid[r][c][0]]];
+        ctx.fillStyle = getColor(referenceMapByValue[referenceGrid[r][c][0]], palette.referenceFrame);
         if (triangles) {
           ctx.beginPath();
           ctx.moveTo(bounds.x, bounds.y);
@@ -1535,7 +1531,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         }
       }
       if (referenceGrid[r][c][1] >= 0) {
-        ctx.fillStyle = palette.referenceFrame[referenceMapByValue[referenceGrid[r][c][1]]];
+        ctx.fillStyle = getColor(referenceMapByValue[referenceGrid[r][c][1]], palette.referenceFrame);
         if (triangles) {
           ctx.beginPath();
           ctx.moveTo(bounds.x + bounds.w, bounds.y);
@@ -1607,7 +1603,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     let typeGrid = frame.json["transformType"];
     let transformTypeMapByValue = reverseMap(frame.json["transformTypeMap"]);
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
-      ctx.fillStyle = palette.transformType[transformTypeMapByValue[typeGrid[r][c]]];
+      ctx.fillStyle = getColor(transformTypeMapByValue[typeGrid[r][c]], palette.transformType);
       return true;
     });
   }
@@ -1735,7 +1731,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
           drawLine(ctx, x, y + hh, w, -hh);
           break;
         default:
-          ctx.fillStyle = palette.predictionMode[modeMapByValue[m]];
+          ctx.fillStyle = getColor(modeMapByValue[m], palette.predictionMode);
           ctx.fillRect(x, y, w, h);
           break;
       }
