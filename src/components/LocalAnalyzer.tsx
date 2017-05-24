@@ -195,7 +195,7 @@ export class LocalAnalyzerComponent extends React.Component<{
       // listJson = listJson.filter(job => {
       //   return job.status === "completed";
       // });
-      listJson = listJson.slice(0, 1000);
+      listJson = listJson.slice(0, 5000);
 
       // Say no to long names.
       listJson = listJson.filter(job => {
@@ -437,7 +437,7 @@ export class LocalAnalyzerComponent extends React.Component<{
         return pass;
       }).map(run => {
         return { value: run.run_id, label: run.run_id }
-      });
+      }).slice(0, 1000);
 
       let taskFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.task)).map(task => {
         return { value: task, label: task }
