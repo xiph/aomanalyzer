@@ -49,7 +49,6 @@ let file = parameters.file;
 let playbackFrameRate = parameters.playbackFrameRate;
 let layers = parameters.layers;
 let maxFrames = parameters.maxFrames;
-let filePrefix = parameters.filePrefix || "";
 let local = parameters.local | 0;
 let blind = parameters.blind | 0;
 let split = parameters.split | 0;
@@ -65,16 +64,23 @@ let benchmark = parameters.benchmark | 0;
  * Extracts decoder / file pairs from the url parameter string.
  */
 function getDecoderVideoUrls(): {decoderUrl: string, videoUrl: string, decoderName: string} [] {
-  let currenDecoder = null;
-  let currenDecoderName = null;
+  let currentDecoderUrl = null;
+  let currentDecoderName = null;
+  let currentUrlPrefix = "";
   let pairs = [];
   forEachUrlParameter((key, value) => {
-    if (key == "decoder") {
-      currenDecoder = value;
+    if (key == "decoder" || key == "d") {
+      currentDecoderUrl = value;
     } else if (key == "decoderName") {
-      currenDecoderName = value;
-    } else if (key == "file") {
-      pairs.push({decoderUrl: currenDecoder, videoUrl: filePrefix + value, decoderName: currenDecoderName});
+      currentDecoderName = value;
+    } else if (key == "prefix" || key == "p") {
+      currentUrlPrefix = value;
+    } else if (key == "file" || key == "f") {
+      pairs.push({
+        decoderUrl: currentUrlPrefix + currentDecoderUrl,
+        videoUrl: currentUrlPrefix + value,
+        decoderName: currentDecoderName
+      });
     }
   });
   return pairs;
