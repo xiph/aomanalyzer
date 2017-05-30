@@ -298,6 +298,34 @@ export class LocalAnalyzerComponent extends React.Component<{
       return {decoderUrl, videoUrl};
     });
   }
+  findLongestPrefix(pairs: {decoderUrl: string, videoUrl: string} []): string {
+    let list = [];
+    pairs.forEach(pair => {
+      list.push(pair.decoderUrl);
+      list.push(pair.videoUrl);
+    });
+    if (list.length == 0) {
+      return "";
+    }
+    let first = list[0];
+    let prefix = "";
+    // Find longest prefix.
+    for (let i = 0; i < first.length; i++) {
+      let tmp = first.slice(0, i);
+      let isCommon = list.every(s => s.indexOf(tmp) == 0);
+      if (!isCommon) {
+        break;
+      }
+      prefix = tmp;
+    }
+    // Remove prefix.
+    pairs.forEach(pair => {
+      pair.decoderUrl = pair.decoderUrl.slice(prefix.length);
+      pair.videoUrl = pair.videoUrl.slice(prefix.length);
+    });
+
+    return prefix;
+  }
   onSend() {
     window.open(this.createURL(), "_blank");
   }
@@ -337,6 +365,7 @@ export class LocalAnalyzerComponent extends React.Component<{
   createURL() {
     try {
       let pairs = this.makePairs();
+      let prefix = this.findLongestPrefix(pairs);
       let url = window.location.origin + window.location.pathname + "?";
       if (this.state.votingEnabled) {
         let vote = this.state.vote;
@@ -357,7 +386,10 @@ export class LocalAnalyzerComponent extends React.Component<{
       if (!this.state.vote) {
         url += `maxFrames=${4}&`;
       }
-      return url + pairs.map(pair => `decoder=${pair.decoderUrl}&file=${pair.videoUrl}`).join("&");
+      if (prefix) {
+        url += `p=${prefix}&`;
+      }
+      return url + pairs.map(pair => `d=${pair.decoderUrl}&f=${pair.videoUrl}`).join("&");
     } catch(e) {
       return "";
     }
