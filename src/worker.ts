@@ -68,6 +68,8 @@ interface Native {
   _get_tile_cols_and_rows_log2(): number;
   _get_frame_count(): number;
   _get_frame_width(): number;
+  _get_bits_per_sample(): number;
+  _get_image_format(): number;
   _get_frame_height(): number;
   _open_file(): number;
   _set_layers(layers: number): number;
@@ -149,6 +151,15 @@ function getReleasedBuffer(byteLength: number) {
   return null;
 }
 
+const AOM_IMG_FMT_PLANAR = 0x100;
+const AOM_IMG_FMT_HIGHBITDEPTH = 0x800;
+
+function getImageFormat() {
+  // TODO: Just call |native._get_image_format| directly. Older analyzer builds may not have
+  // this function so need this for backwards compatibility.
+  return native._get_image_format ? native._get_image_format() : AOM_IMG_FMT_PLANAR;
+}
+
 function readPlane(plane) {
   let p = native._get_plane(plane);
   let HEAPU8 = native.HEAPU8;
@@ -156,7 +167,8 @@ function readPlane(plane) {
   let depth = native._get_bit_depth();
   let width = native._get_frame_width();
   let height = native._get_frame_height();
-  if (depth == 10) {
+  let hbd = getImageFormat() & AOM_IMG_FMT_HIGHBITDEPTH;
+  if (hbd) {
     stride >>= 1;
   }
   if (plane > 0) {
@@ -165,7 +177,8 @@ function readPlane(plane) {
   }
   let byteLength = height * width;
   var buffer = getReleasedBuffer(byteLength);
-  if (depth == 8 && buffer) {
+
+  if (buffer && !hbd) {
     // Copy into released buffer.
     let tmp = new Uint8Array(buffer);
     if (stride === width) {
@@ -176,29 +189,37 @@ function readPlane(plane) {
         p += stride;
       }
     }
-  } else {
+  } else if (hbd) {
+    let tmpBuffer = buffer ? new Uint8Array(buffer) : new Uint8Array(byteLength);
     if (depth == 10) {
       // Convert to 8 bit depth.
-      let tmpBuffer = buffer ? new Uint8Array(buffer) : new Uint8Array(byteLength);
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
           let offset = y * (stride << 1) + (x << 1);
           tmpBuffer[y * width + x] = (HEAPU8[p + offset] + (HEAPU8[p + offset + 1] << 8)) >> 2;
         }
       }
-      buffer = tmpBuffer.buffer;
-      depth = 8;
     } else {
-      if (stride === width) {
-        buffer = HEAPU8.slice(p, p + byteLength).buffer;
-      } else {
-        let tmp = new Uint8Array(byteLength);
-        for (let i = 0; i < height; i++) {
-          tmp.set(HEAPU8.subarray(p, p + width), i * width);
-          p += stride;
+      // Unpack to 8 bit depth.
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          let offset = y * (stride << 1) + (x << 1);
+          tmpBuffer[y * width + x] = HEAPU8[p + offset];
         }
-        buffer = tmp.buffer;
       }
+    }
+    buffer = tmpBuffer.buffer;
+    depth = 8;
+  } else {
+    if (stride === width) {
+      buffer = HEAPU8.slice(p, p + byteLength).buffer;
+    } else {
+      let tmp = new Uint8Array(byteLength);
+      for (let i = 0; i < height; i++) {
+        tmp.set(HEAPU8.subarray(p, p + width), i * width);
+        p += stride;
+      }
+      buffer = tmp.buffer;
     }
   }
   return {
