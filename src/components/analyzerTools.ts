@@ -822,7 +822,18 @@ const blockSizeLog2MapByName = {
   BLOCK_32X32: [5, 5],
   BLOCK_32X64: [5, 6],
   BLOCK_64X32: [6, 5],
-  BLOCK_64X64: [6, 6]
+  BLOCK_64X64: [6, 6],
+  BLOCK_64X128: [6, 7],
+  BLOCK_128X64: [7, 6],
+  BLOCK_128X128: [7, 7],
+  BLOCK_4X16: [2, 4],
+  BLOCK_16X4: [4, 2],
+  BLOCK_8X32: [3, 5],
+  BLOCK_32X8: [5, 3],
+  BLOCK_16X64: [4, 6],
+  BLOCK_64X16: [6, 4],
+  BLOCK_32X128: [5, 7],
+  BLOCK_128X32: [7, 5]
 };
 
 const transformSizeLog2MapByName = {
