@@ -17,10 +17,9 @@ import {grey900, grey800, grey100, grey200} from 'material-ui/styles/colors';
 import Checkbox from 'material-ui/Checkbox';
 import Toggle from 'material-ui/Toggle';
 import TextField from 'material-ui/TextField';
+import Select from 'react-select';
 declare var require;
 declare var shortenUrl;
-var Select = require('react-select');
-
 
 export interface Option {
   label: string;
@@ -173,7 +172,7 @@ export class LocalAnalyzerComponent extends React.Component<{
             reject();
           }
         }
-        resolve(response);
+        resolve(response as any);
       });
     });
   }

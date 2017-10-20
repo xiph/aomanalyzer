@@ -5,3 +5,4 @@ AOMAnalyzer-win32-x64
 dist
 \.*
 release_builds
+node_modules

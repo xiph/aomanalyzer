@@ -120,7 +120,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       return;
     }
     let self = this;
-    this.playerInterval = setInterval(() => {
+    this.playerInterval = window.setInterval(() => {
       self.advanceOffset(true, false);
       self.forceUpdateIfMounted();
     }, 1000 / this.state.decoder.frameRate);
@@ -167,7 +167,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     this.fetchBuffer.length = 0;
     this.lastFrameImage = null;
     this.state.decoder.unload();
-    this.state.decoder = null; // setState() doesn't work in componentWillUnmount.
+    (this.state as any).decoder = null; // setState() doesn't work in componentWillUnmount.
   }
 
   forceUpdateIfMounted() {
@@ -201,12 +201,12 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
    * Fetch frames as long as there's more room in the buffer.
    */
   startFetchPump() {
-    this.fetchPumpInterval = setInterval(() => {
+    this.fetchPumpInterval = window.setInterval(() => {
       this.fetchFrames();
     }, 1);
 
     // Fill frame buffer.
-    this.drainFetchPumpInterval = setInterval(() => {
+    this.drainFetchPumpInterval = window.setInterval(() => {
       this.drainFetchBuffer();
     }, 1);
   }
