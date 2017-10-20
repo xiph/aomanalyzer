@@ -5,9 +5,7 @@ interface CalibrateComponentProps {
   height: number;
 }
 
-export class CalibrateComponent extends React.Component<CalibrateComponentProps,
-  void
-> {
+export class CalibrateComponent extends React.Component<CalibrateComponentProps> {
   public static defaultProps: CalibrateComponentProps = {
     width: 512,
     height: 512
