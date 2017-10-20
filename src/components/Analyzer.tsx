@@ -306,6 +306,13 @@ export class ModeInfoComponent extends React.Component<{
       let cfl_alpha_sign_v = cfl_alpha_sign >> 1;
       return `${cfl_alpha_idx}, ${"-+"[cfl_alpha_sign_u]}U, ${"-+"[cfl_alpha_sign_v]}V`;
     }
+    function getDualFilterType() {
+      if (json["dualFilterType"] === undefined) {
+        return "N/A";
+      }
+      let map = json["dualFilterTypeMap"];
+      return keyForValue(map, json["dualFilterType"][r][c]);
+    }
     let valueStyle = { textAlign: "right", fontSize: "12px" };
     return <div>
       <Table>
@@ -342,6 +349,9 @@ export class ModeInfoComponent extends React.Component<{
           </TableRow>
           <TableRow>
             <TableRowColumn>CFL</TableRowColumn><TableRowColumn style={valueStyle}>{getCFL()}</TableRowColumn>
+          </TableRow>
+          <TableRow>
+            <TableRowColumn>Dual Filter Type</TableRowColumn><TableRowColumn style={valueStyle}>{getDualFilterType()}</TableRowColumn>
           </TableRow>
         </TableBody>
       </Table>
