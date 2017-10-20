@@ -300,6 +300,7 @@ export class AnalyzerFrame {
   predictionModeHist: Histogram;
   uvPredictionModeHist: Histogram;
   skipHist: Histogram;
+  dualFilterTypeHist: Histogram;
   frameImage: FrameImage;
   decodeTime: number;
   canvasImage: HTMLCanvasElement;
@@ -423,6 +424,7 @@ function readFrameFromJson(json): AnalyzerFrame {
   frame.transformTypeHist = getHistogramFromJson(json, "transformType");
   frame.predictionModeHist = getHistogramFromJson(json, "mode");
   frame.uvPredictionModeHist = getHistogramFromJson(json, "uv_mode");
+  frame.dualFilterTypeHist = getHistogramFromJson(json, "dualFilterType");
   frame.miSizeLog2 = log2(json.config.MI_SIZE);
   frame.miSuperSizeLog2 = log2(64); // TODO: Does this ever change?
   frame.blockSizeLog2Map = makeBlockSizeLog2MapByValue(json["blockSizeMap"]);
@@ -995,6 +997,17 @@ export const palette = {
     GOLDEN_FRAME:           "#ff50ed",
     BWDREF_FRAME:           "#808900",
     ALTREF_FRAME:           "#014bb5"
+  },
+  dualFilterType: {
+    REG_REG:                "#c95f3f",
+    REG_SMOOTH:             "#4eb7a0",
+    REG_SHARP:              "#b459c0",
+    SMOOTH_REG:             "#77b84b",
+    SMOOTH_SMOOTH:          "#d0406d",
+    SMOOTH_SHARP:           "#627e3b",
+    SHARP_REG:              "#6f7dcb",
+    SHARP_SMOOTH:           "#c29743",
+    SHARP_SHARP:            "#c06d93"
   }
 }
 

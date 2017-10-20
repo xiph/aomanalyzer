@@ -51,7 +51,8 @@ enum HistogramTab {
   TransformType,
   PredictionMode,
   UVPredictionMode,
-  Skip
+  Skip,
+  DualFilterType
 }
 
 function colorScale(v, colors) {
@@ -1127,6 +1128,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         return frames.map(x => x.uvPredictionModeHist);
       case HistogramTab.Skip:
         return frames.map(x => x.skipHist);
+      case HistogramTab.DualFilterType:
+        return frames.map(x => x.dualFilterTypeHist);
     }
     return null;
   }
@@ -1149,6 +1152,9 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         break;
       case HistogramTab.Skip:
         color = getColor(name, palette.skip);
+        break;
+      case HistogramTab.DualFilterType:
+        color = getColor(name, palette.dualFilterType);
         break;
       default:
         color = getColor(name);
@@ -1373,6 +1379,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
                       <MenuItem value={HistogramTab.PredictionMode} label="Prediction Mode" primaryText="Prediction Mode" />
                       <MenuItem value={HistogramTab.UVPredictionMode} label="UV Prediction Mode" primaryText="UV Prediction Mode" />
                       <MenuItem value={HistogramTab.Skip} label="Skip" primaryText="Skip" />
+                      <MenuItem value={HistogramTab.DualFilterType} label="Dual Filter Type" primaryText="Dual Filter Type" />
                     </DropDownMenu>
                   </ToolbarGroup>
                 </Toolbar>
