@@ -1489,6 +1489,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
 
   drawFilters(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let dualFilterTypeGrid = frame.json["dualFilterType"];
+    if (!dualFilterTypeGrid) return;
     let dualFilterTypeMapByValue = reverseMap(frame.json["dualFilterTypeMap"]);
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       ctx.fillStyle = getColor(dualFilterTypeMapByValue[dualFilterTypeGrid[r][c]], palette.dualFilterType);
