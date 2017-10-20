@@ -130,7 +130,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       return;
     }
     let self = this;
-    this.playerInterval = setInterval(() => {
+    this.playerInterval = window.setInterval(() => {
       if (!this.players.every(player => player.canAdvanceOffsetWithoutLooping(true))) {
         if (this.state.isLooping) {
           this.players.forEach(player => player.resetFrameOffset());
