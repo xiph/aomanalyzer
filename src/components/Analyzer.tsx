@@ -372,6 +372,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   showSuperBlockGrid: boolean;
   showTransformGrid: boolean;
   showSkip: boolean;
+  showFilters: boolean;
   showCDEF: boolean;
   showMode: boolean;
   showUVMode: boolean;
@@ -555,6 +556,14 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       value: undefined,
       icon: "icon-t"
     },
+    showFilters: {
+      key: "e",
+      description: "Filters",
+      detail: "Display filters.",
+      default: false,
+      value: undefined,
+      icon: "icon-t"
+    },
     showCDEF: {
       key: "d",
       description: "CDEF",
@@ -714,6 +723,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.save();
     ctx.globalAlpha = 0.5;
     this.state.showSkip && this.drawSkip(frame, ctx, src, dst);
+    this.state.showFilters && this.drawFilters(frame, ctx, src, dst);
     this.state.showMode && this.drawMode("mode", frame, ctx, src, dst);
     this.state.showUVMode && this.drawMode("uv_mode", frame, ctx, src, dst);
     this.state.showBits && this.drawBits(frame, ctx, src, dst);
@@ -1473,6 +1483,15 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         return false;
       }
       ctx.fillStyle = palette.skip.SKIP;
+      return true;
+    });
+  }
+
+  drawFilters(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
+    let dualFilterTypeGrid = frame.json["dualFilterType"];
+    let dualFilterTypeMapByValue = reverseMap(frame.json["dualFilterTypeMap"]);
+    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
+      ctx.fillStyle = getColor(dualFilterTypeMapByValue[dualFilterTypeGrid[r][c]], palette.dualFilterType);
       return true;
     });
   }
