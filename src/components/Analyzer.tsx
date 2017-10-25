@@ -254,6 +254,9 @@ export class FrameInfoComponent extends React.Component<{
           <TableRow>
             <TableRowColumn>MI Size</TableRowColumn><TableRowColumn style={valueStyle}>{1 << frame.miSizeLog2}</TableRowColumn>
           </TableRow>
+          <TableRow>
+            <TableRowColumn>DeltaQ Res / Present Flag</TableRowColumn><TableRowColumn style={valueStyle}>{frame.json.deltaQRes} / {frame.json.deltaQPresentFlag}</TableRowColumn>
+          </TableRow>
         </TableBody>
       </Table>
     </div>
@@ -314,6 +317,12 @@ export class ModeInfoComponent extends React.Component<{
       let map = json["dualFilterTypeMap"];
       return keyForValue(map, json["dualFilterType"][r][c]);
     }
+    function getDeltaQIndex() {
+      if (json["delta_q"] === undefined) {
+        return "N/A";
+      }
+      return json["delta_q"][r][c];
+    }
     let valueStyle = { textAlign: "right", fontSize: "12px" };
     return <div>
       <Table>
@@ -353,6 +362,9 @@ export class ModeInfoComponent extends React.Component<{
           </TableRow>
           <TableRow>
             <TableRowColumn>Dual Filter Type</TableRowColumn><TableRowColumn style={valueStyle}>{getDualFilterType()}</TableRowColumn>
+          </TableRow>
+          <TableRow>
+            <TableRowColumn>DeltaQ Index</TableRowColumn><TableRowColumn style={valueStyle}>{getDeltaQIndex()}</TableRowColumn>
           </TableRow>
         </TableBody>
       </Table>
@@ -1489,6 +1501,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
 
   drawFilters(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let dualFilterTypeGrid = frame.json["dualFilterType"];
+    if (!dualFilterTypeGrid) return;
     let dualFilterTypeMapByValue = reverseMap(frame.json["dualFilterTypeMap"]);
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       ctx.fillStyle = getColor(dualFilterTypeMapByValue[dualFilterTypeGrid[r][c]], palette.dualFilterType);

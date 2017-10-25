@@ -52,7 +52,7 @@ export class HistogramComponent extends React.Component<{
     TRACE_RENDERING && console.log("renderHistogram");
     let names: string [] = null;
     let nameMap: { [id: string]: number };
-    if (!histograms.length) {
+    if (!histograms.length || !histograms[0]) {
       return;
     }
     nameMap = histograms[0].names;
