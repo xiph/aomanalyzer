@@ -289,6 +289,8 @@ export class AnalyzerFrame {
     baseQIndex: number;
     clpfSize: number;
     clpfStrengthY: number;
+    deltaQRes: number;
+    deltaQPresentFlag: number;
     config: {
       MI_SIZE: number
     };
@@ -414,6 +416,8 @@ function readFrameFromJson(json): AnalyzerFrame {
   uncompress(json["cfl_alpha_idx"]);
   uncompress(json["cfl_alpha_sign"]);
   uncompress(json["dualFilterType"]);
+  uncompress(json["delta_q"]);
+  uncompress(json["seg_id"]);
 
   let frame = new AnalyzerFrame();
   frame.json = json;
