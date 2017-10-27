@@ -417,6 +417,7 @@ function readFrameFromJson(json): AnalyzerFrame {
   uncompress(json["cfl_alpha_sign"]);
   uncompress(json["dualFilterType"]);
   uncompress(json["delta_q"]);
+  uncompress(json["seg_id"]);
 
   let frame = new AnalyzerFrame();
   frame.json = json;

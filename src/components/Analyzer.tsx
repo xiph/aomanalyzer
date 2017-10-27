@@ -323,6 +323,12 @@ export class ModeInfoComponent extends React.Component<{
       }
       return json["delta_q"][r][c];
     }
+    function getSegId() {
+      if (json["seg_id"] === undefined) {
+        return "N/A";
+      }
+      return json["seg_id"][r][c];
+    }
     let valueStyle = { textAlign: "right", fontSize: "12px" };
     return <div>
       <Table>
@@ -365,6 +371,9 @@ export class ModeInfoComponent extends React.Component<{
           </TableRow>
           <TableRow>
             <TableRowColumn>DeltaQ Index</TableRowColumn><TableRowColumn style={valueStyle}>{getDeltaQIndex()}</TableRowColumn>
+          </TableRow>
+          <TableRow>
+            <TableRowColumn>Segment ID</TableRowColumn><TableRowColumn style={valueStyle}>{getSegId()}</TableRowColumn>
           </TableRow>
         </TableBody>
       </Table>
