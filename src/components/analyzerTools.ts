@@ -1016,5 +1016,9 @@ export const palette = {
 }
 
 export function getColor(name: string, palette = undefined): string {
+  if (name === undefined) {
+    console.warn("Undefined name in getColor(), make sure ENUMs are exported correctly.");
+    return "#FF0000";
+  }
   return (palette && palette[name]) || COLORS[hashString(name) % COLORS.length];
 }
