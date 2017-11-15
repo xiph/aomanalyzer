@@ -20,10 +20,14 @@ onmessage = function (e) {
           // analyzer files may not have compression.
           native._set_compress && native._set_compress(1);
           let buildConfig;
-          if (!native._get_aom_codec_build_config) {
+          if (native._get_aom_codec_build_config) {
+            // TODO: Remove after a while, make sure libaom is updated to use |_get_codec_build_config|.
+            buildConfig = native.UTF8ToString(native._get_aom_codec_build_config());
+          } else if (native._get_codec_build_config) {
+            buildConfig = native.UTF8ToString(native._get_codec_build_config());
+          } else {
             buildConfig = "N/A";
           }
-          buildConfig = native.UTF8ToString(native._get_aom_codec_build_config());
           postMessage({
             command: "loadResult",
             payload: {
@@ -74,7 +78,8 @@ interface Native {
   _open_file(): number;
   _set_layers(layers: number): number;
   _set_compress(compress: number): number;
-  _get_aom_codec_build_config(): number;
+  _get_codec_build_config(): number;
+  _get_aom_codec_build_config(): number; // Legacy for AV1
   FS: any;
   HEAPU8: Uint8Array;
   UTF8ToString(p: number): string;
