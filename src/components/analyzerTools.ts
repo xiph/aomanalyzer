@@ -886,6 +886,7 @@ export function log2(n: number): number {
 export function makeBlockSizeLog2MapByValue(blockSizeMap): [number, number][] {
   let byValue = [];
   for (let key in blockSizeMap) {
+    assert(key in blockSizeLog2MapByName, `Key ${key} not found in blockSizeLog2MapByName.`);
     byValue[blockSizeMap[key]] = blockSizeLog2MapByName[key];
   }
   return byValue;
@@ -894,6 +895,7 @@ export function makeBlockSizeLog2MapByValue(blockSizeMap): [number, number][] {
 export function makeTransformSizeLog2MapByValue(transformSizeMap): [number, number][] {
   let byValue = [];
   for (let key in transformSizeMap) {
+    assert(key in transformSizeLog2MapByName, `Key ${key} not found in transformSizeLog2MapByName.`);
     byValue[transformSizeMap[key]] = transformSizeLog2MapByName[key];
   }
   return byValue;
