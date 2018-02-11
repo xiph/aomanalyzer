@@ -858,7 +858,10 @@ const transformSizeLog2MapByName = {
   TX_16X32: [4, 5],
   TX_32X8: [5, 3],
   TX_32X16: [5, 4],
-  TX_32X32: [5, 5]
+  TX_32X32: [5, 5],
+  TX_32X64: [5, 6],
+  TX_64X32: [6, 5],
+  TX_64X64: [6, 6]
 }
 
 export function padLeft(v, n) {
@@ -883,6 +886,7 @@ export function log2(n: number): number {
 export function makeBlockSizeLog2MapByValue(blockSizeMap): [number, number][] {
   let byValue = [];
   for (let key in blockSizeMap) {
+    assert(key in blockSizeLog2MapByName, `Key ${key} not found in blockSizeLog2MapByName.`);
     byValue[blockSizeMap[key]] = blockSizeLog2MapByName[key];
   }
   return byValue;
@@ -891,6 +895,7 @@ export function makeBlockSizeLog2MapByValue(blockSizeMap): [number, number][] {
 export function makeTransformSizeLog2MapByValue(transformSizeMap): [number, number][] {
   let byValue = [];
   for (let key in transformSizeMap) {
+    assert(key in transformSizeLog2MapByName, `Key ${key} not found in transformSizeLog2MapByName.`);
     byValue[transformSizeMap[key]] = transformSizeLog2MapByName[key];
   }
   return byValue;
