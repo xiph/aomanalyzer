@@ -90,11 +90,7 @@ Both the `Block Info` and `Frame Info` tabs have an accounting section. Accounti
 
 ## Building JavaScript Decoders
 
-The analyzer uses a JavaScript decoder to decode video frames and extract information out of `.ivf` files. The decoder is compiled to JavaScript using the Emscripten compiler. To build your own decoder you'll first need to install [Emscripten](https://kripken.github.io/emscripten-site/docs/getting_started/downloads.html) and then run `build_inspector.sh` in the aom `tools` directory. This will produce a `inspect.js` file in the same directory that you can use as a decoder in the analyzer.
-
-Note that the `build_inspector.sh` shell script doesn't look at the current build configuration, so you'll need to edit it to add your own configure options. (Because of limitations in the web platform, the decoder must be configured with `--disable-multithread --disable-runtime-cpu-detect --target=generic-gnu` because threading and SIMD is not yet supported in JavaScript.)
-
-If something goes wrong, you can clean the build by deleting the `.inspect` directory and try again.
+The analyzer uses a JavaScript decoder to decode video frames and extract information out of `.ivf` files. The decoder is compiled to JavaScript using the Emscripten compiler. To build your own decoder you'll first need to install [Emscripten](https://kripken.github.io/emscripten-site/docs/getting_started/downloads.html) and then follow the directions in the [AV1 Codec Library](https://aomedia.googlesource.com/aom/#emscripten-builds). This will produce a `inspect.js` file that you can use as a decoder in the analyzer.
 
 ## URL Parameters
 
