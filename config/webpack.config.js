@@ -22,7 +22,10 @@ module.exports = {
   module: {
     loaders: [
       // All files with a '.ts' or '.tsx' extension will be handled by 'ts-loader'.
-      { test: /\.tsx?$/, loader: "ts-loader" }
+      { test: /\.tsx?$/, loader: "ts-loader",
+      options: {
+        ignoreDiagnostics: [2403]
+       } }
     ]
 
     // preLoaders: [
