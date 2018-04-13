@@ -397,6 +397,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   showCDEF: boolean;
   showMode: boolean;
   showUVMode: boolean;
+  showSegment: boolean;
   showBits: boolean;
   showBitsScale: "frame" | "video" | "videos";
   showBitsMode: "linear" | "heat" | "heat-opaque";
@@ -561,6 +562,14 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       value: undefined,
       icon: "icon-l"
     },
+    showSegment: {
+      key: "v",
+      description: "Show Segment",
+      detail: "Display segment.",
+      default: false,
+      value: undefined,
+      icon: "icon-l"
+    },
     showBits: {
       key: "b",
       description: "Bits",
@@ -616,6 +625,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       showCDEF: false,
       showMode: false,
       showUVMode: false,
+      showSegment: false,
       showBits: false,
       showBitsScale: "frame",
       showBitsMode: "heat",
@@ -747,6 +757,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.state.showFilters && this.drawFilters(frame, ctx, src, dst);
     this.state.showMode && this.drawMode("mode", frame, ctx, src, dst);
     this.state.showUVMode && this.drawMode("uv_mode", frame, ctx, src, dst);
+    this.state.showSegment && this.drawSegment(frame, ctx, src, dst);
     this.state.showBits && this.drawBits(frame, ctx, src, dst);
     this.state.showCDEF && this.drawCDEF(frame, ctx, src, dst);
     this.state.showTransformType && this.drawTransformType(frame, ctx, src, dst);
@@ -1657,6 +1668,14 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     });
     ctx.restore();
   }
+  drawSegment(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
+    let segGrid = frame.json["seg_id"];
+    let segMapByValue = reverseMap(frame.json["seg_idMap"]);
+    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
+      ctx.fillStyle = getColor(segGrid[r][c], palette.seg_id);
+      return true;
+    });
+  }
   drawTransformType(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let typeGrid = frame.json["transformType"];
     let transformTypeMapByValue = reverseMap(frame.json["transformTypeMap"]);
@@ -1720,11 +1739,11 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     const V_PRED = modeMap.V_PRED;
     const H_PRED = modeMap.H_PRED;
     const D45_PRED = modeMap.D45_PRED;
-    const D63_PRED = modeMap.D63_PRED;
+    const D67_PRED = modeMap.D67_PRED;
     const D135_PRED = modeMap.D135_PRED;
-    const D117_PRED = modeMap.D117_PRED;
-    const D153_PRED = modeMap.D153_PRED;
-    const D207_PRED = modeMap.D207_PRED;
+    const D113_PRED = modeMap.D113_PRED;
+    const D157_PRED = modeMap.D157_PRED;
+    const D203_PRED = modeMap.D203_PRED;
     const DC_PRED = modeMap.DC_PRED;
 
     let scale = dst.w / src.w;
@@ -1763,6 +1782,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       let h = bounds.h;
       let hw = w / 2;
       let hh = h / 2;
+      ctx.fillStyle = getColor(modeMapByValue[m], palette.predictionMode);
+      ctx.fillRect(x, y, w, h);
       switch (m) {
         case V_PRED:
           drawLine(ctx, x + hw + lineOffset, y, 0, h);
@@ -1773,24 +1794,22 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         case D45_PRED:
           drawLine(ctx, x, y + h, w, -h);
           break;
-        case D63_PRED:
+        case D67_PRED:
           drawLine(ctx, x, y + h, hw, -h);
           break;
         case D135_PRED:
           drawLine(ctx, x, y, w, h);
           break;
-        case D117_PRED:
+        case D113_PRED:
           drawLine(ctx, x + hw, y, hw, h);
           break;
-        case D153_PRED:
+        case D157_PRED:
           drawLine(ctx, x, y + hh, w, hh);
           break;
-        case D207_PRED:
+        case D203_PRED:
           drawLine(ctx, x, y + hh, w, -hh);
           break;
         default:
-          ctx.fillStyle = getColor(modeMapByValue[m], palette.predictionMode);
-          ctx.fillRect(x, y, w, h);
           break;
       }
     }
@@ -1873,35 +1892,6 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
               let h = dr << miSizeLog2;
               visitor(size, c, r, 0, 0, rect.set(c << miSizeLog2, r << miSizeLog2, w, h), 1);
             }
-          }
-        }
-      }
-
-      // Visit sizes < MI_SIZE
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          let size = sizeGrid[r][c];
-          const sizeLog2 = allSizes[size];
-          if (sizeLog2[0] >= miSizeLog2 && sizeLog2[1] >= miSizeLog2) {
-            continue;
-          }
-          let w = 1 << sizeLog2[0];
-          let h = 1 << sizeLog2[1];
-          let C = c << miSizeLog2;
-          let R = r << miSizeLog2;
-          if (w == 4 && h == 4 || w == 2 && h == 2) {
-            visitor(size, c, r, 0, 0, rect.set(C, R, w, h), 1);
-            visitor(size, c, r, 0, 1, rect.set(C, R + h, w, h), 1);
-            visitor(size, c, r, 1, 0, rect.set(C + w, R, w, h), 1);
-            visitor(size, c, r, 1, 1, rect.set(C + w, R + h, w, h), 1);
-          } else if (w == 8 && h == 4) {
-            visitor(size, c, r, 0, 0, rect.set(C, R, w, h), 1);
-            visitor(size, c, r, 0, 1, rect.set(C, R + h, w, h), 1);
-          } else if (w == 4 && h == 8) {
-            visitor(size, c, r, 0, 0, rect.set(C, R, w, h), 1);
-            visitor(size, c, r, 1, 0, rect.set(C + w, R, w, h), 1);
-          } else {
-            unreachable();
           }
         }
       }
