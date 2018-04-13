@@ -287,6 +287,13 @@ export class AnalyzerFrame {
     frameType: number;
     showFrame: number;
     baseQIndex: number;
+    filter_level_y1: number;
+    filter_level_y2: number;
+    filter_level_u: number;
+    filter_level_v: number;
+    restoration_type_y: number;
+    restoration_type_u: number;
+    restoration_type_v: number;
     clpfSize: number;
     clpfStrengthY: number;
     deltaQRes: number;
@@ -861,7 +868,9 @@ const transformSizeLog2MapByName = {
   TX_32X32: [5, 5],
   TX_32X64: [5, 6],
   TX_64X32: [6, 5],
-  TX_64X64: [6, 6]
+  TX_64X64: [6, 6],
+  TX_16X64: [4, 6],
+  TX_64X16: [6, 4]
 }
 
 export function padLeft(v, n) {
@@ -948,6 +957,17 @@ export const palette = {
     TX_32X16:               "#00372a",
     TX_32X32:               "#ff9556"
   },
+  seg_id: {
+    0:                      "#f4ffc3",
+    1:                      "#622cd8",
+    2:                      "#deff76",
+    3:                      "#ff50ed",
+    4:                      "#6895ff",
+    5:                      "#014bb5",
+    6:                      "#ffbd35",
+    7:                      "#682bff",
+    8:                      "#e62b00",
+  },
   transformType: {
     DCT_DCT:                "#f4ffc3",
     ADST_DCT:               "#622cd8",
@@ -976,12 +996,14 @@ export const palette = {
     H_PRED:                 "#801cd1",
     D45_PRED:               "#a0ff78",
     D135_PRED:              "#ff4ff7",
-    D117_PRED:              "#02c45a",
-    D153_PRED:              "#2d64ff",
-    D207_PRED:              "#91b900",
-    D63_PRED:               "#001d80",
+    D113_PRED:              "#02c45a",
+    D157_PRED:              "#2d64ff",
+    D203_PRED:              "#91b900",
+    D67_PRED:               "#001d80",
     SMOOTH_PRED:            "#78ff9f",
-    TM_PRED:                "#410065",
+    SMOOTH_V_PRED:          "#08ff9f",
+    SMOOTH_H_PRED:          "#f8ff9f",
+    PAETH_PRED:             "#410065",
     NEARESTMV:              "#8affe8",
     NEARMV:                 "#ee007d",
     ZEROMV:                 "#01ad84",
