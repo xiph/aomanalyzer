@@ -8,22 +8,23 @@
     "build-watch": "webpack --watch --config config/webpack.config.js",
     "build-debug": "webpack --display-reasons --progress --config config/webpack.config.js",
     "build-release": "webpack -p --config config/webpack.config.js",
-    "package-darwin": "electron-packager . --platform=darwin --arch=x64 --electron-version=1.4.16 --overwrite --icon=vomit.icns --out=release_builds --tmpdir=/tmp",
-    "package-linux": "electron-packager . --platform=linux --arch=x64 --electron-version=1.4.16 --overwrite  --out=release_builds --tmpdir=/tmp",
-    "package-win32": "electron-packager . --platform=win32 --arch=x64 --electron-version=1.4.16 --overwrite  --out=release_builds --tmpdir=/tmp"
+    "package-darwin": "electron-packager . --platform=darwin --arch=x64 --electron-version=2.0.8 --overwrite --icon=vomit.icns --out=release_builds --tmpdir=/tmp",
+    "package-linux": "electron-packager . --platform=linux --arch=x64 --electron-version=2.0.8 --overwrite  --out=release_builds --tmpdir=/tmp",
+    "package-win32": "electron-packager . --platform=win32 --arch=x64 --electron-version=2.0.8 --overwrite  --out=release_builds --tmpdir=/tmp"
   },
   "author": "Michael Bebenita",
   "license": "ISC",
   "devDependencies": {
     "@types/react": "16.0.15",
     "@types/react-dom": "16.0.2",
-    "electron-packager": "^8.6.0",
+    "electron-packager": "^8.7.2",
     "ts-loader": "^2.0.3",
     "typescript": "^2.2.2",
     "webpack": "^2.3.3"
   },
   "dependencies": {
     "argparse": "^1.0.9",
+    "electron": "^2.0.8",
     "electron-packager-dummy-wine": "^1.0.2",
     "file-saver": "^1.3.3",
     "material-ui": "0.19.4",

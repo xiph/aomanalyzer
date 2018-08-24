@@ -1,5 +1,6 @@
 declare var importScripts;
 declare var DecoderModule;
+declare var TextDecoder;
 
 function assert(c: boolean, message: string = "") {
   if (!c) {
@@ -7,13 +8,18 @@ function assert(c: boolean, message: string = "") {
   }
 }
 
+var decoderPathPrefix = "";
+
 onmessage = function (e) {
   // console.log("Worker: " + e.data.command);
   switch (e.data.command) {
     case "load":
       try {
-        importScripts.apply(self, e.data.payload);
-        load(e.data.payload[0], (nativeModule) => {
+        let payload = e.data.payload;
+        let path = payload[0];
+        decoderPathPrefix = path.substring(0, path.lastIndexOf("/") + 1);
+        importScripts.apply(self, payload);
+        load(payload[0], (nativeModule) => {
           native = nativeModule;
           // TODO: Remove after a while. For backwards compatibility, older
           // analyzer files may not have compression.
@@ -89,17 +95,11 @@ let frameRate = 0;
 let buffer: Uint8Array = null;
 let json = null;
 
-function getWasmBinaryFilePath(path: string) {
-  let i = path.lastIndexOf(".js");
-  if (i >= 0) {
-    return path.substring(0, i) + ".wasm";
-  }
-  return null;
-}
-
 function load(path: string, ready: (native: any) => void) {
   var Module = {
-    wasmBinaryFile: getWasmBinaryFilePath(path),
+    locateFile: function (path) {
+      return decoderPathPrefix + path;
+    },
     noExitRuntime: true,
     noInitialRun: true,
     preRun: [],
