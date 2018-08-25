@@ -109,6 +109,18 @@ function getLineOffset(lineWidth: number) {
   return lineWidth % 2 == 0 ? 0 : 0.5;
 }
 
+function toCflAlphas(cfl_alpha_idx: number, cfl_alpha_sign: number) {
+  cfl_alpha_idx &= 255;
+  cfl_alpha_sign &= 7;
+  let sign_u = ((cfl_alpha_sign + 1) * 11) >> 5;
+  let sign_v = cfl_alpha_sign + 1 - 3 * sign_u;
+  let alpha_u = 1 + (cfl_alpha_idx >> 4);
+  let alpha_v = 1 + (cfl_alpha_idx & 15);
+  let cfl_alpha_u = [0, -1, 1][sign_u] * alpha_u;
+  let cfl_alpha_v = [0, -1, 1][sign_v] * alpha_v;
+  return [cfl_alpha_u, cfl_alpha_v];
+}
+
 function drawVector(ctx: CanvasRenderingContext2D, a: Vector, b: Vector) {
   ctx.beginPath();
   ctx.moveTo(a.x, a.y);
@@ -306,9 +318,8 @@ export class ModeInfoComponent extends React.Component<{
       }
       let cfl_alpha_idx = json["cfl_alpha_idx"][r][c];
       let cfl_alpha_sign = json["cfl_alpha_sign"][r][c];
-      let cfl_alpha_sign_u = cfl_alpha_sign & 1;
-      let cfl_alpha_sign_v = cfl_alpha_sign >> 1;
-      return `${cfl_alpha_idx}, ${"-+"[cfl_alpha_sign_u]}U, ${"-+"[cfl_alpha_sign_v]}V`;
+      let [cfl_alpha_u, cfl_alpha_v] = toCflAlphas(cfl_alpha_idx, cfl_alpha_sign);
+      return `${cfl_alpha_u},${cfl_alpha_v}`;
     }
     function getDualFilterType() {
       if (json["dualFilterType"] === undefined) {
@@ -1734,6 +1745,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     let skipGrid = frame.json["skip"];
     let modeGrid = frame.json[type];
     let modeMap = frame.json["modeMap"];
+    let uvModeMap = frame.json["uv_modeMap"];
     let alphaIndex = frame.json["cfl_alpha_idx"];
     let modeMapByValue = reverseMap(modeMap);
     const V_PRED = modeMap.V_PRED;
@@ -1745,6 +1757,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     const D157_PRED = modeMap.D157_PRED;
     const D203_PRED = modeMap.D203_PRED;
     const DC_PRED = modeMap.DC_PRED;
+    const UV_CFL_PRED = uvModeMap.UV_CFL_PRED;
 
     let scale = dst.w / src.w;
     ctx.save();
@@ -1759,19 +1772,22 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.globalAlpha = 1;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = String(8 * this.ratio) + "pt Courier New";
+    ctx.font = String(6 * this.ratio) + "pt Courier New";
 
     this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
       bounds.multiplyScalar(scale);
       drawMode(modeGrid[r][c], bounds);
-      if (alphaIndex && type === "uv_mode" && modeGrid[r][c] === DC_PRED && !skipGrid[r][c]) {
+      if (alphaIndex && type === "uv_mode" && modeGrid[r][c] === UV_CFL_PRED) {
         if (bounds.w < 16 * this.ratio || bounds.h < 16 * this.ratio) {
           return;
         }
         let o = bounds.getCenter();
-        let i = alphaIndex[r][c];
-        ctx.fillStyle = "white";
-        ctx.fillText(i, o.x, o.y);
+        let cfl_alpha_idx = frame.json["cfl_alpha_idx"][r][c];
+        let cfl_alpha_sign = frame.json["cfl_alpha_sign"][r][c];
+        let [cfl_alpha_u, cfl_alpha_v] = toCflAlphas(cfl_alpha_idx, cfl_alpha_sign);
+        ctx.fillStyle = "black";
+        ctx.fillText(`${cfl_alpha_u}`, o.x, o.y - 4 * this.ratio);
+        ctx.fillText(`${cfl_alpha_v}`, o.x, o.y + 4 * this.ratio);
       }
     });
 
