@@ -1693,7 +1693,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       ctx.fillStyle = getColor(transformTypeMapByValue[typeGrid[r][c]], palette.transformType);
       return true;
-    });
+    }, VisitMode.TransformBlock);
   }
   drawBits(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let { blocks, total } = frame.accounting.countBits(this.state.showBitsFilter);
