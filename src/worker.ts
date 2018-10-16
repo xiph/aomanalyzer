@@ -157,6 +157,8 @@ function getReleasedBuffer(byteLength: number) {
 
 const AOM_IMG_FMT_PLANAR = 0x100;
 const AOM_IMG_FMT_HIGHBITDEPTH = 0x800;
+const AOM_IMG_FMT_I444 = AOM_IMG_FMT_PLANAR | 6;
+const AOM_IMG_FMT_I44416 = AOM_IMG_FMT_I444 | AOM_IMG_FMT_HIGHBITDEPTH
 
 function getImageFormat() {
   // TODO: Just call |native._get_image_format| directly. Older analyzer builds may not have
@@ -171,14 +173,22 @@ function readPlane(plane) {
   let depth = native._get_bit_depth();
   let width = native._get_frame_width();
   let height = native._get_frame_height();
-  let hbd = getImageFormat() & AOM_IMG_FMT_HIGHBITDEPTH;
+  let fmt = getImageFormat();
+  let hbd = fmt & AOM_IMG_FMT_HIGHBITDEPTH;
   if (hbd) {
     stride >>= 1;
   }
-  if (plane > 0) {
-    width >>= 1;
-    height >>= 1;
+  let xdec;
+  let ydec;
+  if (fmt == AOM_IMG_FMT_I444 || fmt == AOM_IMG_FMT_I44416) {
+    xdec = 0;
+    ydec = 0;
+  } else {
+    xdec = plane > 0 ? 1 : 0;
+    ydec = plane > 0 ? 1 : 0;
   }
+  width >>= xdec;
+  height >>= ydec;
   let byteLength = height * width;
   var buffer = getReleasedBuffer(byteLength);
 
@@ -231,7 +241,9 @@ function readPlane(plane) {
     stride: width,
     depth,
     width,
-    height
+    height,
+    xdec,
+    ydec
   };
 }
 
