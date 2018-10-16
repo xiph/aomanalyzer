@@ -38,6 +38,8 @@ export interface FrameImagePlane {
   width: number;
   height: number;
   stride: number;
+  xdec: number;
+  ydec: number;
 }
 
 export interface FrameImage {
@@ -66,14 +68,18 @@ function createImageData(image: FrameImage) {
 
   let p = 0;
   let bgr = 0;
+  let uxdec = image.U.xdec;
+  let vxdec = image.V.xdec;
+  let uydec = image.U.ydec;
+  let vydec = image.V.ydec;
   for (let y = 0; y < h; y++) {
     let yYs = y * Ys;
-    let yUs = (y >> 1) * Us;
-    let yVs = (y >> 1) * Vs;
+    let yUs = (y >> uydec) * Us;
+    let yVs = (y >> vydec) * Vs;
     for (let x = 0; x < w; x++) {
       let Y = YH[yYs + x];
-      let U = UH[yUs + (x >> 1)];
-      let V = VH[yVs + (x >> 1)];
+      let U = UH[yUs + (x >> uxdec)];
+      let V = VH[yVs + (x >> vxdec)];
       bgr = YUV2RGB(Y, U, V);
       let r = (bgr >> 0) & 0xFF;
       let g = (bgr >> 8) & 0xFF;
