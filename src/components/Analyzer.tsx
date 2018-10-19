@@ -51,6 +51,8 @@ enum HistogramTab {
   TransformType,
   PredictionMode,
   UVPredictionMode,
+  MotionMode,
+  CompoundType,
   Skip,
   DualFilterType
 }
@@ -249,7 +251,7 @@ export class FrameInfoComponent extends React.Component<{
             <TableRowColumn>Video</TableRowColumn><TableRowColumn style={valueStyle}>{this.props.activeGroup}</TableRowColumn>
           </TableRow>
           <TableRow>
-            <TableRowColumn>Frame</TableRowColumn><TableRowColumn style={valueStyle}>{this.props.activeFrame + 1}</TableRowColumn>
+            <TableRowColumn>Frame Number</TableRowColumn><TableRowColumn style={valueStyle}>{frame.json.frame}</TableRowColumn>
           </TableRow>
           <TableRow>
             <TableRowColumn>Frame Type</TableRowColumn><TableRowColumn style={valueStyle}>{frame.json.frameType}</TableRowColumn>
@@ -363,6 +365,12 @@ export class ModeInfoComponent extends React.Component<{
             <TableRowColumn>UV Mode</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("uv_mode")}</TableRowColumn>
           </TableRow>
           <TableRow>
+            <TableRowColumn>Motion Mode</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("motion_mode")}</TableRowColumn>
+          </TableRow>
+          <TableRow>
+            <TableRowColumn>Compound Type</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("compound_type")}</TableRowColumn>
+          </TableRow>
+          <TableRow>
             <TableRowColumn>Skip</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("skip")}</TableRowColumn>
           </TableRow>
           <TableRow>
@@ -408,6 +416,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   showCDEF: boolean;
   showMode: boolean;
   showUVMode: boolean;
+  showMotionMode: boolean;
+  showCompoundType: boolean;
   showSegment: boolean;
   showBits: boolean;
   showBitsScale: "frame" | "video" | "videos";
@@ -573,6 +583,22 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       value: undefined,
       icon: "icon-l"
     },
+    showMotionMode: {
+      key: "#",
+      description: "Motion Mode",
+      detail: "Display motion modes.",
+      default: false,
+      value: undefined,
+      icon: "icon-l"
+    },
+    showCompoundType: {
+      key: "@",
+      description: "Compound Type",
+      detail: "Display compound type.",
+      default: false,
+      value: undefined,
+      icon: "icon-l"
+    },
     showSegment: {
       key: "v",
       description: "Show Segment",
@@ -636,6 +662,9 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       showCDEF: false,
       showMode: false,
       showUVMode: false,
+      showMotionMode: false,
+      showCompoundType: false,
+      showVMode: false,
       showSegment: false,
       showBits: false,
       showBitsScale: "frame",
@@ -768,6 +797,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.state.showFilters && this.drawFilters(frame, ctx, src, dst);
     this.state.showMode && this.drawMode("mode", frame, ctx, src, dst);
     this.state.showUVMode && this.drawMode("uv_mode", frame, ctx, src, dst);
+    this.state.showMotionMode && this.drawMotionMode(frame, ctx, src, dst);
+    this.state.showCompoundType && this.drawCompoundType(frame, ctx, src, dst);
     this.state.showSegment && this.drawSegment(frame, ctx, src, dst);
     this.state.showBits && this.drawBits(frame, ctx, src, dst);
     this.state.showCDEF && this.drawCDEF(frame, ctx, src, dst);
@@ -1179,6 +1210,10 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         return frames.map(x => x.predictionModeHist);
       case HistogramTab.UVPredictionMode:
         return frames.map(x => x.uvPredictionModeHist);
+      case HistogramTab.MotionMode:
+        return frames.map(x => x.motionModeHist);
+      case HistogramTab.CompoundType:
+        return frames.map(x => x.compoundTypeHist);
       case HistogramTab.Skip:
         return frames.map(x => x.skipHist);
       case HistogramTab.DualFilterType:
@@ -1199,6 +1234,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       case HistogramTab.TransformType:
         color = getColor(name, palette.transformType);
         break;
+      case HistogramTab.MotionMode:
+      case HistogramTab.CompoundType:
       case HistogramTab.PredictionMode:
       case HistogramTab.UVPredictionMode:
         color = getColor(name, palette.predictionMode);
@@ -1431,6 +1468,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
                       <MenuItem value={HistogramTab.TransformType} label="Transform Type" primaryText="Transform Type" />
                       <MenuItem value={HistogramTab.PredictionMode} label="Prediction Mode" primaryText="Prediction Mode" />
                       <MenuItem value={HistogramTab.UVPredictionMode} label="UV Prediction Mode" primaryText="UV Prediction Mode" />
+                      <MenuItem value={HistogramTab.MotionMode} label="Motion Mode" primaryText="Motion Mode" />
+                      <MenuItem value={HistogramTab.CompoundType} label="Compound Type" primaryText="Compound Type" />
                       <MenuItem value={HistogramTab.Skip} label="Skip" primaryText="Skip" />
                       <MenuItem value={HistogramTab.DualFilterType} label="Dual Filter Type" primaryText="Dual Filter Type" />
                     </DropDownMenu>
@@ -1679,6 +1718,22 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     });
     ctx.restore();
   }
+  drawMotionMode(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
+    let compoundTypeMap = reverseMap(frame.json["motion_modeMap"]);
+    let motionModeTypeGrid = frame.json["motion_mode"];
+    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
+      ctx.fillStyle = getColor(motionModeTypeGrid[r][c], palette.motion_mode);
+      return true;
+    });
+  }
+  drawCompoundType(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
+    let compoundTypeMap = reverseMap(frame.json["compound_typeMap"]);
+    let compoundTypeGrid = frame.json["compound_type"];
+    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
+      ctx.fillStyle = getColor(compoundTypeGrid[r][c], palette.compound_type);
+      return true;
+    });
+  }
   drawSegment(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     let segGrid = frame.json["seg_id"];
     let segMapByValue = reverseMap(frame.json["seg_idMap"]);
@@ -1746,6 +1801,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     let modeGrid = frame.json[type];
     let modeMap = frame.json["modeMap"];
     let uvModeMap = frame.json["uv_modeMap"];
+    let motionModeMap = frame.json["motion_modeMap"];
     let alphaIndex = frame.json["cfl_alpha_idx"];
     let modeMapByValue = reverseMap(modeMap);
     const V_PRED = modeMap.V_PRED;

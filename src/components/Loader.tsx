@@ -112,7 +112,7 @@ export class LoaderComponent extends React.Component<LoaderComponentProps, {
   decodeFrames(decoder: Decoder, count: number): Promise<AnalyzerFrame[]> {
     // If we use the split view, we don't need any layers making decoding faster.
     if (!this.props.split && !this.props.bench) {
-      decoder.setLayers(0xffffffff);
+      decoder.setLayers(0xffffffffff);
     }
     if (this.props.bench == 1) {
       decoder.shouldReadImageData = false;

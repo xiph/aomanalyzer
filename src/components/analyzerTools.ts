@@ -290,6 +290,7 @@ export class Histogram {
 
 export class AnalyzerFrame {
   json: {
+    frame: number;
     frameType: number;
     showFrame: number;
     baseQIndex: number;
@@ -314,6 +315,8 @@ export class AnalyzerFrame {
   transformTypeHist: Histogram;
   predictionModeHist: Histogram;
   uvPredictionModeHist: Histogram;
+  motionModeHist: Histogram;
+  compoundTypeHist: Histogram;
   skipHist: Histogram;
   dualFilterTypeHist: Histogram;
   frameImage: FrameImage;
@@ -420,6 +423,8 @@ function readFrameFromJson(json): AnalyzerFrame {
   uncompress(json["transformType"]);
   uncompress(json["mode"]);
   uncompress(json["uv_mode"]);
+  uncompress(json["motion_mode"]);
+  uncompress(json["compound_type"]);
   uncompress(json["skip"]);
   uncompress(json["filter"]);
   uncompress(json["cdef_level"]);
@@ -441,6 +446,8 @@ function readFrameFromJson(json): AnalyzerFrame {
   frame.transformTypeHist = getHistogramFromJson(json, "transformType");
   frame.predictionModeHist = getHistogramFromJson(json, "mode");
   frame.uvPredictionModeHist = getHistogramFromJson(json, "uv_mode");
+  frame.motionModeHist = getHistogramFromJson(json, "motion_mode");
+  frame.compoundTypeHist = getHistogramFromJson(json, "compound_type");
   frame.dualFilterTypeHist = getHistogramFromJson(json, "dualFilterType");
   frame.miSizeLog2 = log2(json.config.MI_SIZE);
   frame.miSuperSizeLog2 = log2(64); // TODO: Does this ever change?
@@ -974,6 +981,17 @@ export const palette = {
     7:                      "#682bff",
     8:                      "#e62b00",
   },
+  motion_mode: {
+    0:                      "#a45a00",
+    1:                      "#00a781",
+    2:                      "#ff70a6",
+  },
+  compound_type: {
+    0:                      "#00372a",
+    1:                      "#ff9556",
+    2:                      "#7a0032",
+  },
+
   transformType: {
     DCT_DCT:                "#f4ffc3",
     ADST_DCT:               "#622cd8",
