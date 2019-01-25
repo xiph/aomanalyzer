@@ -8,10 +8,10 @@ node_js:
  - "6"
 
 env:
- - CONFIG: 'build-release'
- - CONFIG: 'build-watch'
  - CONFIG: 'package-darwin'
  - CONFIG: 'package-linux'
  - CONFIG: 'package-win32'
+ - CONFIG: 'build-release'
+ - CONFIG: 'build-watch'
 
 script: npm run $CONFIG
