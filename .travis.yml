@@ -2,7 +2,7 @@ language: node_js
 dist: xenial
 
 node_js:
- - "node"
+# - "node"
  - "10"
 
 env:
@@ -11,5 +11,9 @@ env:
  - CONFIG: 'package-darwin'
  - CONFIG: 'package-linux'
  - CONFIG: 'package-win32'
+ 
+install:
+ - npm i -D webpack-cli @webpack-cli/update
+ - npm install
  
 script: npm run $CONFIG
