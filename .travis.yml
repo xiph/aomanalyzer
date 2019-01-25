@@ -14,8 +14,4 @@ env:
  - CONFIG: 'package-linux'
  - CONFIG: 'package-win32'
 
-install:
- - npm install
- - npm --dev update
-
 script: npm run $CONFIG
