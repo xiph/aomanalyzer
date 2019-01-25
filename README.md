@@ -1,4 +1,4 @@
-# [AOM Analyzer](http://aomanalyzer.org)
+# [AOM Analyzer](http://aomanalyzer.org) [![Travis Build Status](https://travis-ci.org/mbebenita/aomanalyzer.svg?branch=master)](https://travis-ci.org/mbebenita/aomanalyzer)
 
 ## Install & Build
 
