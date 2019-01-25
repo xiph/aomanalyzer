@@ -12,8 +12,8 @@ env:
  - CONFIG: 'package-linux'
  - CONFIG: 'package-win32'
  
-install:
- - npm i -D webpack-cli @webpack-cli/update
- - npm install
+before_install:
+ - npm install webpack
+ - npm install webpack-cli
  
 script: npm run $CONFIG
