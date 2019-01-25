@@ -2,10 +2,10 @@ language: node_js
 dist: xenial
 
 node_js:
- - "node"
+# - "node"
  - "10"
  - "8"
- - "6"
+# - "6"
 
 env:
  - CONFIG: 'build-release'
@@ -14,6 +14,8 @@ env:
  - CONFIG: 'package-linux'
  - CONFIG: 'package-win32'
 
-before_install: npm --dev update
+install:
+ - npm install
+ - npm --dev update
 
 script: npm run $CONFIG
