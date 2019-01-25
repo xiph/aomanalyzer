@@ -1,0 +1,10 @@
+language: node_js
+
+env:
+ - CONFIG: 'build-release'
+ - CONFIG: 'build-watch'
+ - CONFIG: 'package-darwin'
+ - CONFIG: 'package-linux'
+ - CONFIG: 'package-win32'
+ 
+script: npm run $CONFIG
