@@ -1,6 +1,5 @@
 declare var importScripts;
 declare var DecoderModule;
-declare var TextDecoder;
 
 function assert(c: boolean, message: string = "") {
   if (!c) {
