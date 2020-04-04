@@ -156,6 +156,8 @@ function getReleasedBuffer(byteLength: number) {
 
 const AOM_IMG_FMT_PLANAR = 0x100;
 const AOM_IMG_FMT_HIGHBITDEPTH = 0x800;
+const AOM_IMG_FMT_I422 = AOM_IMG_FMT_PLANAR | 5;
+const AOM_IMG_FMT_I42216 = AOM_IMG_FMT_I422 | AOM_IMG_FMT_HIGHBITDEPTH
 const AOM_IMG_FMT_I444 = AOM_IMG_FMT_PLANAR | 6;
 const AOM_IMG_FMT_I44416 = AOM_IMG_FMT_I444 | AOM_IMG_FMT_HIGHBITDEPTH
 
@@ -181,6 +183,9 @@ function readPlane(plane) {
   let ydec;
   if (fmt == AOM_IMG_FMT_I444 || fmt == AOM_IMG_FMT_I44416) {
     xdec = 0;
+    ydec = 0;
+  } else if (fmt == AOM_IMG_FMT_I422 || fmt == AOM_IMG_FMT_I42216) {
+    xdec = plane > 0 ? 1 : 0;
     ydec = 0;
   } else {
     xdec = plane > 0 ? 1 : 0;
