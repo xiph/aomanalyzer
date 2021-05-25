@@ -713,7 +713,6 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
 
     // Draw frameCanvas to displayCanvas
     (this.displayContext as any).imageSmoothingEnabled = false;
-    (this.displayContext as any).mozImageSmoothingEnabled = false;
     let dw = this.frameSize.w * this.state.scale * this.ratio;
     let dh = this.frameSize.h * this.state.scale * this.ratio;
     if (this.state.showDecodedImage) {
@@ -750,7 +749,6 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
 
     this.zoomContext.clearRect(0, 0, dst.w, dst.h);
     if (this.state.showDecodedImage) {
-      (this.zoomContext as any).mozImageSmoothingEnabled = false;
       (this.zoomContext as any).imageSmoothingEnabled = false;
       this.zoomContext.clearRect(dst.x, dst.y, dst.w, dst.h);
       this.zoomContext.drawImage(this.frameCanvas,
