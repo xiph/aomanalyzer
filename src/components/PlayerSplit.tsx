@@ -175,8 +175,8 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
         document.exitFullscreen();
       } else if((document as any).mozCancelFullScreen) {
         (document as any).mozCancelFullScreen();
-      } else if(document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
+      } else if((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
       }
     }
     function launchIntoFullscreen(element) {
