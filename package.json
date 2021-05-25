@@ -19,7 +19,7 @@
     "@types/react-dom": "16.0.2",
     "electron-packager": "^14.0.2",
     "ts-loader": "^2.0.3",
-    "typescript": "^2.2.2",
+    "typescript": "^4.2.4",
     "webpack": "^2.3.3"
   },
   "dependencies": {
