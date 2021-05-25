@@ -35,6 +35,23 @@ interface PlayerSplitComponentProps {
   onVoted?: (vote: any) => void;
 }
 
+declare global {
+  interface Document {
+    mozCancelFullScreen?: () => Promise<void>;
+    msExitFullscreen?: () => Promise<void>;
+    webkitExitFullscreen?: () => Promise<void>;
+    mozFullScreenElement?: Element;
+    msFullscreenElement?: Element;
+    webkitFullscreenElement?: Element;
+  }
+
+  interface HTMLElement {
+    msRequestFullscreen?: () => Promise<void>;
+    mozRequestFullscreen?: () => Promise<void>;
+    webkitRequestFullscreen?: () => Promise<void>;
+  }
+}
+
 function generateUUID() { // Public Domain/MIT
   var d = new Date().getTime();
   if (typeof performance !== 'undefined' && typeof performance.now === 'function'){
@@ -173,10 +190,10 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     function exitFullscreen() {
       if(document.exitFullscreen) {
         document.exitFullscreen();
-      } else if((document as any).mozCancelFullScreen) {
-        (document as any).mozCancelFullScreen();
-      } else if((document as any).webkitExitFullscreen) {
-        (document as any).webkitExitFullscreen();
+      } else if(document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if(document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
       }
     }
     function launchIntoFullscreen(element) {
