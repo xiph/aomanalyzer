@@ -714,7 +714,7 @@ export class Decoder {
           this.workerInfo = {
             buildConfig: e.data.payload.buildConfig
           }
-          resolve();
+          resolve(null);
         } else {
           reject(`Cannot load decoder, check url: ${url}`);
         }
