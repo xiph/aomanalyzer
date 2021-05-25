@@ -14,5 +14,6 @@
     "exclude": [
         "node_modules",
         "release_builds"
-    ]
+    ],
+    "typeRoots": ["./node_modules/@types"]
 }
