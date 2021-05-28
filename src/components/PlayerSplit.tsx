@@ -1,32 +1,32 @@
 import * as React from "react";
 
-import Paper from 'material-ui/Paper';
-import Dialog from 'material-ui/Dialog';
-import { Toolbar, ToolbarGroup, ToolbarSeparator, ToolbarTitle } from 'material-ui/Toolbar';
-import IconButton from 'material-ui/IconButton';
-import FontIcon from 'material-ui/FontIcon';
-import Checkbox from 'material-ui/Checkbox';
-import { grey900, grey800, grey100, grey200, red100, red500, red600, red700, red800, red900, deepOrange500 } from 'material-ui/styles/colors';
 import { assert, clamp, downloadFile, Decoder, AnalyzerFrame, FrameImage } from "./analyzerTools";
-import LinearProgress from 'material-ui/LinearProgress';
-import CircularProgress from 'material-ui/CircularProgress';
-import RaisedButton from 'material-ui/RaisedButton';
-import FlatButton from 'material-ui/FlatButton';
-import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from 'material-ui/Table';
-
-import TextField from 'material-ui/TextField';
 import { YUVCanvas } from '../YUVCanvas';
 import { PlayerComponent } from './Player';
 import { CalibrateComponent } from './Calibrate'
+import Button from "@material-ui/core/Button";
+import Dialog from "@material-ui/core/Dialog";
+import Stepper from "@material-ui/core/Stepper";
+import Step from "@material-ui/core/Step";
+import StepLabel from "@material-ui/core/StepLabel";
+import TextField from "@material-ui/core/TextField";
+import {DialogActions, DialogContent, DialogTitle, IconButton, Toolbar, Tooltip, Typography} from "@material-ui/core";
+import { deepOrange } from "@material-ui/core/colors";
+import InfoOutlinedIcon from "@material-ui/icons/InfoOutlined";
+import ReplayIcon from '@material-ui/icons/Replay';
+import SkipPreviousIcon from '@material-ui/icons/SkipPrevious';
+import StopIcon from '@material-ui/icons/Stop';
+import PlayArrowIcon from '@material-ui/icons/PlayArrow';
+import SkipNextIcon from '@material-ui/icons/SkipNext';
+import ZoomOutIcon from '@material-ui/icons/ZoomOut';
+import ZoomInIcon from '@material-ui/icons/ZoomIn';
+import LoopIcon from '@material-ui/icons/Loop';
+import AspectRatioIcon from '@material-ui/icons/AspectRatio';
+import FullscreenIcon from '@material-ui/icons/Fullscreen';
+import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
+
 
 declare const Mousetrap;
-
-import {
-  Step,
-  Stepper,
-  StepLabel,
-  StepContent,
-} from 'material-ui/Stepper';
 
 const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 interface PlayerSplitComponentProps {
@@ -103,8 +103,8 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     state: undefined,
     playerDecodeStats: undefined
   };
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     if (!localStorage["voterID"]) {
       localStorage["voterID"] = generateUUID();
     }
@@ -328,22 +328,21 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     return (
       <div style={{margin: '12px 0'}}>
         {step > 0 && (
-          <FlatButton
-            label="Back"
+          <Button
             disabled={directionsStepIndex === 0}
             disableTouchRipple={true}
             disableFocusRipple={true}
-            onTouchTap={this.handlePrev.bind(this)}
+            onClick={this.handlePrev.bind(this)}
             style={{marginRight: 12}}
-          />
+          >Back</Button>
         )}
-        <RaisedButton
-          label={directionsStepIndex >= 3 ? 'Finish' : 'Next'}
+        <Button
+          variant="contained"
+          color="primary"
           disableTouchRipple={true}
           disableFocusRipple={true}
-          primary={true}
-          onTouchTap={this.handleNext.bind(this)}
-        />
+          onClick={this.handleNext.bind(this)}
+        >{directionsStepIndex >= 3 ? 'Finish' : 'Next'}</Button>
       </div>
     );
   }
@@ -427,7 +426,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     }
     if (this.props.isVotingEnabled) {
       voteButtons = this.props.videos.map((video, i) => {
-        return <RaisedButton disabled={!this.state.playersInitialized[i]} style={buttonStyle} key={i} label={ABC[i]} onTouchTap={this.onVote.bind(this, i)} />
+        return <Button variant="contained" disabled={!this.state.playersInitialized[i]} style={buttonStyle} key={i} onClick={this.onVote.bind(this, i)}>{ABC[i]}</Button>
       });
       let allInitialized = true;
       this.props.videos.forEach((video, i) => {
@@ -435,26 +434,21 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
           allInitialized = false;
         }
       });
-      voteButtons.push(<RaisedButton disabled={!allInitialized} style={buttonStyle} key="tie" label={"Tie"} onTouchTap={this.onVote.bind(this, -1)} />)
+      voteButtons.push(<Button variant="contained" disabled={!allInitialized} style={buttonStyle} key="tie" onClick={this.onVote.bind(this, -1)}>Tie</Button>)
     }
     let toggleButtons = this.props.videos.map((video, i) => {
-      return <RaisedButton style={buttonStyle} primary={this.state.focus === i} key={i} label={ABC[i]} onTouchTap={() => this.setState({ focus: i } as any)}/>
+      return <Button  variant="contained" color={this.state.focus === i ? 'primary' : undefined} style={buttonStyle} key={i} onClick={() => this.setState({ focus: i } as any)}>{ABC[i]}</Button>
     });
-    toggleButtons.push(<RaisedButton style={buttonStyle} primary={this.state.focus === -1} key="split" label={"Split"} onTouchTap={(event, focus) => this.setState({ focus: -1 } as any)} />);
+    toggleButtons.push(<Button  variant="contained" color={this.state.focus === -1 ? 'primary' : undefined} style={buttonStyle} key="split" onClick={() => this.setState({ focus: -1 } as any)} >Split</Button>);
 
-    let customContentStyle = {
-      width: '1200px',
-      maxWidth: 'none'
-    };
     return <div className="maxWidthAndHeight">
       <Dialog
-        bodyStyle={{backgroundColor: "black"}}
-        contentStyle={customContentStyle}
-        modal={true}
-        title="Directions"
         open={this.state.directionsStepIndex < 4}
+        maxWidth={false}
       >
-        <Stepper width={1024} activeStep={this.state.directionsStepIndex}>
+        <DialogTitle>Directions</DialogTitle>
+        <DialogContent>
+        <Stepper activeStep={this.state.directionsStepIndex}>
             <Step>
               <StepLabel style={{color: "white"}}>Introduction</StepLabel>
             </Step>
@@ -529,69 +523,89 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
               {this.renderStepActions(3)}
             </div>
           }
+        </DialogContent>
       </Dialog>
-      <Dialog modal={true}
-        title="Voter ID"
+      <Dialog
         open={this.state.showVoterIDDialog}
-        actions={[
-        <FlatButton
-          label="Cancel"
-          onTouchTap={() => this.setState({showVoterIDDialog: false} as any)}
-        />,
-        <FlatButton
-          label={this.state.voterID ? "Vote" : "Vote Anonymously"}
-          primary={true}
-          onTouchTap={this.onSubmitVote.bind(this)}
-        />]}
       >
-      <TextField floatingLabelText="Voter ID" floatingLabelFixed={true} name="voterID" value={this.state.voterID} onChange={this.onVoterIDChange.bind(this)} style={{width: "100%"}}/>
+        <DialogTitle>Voter ID</DialogTitle>
+        <DialogContent>
+          <TextField label="Voter ID" name="voterID" value={this.state.voterID} onChange={this.onVoterIDChange.bind(this)} style={{width: "100%"}}/>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => this.setState({showVoterIDDialog: false} as any)}
+          >Cancel</Button>
+          <Button
+            color="primary"
+            onClick={this.onSubmitVote.bind(this)}
+          >{this.state.voterID ? "Vote" : "Vote Anonymously"}</Button>
+        </DialogActions>
       </Dialog>
       <div className="playerSplitVerticalContainer">
         {panes}
       </div>
       <Toolbar>
-        <ToolbarGroup firstChild={true}>
-          <IconButton onClick={this.showDirections.bind(this)} tooltip="Help" tooltipPosition="top-center">
-            <FontIcon className="material-icons md-24">info_outline</FontIcon>
-          </IconButton>
-          <IconButton onClick={this.resetFrameOffset.bind(this)} tooltip="Replay: r" tooltipPosition="top-center">
-            <FontIcon className="material-icons md-24">replay</FontIcon>
-          </IconButton>
-          <IconButton onClick={this.advanceOffset.bind(this, false)} tooltip="Previous: ," tooltipPosition="top-center">
-            <FontIcon className="material-icons md-24">skip_previous</FontIcon>
-          </IconButton>
-          <IconButton onClick={this.playPause.bind(this)} tooltip={"Play / Pause"} tooltipPosition="top-right">
-            <FontIcon className="material-icons md-24">{this.state.playing ? "stop" : "play_arrow"}</FontIcon>
-          </IconButton>
-          <IconButton onClick={this.advanceOffset.bind(this, true)} tooltip="Next: ." tooltipPosition="top-center">
-            <FontIcon className="material-icons md-24">skip_next</FontIcon>
-          </IconButton>
-          <IconButton onClick={this.zoom.bind(this, 1 / 2)} tooltip="Zoom Out: [" tooltipPosition="top-center">
-            <FontIcon className="material-icons md-24">zoom_out</FontIcon>
-          </IconButton>
-          <IconButton onClick={this.zoom.bind(this, 2)} tooltip="Zoom In: ]" tooltipPosition="top-center">
-            <FontIcon className="material-icons md-24">zoom_in</FontIcon>
-          </IconButton>
-          <IconButton onClick={() => this.toggleIsLooping()} tooltip="Loop" tooltipPosition="top-center">
-            <FontIcon color={this.state.isLooping ? deepOrange500 : undefined } className="material-icons md-24">loop</FontIcon>
-          </IconButton>
-          <IconButton onClick={() => this.toggleShouldFitWidth()} tooltip="Fit Width" tooltipPosition="top-center">
-            <FontIcon color={this.state.shouldFitWidth ? deepOrange500 : undefined } className="material-icons md-24">aspect_ratio</FontIcon>
-          </IconButton>
-          <IconButton onClick={() => this.toggleFullScreen()} tooltip="Full Screen" tooltipPosition="top-center">
-            <FontIcon color={this.state.isFullScreen ? deepOrange500 : undefined } className="material-icons md-24">
-              { this.state.isFullScreen ? "fullscreen_exit" : "fullscreen" }
-            </FontIcon>
-          </IconButton>
-        </ToolbarGroup>
-        <ToolbarGroup>
-          <ToolbarTitle text="View" />
+        <div>
+          <Tooltip title="Help" placement="top">
+            <IconButton onClick={this.showDirections.bind(this)}>
+              <InfoOutlinedIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Replay: r" placement="top">
+            <IconButton onClick={this.resetFrameOffset.bind(this)}>
+              <ReplayIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Previous: ," placement="top">
+            <IconButton onClick={this.advanceOffset.bind(this, false)}>
+              <SkipPreviousIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Play / Pause" placement="top-end">
+            <IconButton onClick={this.playPause.bind(this)}>
+              {this.state.playing ? <StopIcon /> : <PlayArrowIcon />}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Next: ." placement="top">
+            <IconButton onClick={this.advanceOffset.bind(this, true)}>
+              <SkipNextIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Zoom Out: [" placement="top">
+            <IconButton onClick={this.zoom.bind(this, 1 / 2)}>
+              <ZoomOutIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Zoom In: ]" placement="top">
+            <IconButton onClick={this.zoom.bind(this, 2)}>
+              <ZoomInIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Loop" placement="top">
+            <IconButton onClick={() => this.toggleIsLooping()}>
+              <LoopIcon style={{color: this.state.isLooping ? deepOrange[500] : undefined}} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Fit Width" placement="top">
+            <IconButton onClick={() => this.toggleShouldFitWidth()}>
+              <AspectRatioIcon style={{color: this.state.shouldFitWidth ? deepOrange[500] : undefined}} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Full Screen" placement="top">
+            <IconButton onClick={() => this.toggleFullScreen()}>
+              {this.state.isFullScreen ? <FullscreenExitIcon style={{color: this.state.isFullScreen ? deepOrange[500] : undefined}} /> : <FullscreenIcon style={{color: this.state.isFullScreen ? deepOrange[500] : undefined}} />}
+            </IconButton>
+          </Tooltip>
+        </div>
+        <div>
+          <Typography variant="h6">View</Typography>
           {toggleButtons}
-        </ToolbarGroup>
-        <ToolbarGroup>
-          <ToolbarTitle text="Vote" />
+        </div>
+        <div>
+          <Typography variant="h6">Vote</Typography>
           {voteButtons}
-        </ToolbarGroup>
+        </div>
       </Toolbar>
     </div>
   }
