@@ -2,10 +2,9 @@ import * as React from "react";
 
 const MAX_FRAMES = 128;
 import { downloadFile, Decoder, AnalyzerFrame } from "./analyzerTools";
-import Dialog from 'material-ui/Dialog';
-import CircularProgress from 'material-ui/CircularProgress';
 import { AnalyzerView } from './Analyzer'
 import { SplitView } from './Split'
+import {CircularProgress, Dialog, DialogContent} from "@material-ui/core";
 
 interface LoaderComponentProps {
   decoderVideoUrlPairs: { decoderUrl: string, videoUrl: string, decoderName: string }[];
@@ -34,7 +33,7 @@ export class LoaderComponent extends React.Component<LoaderComponentProps, {
     layers: 0xFFFFFFFF
   };
   constructor(props: LoaderComponentProps) {
-    super();
+    super(props);
     this.state = {
       frames: [],
       groupNames: null,
@@ -148,12 +147,11 @@ export class LoaderComponent extends React.Component<LoaderComponentProps, {
     let frames = this.state.frames;
     if (this.state.loading != "done") {
       let icon = this.state.loading === "loading" ? <span className="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> : <span className="glyphicon glyphicon-ban-circle"></span>;
-      return <Dialog
-        modal={false}
-        open={true}
-      >
+      return <Dialog open={true}>
+        <DialogContent>
         { this.props.bench ? null : <CircularProgress size={40} thickness={7} /> }
         <div style={{ paddingTop: "10px" }}>{this.state.status}</div>
+        </DialogContent>
       </Dialog>
     }
 

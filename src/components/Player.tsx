@@ -1,21 +1,9 @@
 import * as React from "react";
 
-import Paper from 'material-ui/Paper';
-import Dialog from 'material-ui/Dialog';
-import { Toolbar, ToolbarGroup, ToolbarSeparator, ToolbarTitle } from 'material-ui/Toolbar';
-import IconButton from 'material-ui/IconButton';
-import FontIcon from 'material-ui/FontIcon';
-import Checkbox from 'material-ui/Checkbox';
-import { grey900, grey800, grey100, grey200, red100, red500, red600, red700, red800, red900, deepOrange500 } from 'material-ui/styles/colors';
 import { assert, clamp, downloadFile, Decoder, AnalyzerFrame, FrameImage } from "./analyzerTools";
-import LinearProgress from 'material-ui/LinearProgress';
-import CircularProgress from 'material-ui/CircularProgress';
-import RaisedButton from 'material-ui/RaisedButton';
-import FlatButton from 'material-ui/FlatButton';
-import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from 'material-ui/Table';
-import Toggle from 'material-ui/Toggle';
-import TextField from 'material-ui/TextField';
 import { YUVCanvas } from '../YUVCanvas';
+import {CircularProgress, LinearProgress, Table, TableBody, TableCell, TableRow} from "@material-ui/core";
+import { red, deepOrange } from "@material-ui/core/colors";
 
 declare var dragscroll;
 const MAX_FRAME_BUFFER_SIZE = 300;
@@ -88,8 +76,8 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
   fetchPumpInterval: number;
   drainFetchPumpInterval: number;
 
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       decoder: null,
       status: "",
@@ -399,56 +387,56 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       <div className="playerCanvasContainer" ref={(self: any) => this.mountCanvasContainer(self)}>
         <canvas className="playerCanvas" ref={(self: any) => this.canvas = self} style={canvasStyle} />
       </div>
-      <LinearProgress style={{ borderRadius: "0px" }} color={red800} mode="determinate" value={this.frameBuffer.length} min={0} max={this.state.decoder.totalFrames} />
+      <LinearProgress style={{ borderRadius: "0px", color: red[800] }} variant="determinate" value={this.frameBuffer.length * 100 / this.state.decoder.totalFrames} />
       {this.props.areDetailsVisible && this.state.decoder &&
         <div className="playerTableContainer">
           <Table>
-            <TableBody displayRowCheckbox={false}>
+            <TableBody>
               <TableRow>
-                <TableRowColumn>Frame # (Base + Offset)</TableRowColumn>
-                <TableRowColumn style={{ textAlign: "right" }}>{this.state.baseFrameOffset + 1} + {this.state.frameOffset} = {this.state.baseFrameOffset + 1 + this.state.frameOffset}</TableRowColumn>
+                <TableCell>Frame # (Base + Offset)</TableCell>
+                <TableCell style={{ textAlign: "right" }}>{this.state.baseFrameOffset + 1} + {this.state.frameOffset} = {this.state.baseFrameOffset + 1 + this.state.frameOffset}</TableCell>
               </TableRow>
               <TableRow>
-                <TableRowColumn>Frame Buffer</TableRowColumn>
-                <TableRowColumn style={{ textAlign: "right" }}>{this.frameBuffer.length}</TableRowColumn>
+                <TableCell>Frame Buffer</TableCell>
+                <TableCell style={{ textAlign: "right" }}>{this.frameBuffer.length}</TableCell>
               </TableRow>
               <TableRow>
-                <TableRowColumn>Fetch Buffer</TableRowColumn>
-                <TableRowColumn style={{ textAlign: "right" }}>{this.fetchBuffer.length}</TableRowColumn>
+                <TableCell>Fetch Buffer</TableCell>
+                <TableCell style={{ textAlign: "right" }}>{this.fetchBuffer.length}</TableCell>
               </TableRow>
               <TableRow>
-                <TableRowColumn>Decoded Frames</TableRowColumn>
-                <TableRowColumn style={{ textAlign: "right" }}>{this.frames.length}</TableRowColumn>
+                <TableCell>Decoded Frames</TableCell>
+                <TableCell style={{ textAlign: "right" }}>{this.frames.length}</TableCell>
               </TableRow>
               {this.frameBuffer.length &&
                 <TableRow>
-                  <TableRowColumn>Frame Decode Time (ms)</TableRowColumn>
-                  <TableRowColumn style={{ textAlign: "right" }}>{this.frameBuffer[this.state.frameOffset].decodeTime.toFixed(2)}</TableRowColumn>
+                  <TableCell>Frame Decode Time (ms)</TableCell>
+                  <TableCell style={{ textAlign: "right" }}>{this.frameBuffer[this.state.frameOffset].decodeTime.toFixed(2)}</TableCell>
                 </TableRow>
               }
               <TableRow>
-                <TableRowColumn>All Frame Decode Time</TableRowColumn>
-                <TableRowColumn style={{ textAlign: "right" }}>{allStats.avg.toFixed(2)} avg, {allStats.std.toFixed(2)} std, {allStats.min.toFixed(2)} min, {allStats.max.toFixed(2)} max</TableRowColumn>
+                <TableCell>All Frame Decode Time</TableCell>
+                <TableCell style={{ textAlign: "right" }}>{allStats.avg.toFixed(2)} avg, {allStats.std.toFixed(2)} std, {allStats.min.toFixed(2)} min, {allStats.max.toFixed(2)} max</TableCell>
               </TableRow>
               <TableRow>
-                <TableRowColumn>Last {this.state.decoder.frameRate} Frame Decode Time</TableRowColumn>
-                <TableRowColumn style={{ textAlign: "right" }}>{lastStats.avg.toFixed(2)} avg, {lastStats.std.toFixed(2)} std, {lastStats.min.toFixed(2)} min, {lastStats.max.toFixed(2)} max</TableRowColumn>
+                <TableCell>Last {this.state.decoder.frameRate} Frame Decode Time</TableCell>
+                <TableCell style={{ textAlign: "right" }}>{lastStats.avg.toFixed(2)} avg, {lastStats.std.toFixed(2)} std, {lastStats.min.toFixed(2)} min, {lastStats.max.toFixed(2)} max</TableCell>
               </TableRow>
               {this.canvas &&
                 <TableRow>
-                  <TableRowColumn>Frame Info</TableRowColumn>
-                  <TableRowColumn style={{ textAlign: "right" }}>
+                  <TableCell>Frame Info</TableCell>
+                  <TableCell style={{ textAlign: "right" }}>
                     {this.canvas.width} x {this.canvas.height}{' '}
                     {this.state.decoder.frameRate} fps
-                  </TableRowColumn>
+                  </TableCell>
                 </TableRow>
               }
               {this.props.bench &&
                 <TableRow>
-                  <TableRowColumn>Benchmark (Worker Frame Decode Time Only)</TableRowColumn>
+                  <TableCell>Benchmark (Worker Frame Decode Time Only)</TableCell>
                   {benchStats ?
-                    <TableRowColumn style={{ textAlign: "right", color: deepOrange500 }}>{benchStats.avg.toFixed(2)} avg, {benchStats.std.toFixed(2)} std, {benchStats.min.toFixed(2)} min, {benchStats.max.toFixed(2)} max</TableRowColumn> :
-                    <TableRowColumn style={{ textAlign: "right", color: deepOrange500 }}>Benchmarking {this.frames.length} of {this.props.bench} Frames <CircularProgress color={deepOrange500} size={14} thickness={3} /></TableRowColumn>
+                    <TableCell style={{ textAlign: "right", color: deepOrange[500] }}>{benchStats.avg.toFixed(2)} avg, {benchStats.std.toFixed(2)} std, {benchStats.min.toFixed(2)} min, {benchStats.max.toFixed(2)} max</TableCell> :
+                    <TableCell style={{ textAlign: "right", color: deepOrange[500] }}>Benchmarking {this.frames.length} of {this.props.bench} Frames <CircularProgress style={{color: deepOrange[500]}} size={14} thickness={3} /></TableCell>
                   }
                 </TableRow>
               }

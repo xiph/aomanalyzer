@@ -1,23 +1,17 @@
 import * as React from "react";
 import { localFiles, localFileProtocol } from "./analyzerTools";
 import { LoaderComponent } from "./Loader"
-import Dialog from 'material-ui/Dialog';
-import FlatButton from 'material-ui/FlatButton';
-import RaisedButton from 'material-ui/RaisedButton';
-
-import CircularProgress from 'material-ui/CircularProgress';
-import DropDownMenu from 'material-ui/DropDownMenu';
-import MenuItem from 'material-ui/MenuItem';
-import SelectField from 'material-ui/SelectField';
-import Paper from 'material-ui/Paper';
-import IconButton from 'material-ui/IconButton';
-import FontIcon from 'material-ui/FontIcon';
-import { Toolbar, ToolbarGroup, ToolbarSeparator, ToolbarTitle } from 'material-ui/Toolbar';
-import {grey900, grey800, grey100, grey200} from 'material-ui/styles/colors';
-import Checkbox from 'material-ui/Checkbox';
-import Toggle from 'material-ui/Toggle';
-import TextField from 'material-ui/TextField';
 import Select from 'react-select';
+import {
+  Button,
+  Checkbox,
+  CircularProgress,
+  Dialog, DialogContent,
+  DialogTitle,
+  FormControlLabel, FormGroup, FormHelperText,
+  Switch,
+  TextField
+} from "@material-ui/core";
 declare var require;
 declare var shortenUrl;
 
@@ -127,8 +121,8 @@ export class LocalAnalyzerComponent extends React.Component<{
     statusFilter: Option [];
     commandLineFilter: Option [];
   }> {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       listJson: null,
       setsJson: null,
@@ -431,8 +425,11 @@ export class LocalAnalyzerComponent extends React.Component<{
     }
     let listJson = this.state.listJson;
     if (!listJson) {
-      return <Dialog title="Downloading AWCY Runs" modal={true} open={true}>
-        <CircularProgress size={40} thickness={7} />
+      return <Dialog open={true}>
+        <DialogTitle>Downloading AWCY Runs</DialogTitle>
+        <DialogContent>
+          <CircularProgress size={40} thickness={7} />
+        </DialogContent>
       </Dialog>;
     } else {
       let filtersEnabled = this.state.filtersEnabled;
@@ -492,18 +489,19 @@ export class LocalAnalyzerComponent extends React.Component<{
 
       return <div>
         <div className="builderSection">
-          <div>
-            <Toggle
-              style={{width: "300px"}}
+          <FormGroup row>
+            <FormControlLabel
+              control={<Switch
+                style={{width: "300px"}}
+                checked={this.state.filtersEnabled}
+                onChange={(event) => {
+                  this.setState({ filtersEnabled: event.target.checked });
+                  this.resetURL();
+                }}
+              />}
               label="Filter Runs"
-              labelPosition="right"
-              toggled={this.state.filtersEnabled}
-              onToggle={(event, value) => {
-                this.setState({ filtersEnabled: value } as any);
-                this.resetURL();
-              }}
             />
-          </div>
+          </FormGroup>
         </div>
         { this.state.filtersEnabled &&
           <div>
@@ -592,35 +590,31 @@ export class LocalAnalyzerComponent extends React.Component<{
                 />
               </div>
               <div>
-                <RaisedButton
-                  label="Remove"
+                <Button  variant="contained"
                   disableTouchRipple={true}
                   disableFocusRipple={true}
-                  onTouchTap={this.onDeleteRun.bind(this, i)}
+                  onClick={this.onDeleteRun.bind(this, i)}
                   style={{marginRight: 8}}
-                />
-                <RaisedButton
-                  label="Duplicate"
+                >Remove</Button>
+                <Button  variant="contained"
                   disableTouchRipple={true}
                   disableFocusRipple={true}
-                  onTouchTap={this.onDuplicateRun.bind(this, i)}
+                  onClick={this.onDuplicateRun.bind(this, i)}
                   style={{marginRight: 8}}
-                />
-                <RaisedButton
-                  label="Up"
+                >Duplicate</Button>
+                <Button  variant="contained"
                   disabled={i - 1 < 0}
                   disableTouchRipple={true}
                   disableFocusRipple={true}
-                  onTouchTap={this.onMoveRun.bind(this, i, -1)}
+                  onClick={this.onMoveRun.bind(this, i, -1)}
                   style={{marginRight: 8}}
-                />
-                <RaisedButton
-                  label="Down"
+                >Up</Button>
+                <Button  variant="contained"
                   disabled={i + 1 >= this.state.slots.length}
                   disableTouchRipple={true}
                   disableFocusRipple={true}
-                  onTouchTap={this.onMoveRun.bind(this, i, 1)}
-                />
+                  onClick={this.onMoveRun.bind(this, i, 1)}
+                >Down</Button>
               </div>
             </div>
             <div className="builderContainer" style={{paddingLeft: "40px"}}>
@@ -630,86 +624,77 @@ export class LocalAnalyzerComponent extends React.Component<{
         })
         }
         <div className="builderSection">
-          <div>
-            <Toggle
+          <FormGroup row>
+            <FormControlLabel control={<Switch
               style={{width: "300px"}}
-              label="Enable Voting"
-              labelPosition="right"
-              toggled={this.state.votingEnabled}
-              onToggle={(event, value) => {
-                this.setState({ votingEnabled: value } as any);
+              checked={this.state.votingEnabled}
+              onChange={(event) => {
+                this.setState({ votingEnabled: event.target.checked });
                 this.resetURL();
               }}
-            />
-          </div>
+            />} label="Enable Voting" />
+          </FormGroup>
         </div>
         {this.state.votingEnabled &&
           <div>
             <div className="builderContainer">
               <div style={{width: "1000px"}}>
-                <TextField errorText={this.getVoteErrorText()} multiLine={false} floatingLabelText="Vote Configuration: 0:1,2:3:4, ..." floatingLabelFixed={true} name="message" value={this.state.vote} style={{width: "1000px"}} onChange={this.onChangeVote.bind(this)}/>
+                <TextField error={!!this.getVoteErrorText()} helperText={this.getVoteErrorText()} label="Vote Configuration: 0:1,2:3:4, ..." name="message" value={this.state.vote} style={{width: "1000px"}} onChange={this.onChangeVote.bind(this)}/>
               </div>
             </div>
             <div className="builderContainer">
-              <div>
-              <Checkbox
-                style={{width: "300px"}}
-                label="Show Vote Results"
+              <FormGroup>
+                <FormControlLabel control={<Checkbox
                 checked={this.state.showVoteResult}
-                onCheck={(event, value) => {
-                  this.setState({ showVoteResult: value } as any);
+                onChange={(event) => {
+                  this.setState({ showVoteResult: event.target.checked });
                   this.resetURL();
                 }}
-              />
-              </div>
-              <div className="builderCaption">
-                Show vote results at the end of the voting session.
-              </div>
+              />} label="Show Vote Results" />
+              <FormHelperText>
+                  Show vote results at the end of the voting session.
+              </FormHelperText>
+              </FormGroup>
             </div>
             <div className="builderContainer">
-              <div>
-              <Checkbox
-                style={{width: "300px"}}
-                label="Blind"
-                checked={this.state.blind}
-                onCheck={(event, value) => {
-                  this.setState({ blind: value } as any);
-                  this.resetURL();
-                }}
-              />
-              </div>
-              <div className="builderCaption">
-                Randomize runs when comparing them.
-              </div>
+              <FormGroup>
+                <FormControlLabel control={<Checkbox
+                  checked={this.state.blind}
+                  onChange={(event) => {
+                    this.setState({ blind: event.target.checked });
+                    this.resetURL();
+                  }}
+                />} label="Blind" />
+                  <FormHelperText>
+                      Randomize runs when comparing them.
+                  </FormHelperText>
+              </FormGroup>
             </div>
             <div className="builderContainer">
-              <TextField multiLine={false} floatingLabelText="Vote Intro Message" floatingLabelFixed={true} name="message" value={this.state.voteMessage} style={{width: "1000px"}} onChange={this.onVoteMessageChange.bind(this)}/>
+              <TextField label="Vote Intro Message" name="message" value={this.state.voteMessage} style={{width: "1000px"}} onChange={this.onVoteMessageChange.bind(this)}/>
             </div>
           </div>
         }
         <div className="builderContainer">
           <div>
-            <RaisedButton
-              label="Add Run"
+            <Button  variant="contained"
               disableTouchRipple={true}
               disableFocusRipple={true}
-              onTouchTap={this.onAddRun.bind(this)}
+              onClick={this.onAddRun.bind(this)}
               style={{marginRight: 8}}
-            />
-            <RaisedButton
-              label="Shorten URL"
+            >Add Run</Button>
+            <Button  variant="contained"
               disableTouchRipple={true}
               disableFocusRipple={true}
-              onTouchTap={this.onShortenURL.bind(this)}
+              onClick={this.onShortenURL.bind(this)}
               style={{marginRight: 8}}
-            />
-            <RaisedButton
-              label="Open"
+            >Shorten URL</Button>
+            <Button  variant="contained"
               disabled={this.cannotAnalyze()}
               disableTouchRipple={true}
               disableFocusRipple={true}
-              onTouchTap={this.onSend.bind(this)}
-            />
+              onClick={this.onSend.bind(this)}
+            >Open</Button>
           </div>
         </div>
         <div className="builderSection">

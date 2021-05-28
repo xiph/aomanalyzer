@@ -1,10 +1,9 @@
 import * as React from "react";
 
-import FlatButton from 'material-ui/FlatButton';
-import Dialog from 'material-ui/Dialog';
-import LinearProgress from 'material-ui/LinearProgress';
 import {PlayerSplitComponent} from "./PlayerSplit";
-import {deepOrangeA400} from 'material-ui/styles/colors';
+import {Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress} from "@material-ui/core";
+import Button from "@material-ui/core/Button";
+import {deepOrange} from "@material-ui/core/colors";
 
 function shuffle(array: any[], count: number) {
   // Shuffle Indices
@@ -57,8 +56,8 @@ export class VotingSessionComponent extends React.Component < VotingSessionCompo
     showResult: false
   } as any;
   votes: any [] = [];
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       index: -1
     };
@@ -97,18 +96,17 @@ export class VotingSessionComponent extends React.Component < VotingSessionCompo
     let videos = this.props.videos;
     let body;
     if (index < 0) {
-      body = <Dialog
-        repositionOnUpdate={true}
-        modal={true}
-        title="Vote"
-        open={true}
-        actions={[< FlatButton label = "Let's Begin" onTouchTap = {
-          () => this.next()
-        } />]}>
+      body = <Dialog open={true}>
+        <DialogTitle>Vote</DialogTitle>
+        <DialogContent>
         <p>
           You will be asked to vote on {videos.length} sets of videos. {' '}
           {this.props.description}
         </p>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick = {() => this.next()}>Let's Begin</Button>
+        </DialogActions>
       </Dialog>
     } else if (index < videos.length) {
       let videosToVoteOn = videos[index];
@@ -124,21 +122,24 @@ export class VotingSessionComponent extends React.Component < VotingSessionCompo
         this.next();
       }}/>
     } else {
-      body = <Dialog repositionOnUpdate={true} modal={true} title="Thank You" open={true}>
+      body = <Dialog open={true}>
+        <DialogTitle>Thank You</DialogTitle>
+        <DialogContent>
         <p>
           Your vote counts!
         </p>
         { this.props.showResult &&
           this.renderVoteResults()
         }
+        </DialogContent>
       </Dialog>
     }
     return <div className="votingSessionContainer">
       <LinearProgress
-        color={deepOrangeA400}
-        mode="determinate"
-        value={this.state.index}
-        max={videos.length}/> {body}
+        style={{ color: deepOrange['A400'] }}
+        variant="determinate"
+        value={this.state.index * 100 / videos.length}
+      /> {body}
     </div>
   }
 }
