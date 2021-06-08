@@ -1,21 +1,21 @@
-declare var importScripts;
-declare var DecoderModule;
+declare let importScripts;
+declare let DecoderModule;
 
-function assert(c: boolean, message: string = "") {
+function assert(c: boolean, message = "") {
   if (!c) {
     throw new Error(message);
   }
 }
 
-var decoderPathPrefix = "";
+let decoderPathPrefix = "";
 
 onmessage = function (e) {
   // console.log("Worker: " + e.data.command);
   switch (e.data.command) {
     case "load":
       try {
-        let payload = e.data.payload;
-        let path = payload[0];
+        const payload = e.data.payload;
+        const path = payload[0];
         decoderPathPrefix = path.substring(0, path.lastIndexOf("/") + 1);
         importScripts.apply(self, payload);
         load(payload[0], (nativeModule) => {
@@ -91,11 +91,11 @@ interface Native {
 
 let native: Native = null;
 let frameRate = 0;
-let buffer: Uint8Array = null;
+const buffer: Uint8Array = null;
 let json = null;
 
 function load(path: string, ready: (native: any) => void) {
-  var Module = {
+  const Module = {
     locateFile: function (path) {
       return decoderPathPrefix + path;
     },
@@ -110,12 +110,12 @@ function load(path: string, ready: (native: any) => void) {
     on_frame_decoded_json: function (p) {
       let s = "";
       if (typeof TextDecoder != "undefined") {
-        let m = (Module as any).HEAP8;
+        const m = (Module as any).HEAP8;
         let e = p;
         while (m[e] != 0) {
           e++;
         }
-        let textDecoder = new TextDecoder("utf-8");
+        const textDecoder = new TextDecoder("utf-8");
         s = textDecoder.decode(m.subarray(p, e));
       } else {
         s = (Module as any).UTF8ToString(p);
@@ -136,7 +136,7 @@ function openFileBytes(buffer: Uint8Array) {
   native._open_file();
 }
 
-var bufferPool: ArrayBuffer [] = [];
+const bufferPool: ArrayBuffer [] = [];
 
 function releaseFrameBuffer(buffer: ArrayBuffer) {
   if (bufferPool.length < 64) {
@@ -169,13 +169,13 @@ function getImageFormat() {
 
 function readPlane(plane) {
   let p = native._get_plane(plane);
-  let HEAPU8 = native.HEAPU8;
+  const HEAPU8 = native.HEAPU8;
   let stride = native._get_plane_stride(plane);
   let depth = native._get_bit_depth();
   let width = native._get_frame_width();
   let height = native._get_frame_height();
-  let fmt = getImageFormat();
-  let hbd = fmt & AOM_IMG_FMT_HIGHBITDEPTH;
+  const fmt = getImageFormat();
+  const hbd = fmt & AOM_IMG_FMT_HIGHBITDEPTH;
   if (hbd) {
     stride >>= 1;
   }
@@ -193,12 +193,12 @@ function readPlane(plane) {
   }
   width >>= xdec;
   height >>= ydec;
-  let byteLength = height * width;
-  var buffer = getReleasedBuffer(byteLength);
+  const byteLength = height * width;
+  let buffer = getReleasedBuffer(byteLength);
 
   if (buffer && !hbd) {
     // Copy into released buffer.
-    let tmp = new Uint8Array(buffer);
+    const tmp = new Uint8Array(buffer);
     if (stride === width) {
       tmp.set(HEAPU8.subarray(p, p + byteLength));
     } else {
@@ -208,12 +208,12 @@ function readPlane(plane) {
       }
     }
   } else if (hbd) {
-    let tmpBuffer = buffer ? new Uint8Array(buffer) : new Uint8Array(byteLength);
+    const tmpBuffer = buffer ? new Uint8Array(buffer) : new Uint8Array(byteLength);
     if (depth == 10) {
       // Convert to 8 bit depth.
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-          let offset = y * (stride << 1) + (x << 1);
+          const offset = y * (stride << 1) + (x << 1);
           tmpBuffer[y * width + x] = (HEAPU8[p + offset] + (HEAPU8[p + offset + 1] << 8)) >> 2;
         }
       }
@@ -221,7 +221,7 @@ function readPlane(plane) {
       // Unpack to 8 bit depth.
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-          let offset = y * (stride << 1) + (x << 1);
+          const offset = y * (stride << 1) + (x << 1);
           tmpBuffer[y * width + x] = HEAPU8[p + offset];
         }
       }
@@ -232,7 +232,7 @@ function readPlane(plane) {
     if (stride === width) {
       buffer = HEAPU8.slice(p, p + byteLength).buffer;
     } else {
-      let tmp = new Uint8Array(byteLength);
+      const tmp = new Uint8Array(byteLength);
       for (let i = 0; i < height; i++) {
         tmp.set(HEAPU8.subarray(p, p + width), i * width);
         p += stride;
@@ -261,7 +261,7 @@ function readImage() {
 }
 
 function readFrame(e) {
-  let s = performance.now();
+  const s = performance.now();
   if (native._read_frame() != 0) {
     postMessage({
       command: "readFrameResult",

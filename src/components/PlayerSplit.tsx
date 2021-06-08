@@ -53,12 +53,12 @@ declare global {
 }
 
 function generateUUID() { // Public Domain/MIT
-  var d = new Date().getTime();
+  let d = new Date().getTime();
   if (typeof performance !== 'undefined' && typeof performance.now === 'function'){
     d += performance.now(); //use high-precision timer if available
   }
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    var r = (d + Math.random() * 16) % 16 | 0;
+    const r = (d + Math.random() * 16) % 16 | 0;
     d = Math.floor(d / 16);
     return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
   }).toUpperCase();
@@ -146,7 +146,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       this.pauseIfPlaying();
       return;
     }
-    let self = this;
+    const self = this;
     this.playerInterval = window.setInterval(() => {
       if (!this.players.every(player => player.canAdvanceOffsetWithoutLooping(true))) {
         if (this.state.isLooping) {
@@ -250,34 +250,34 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     });
     const keyboardScrollSpeed = 64;
     Mousetrap.bind(['right'], (e) => {
-      let { scale, scrollLeft } = this.state;
+      let { scrollLeft } = this.state;
       scrollLeft += keyboardScrollSpeed;
       // TODO: Clamp right.
       this.setState({scrollLeft} as any);
       e.preventDefault();
     });
     Mousetrap.bind(['left'], (e) => {
-      let { scale, scrollLeft } = this.state;
+      let { scrollLeft } = this.state;
       scrollLeft -= keyboardScrollSpeed;
       if (scrollLeft < 0) scrollLeft = 0;
       this.setState({scrollLeft} as any);
       e.preventDefault();
     });
     Mousetrap.bind(['up'], (e) => {
-      let { scale, scrollTop } = this.state;
+      let { scrollTop } = this.state;
       scrollTop -= keyboardScrollSpeed;
       if (scrollTop < 0) scrollTop = 0;
       this.setState({scrollTop} as any);
       e.preventDefault();
     });
     Mousetrap.bind(['down'], (e) => {
-      let { scale, scrollTop } = this.state;
+      let { scrollTop } = this.state;
       scrollTop += keyboardScrollSpeed;
       // TODO: Clamp down.
       this.setState({scrollTop} as any);
       e.preventDefault();
     });
-    let self = this;
+    const self = this;
     function setFocus(focus: number) {
       self.setState({ focus } as any);
       self.metrics.focusCount ++;
@@ -287,9 +287,9 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     }
   }
   zoom(multiplier: number) {
-    let scale = this.state.scale;
-    let newScale = Math.max(0.25, Math.min(32, scale * multiplier));
-    let ratio = newScale / scale;
+    const scale = this.state.scale;
+    const newScale = Math.max(0.25, Math.min(32, scale * multiplier));
+    const ratio = newScale / scale;
     this.setState({
       scale: newScale,
       shouldFitWidth: false,
@@ -314,14 +314,14 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       directionsStepIndex: directionsStepIndex + 1
     } as any);
     localStorage["directionsStepIndex"] = directionsStepIndex + 1;
-  };
+  }
   handlePrev() {
     const {directionsStepIndex} = this.state;
     if (directionsStepIndex > 0) {
       this.setState({directionsStepIndex: directionsStepIndex - 1} as any);
     }
     localStorage["directionsStepIndex"] = directionsStepIndex - 1;
-  };
+  }
 
   renderStepActions(step) {
     const {directionsStepIndex} = this.state;
@@ -361,7 +361,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
   }
   onSubmitVote() {
     this.setState({showVoterIDDialog: false} as any);
-    let vote = {
+    const vote = {
       id: generateUUID(),
       voter: this.state.voterID || generateUUID(),
       videos: [], metrics: this.metrics
@@ -376,8 +376,8 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     vote.metrics.devicePixelRatio = window.devicePixelRatio;
     vote.metrics.playerDecodeStats = this.players.map(player => player.getAllFrameDecodeStats());
     function sendRequest(object: any, ok: (any), error: (any)) {
-      var self = this;
-      var xhr = new XMLHttpRequest();
+      const self = this;
+      const xhr = new XMLHttpRequest();
       xhr.addEventListener("load", function () {
         ok.call(this);
       });
@@ -398,12 +398,12 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
     }
   }
   onInitialized(i: number) {
-    let { playersInitialized } = this.state;
+    const { playersInitialized } = this.state;
     playersInitialized[i] = true;
     this.setState({playersInitialized} as any);
   }
   render() {
-    let panes = this.props.videos.map((video, i) => {
+    const panes = this.props.videos.map((video, i) => {
       return <div key={i} className="playerSplitVerticalContent" style={{ display: (this.state.focus >= 0 && this.state.focus != i) ? "none" : "" }}>
         <PlayerComponent ref={(self: any) => this.mountPlayer(i, self)}
           onScroll={this.onScroll.bind(this, i)}
@@ -421,7 +421,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       </div>
     })
     let voteButtons = null;
-    let buttonStyle = {
+    const buttonStyle = {
       marginLeft: 4,
       marginRight: 4
     }
@@ -437,12 +437,12 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
       });
       voteButtons.push(<RaisedButton disabled={!allInitialized} style={buttonStyle} key="tie" label={"Tie"} onTouchTap={this.onVote.bind(this, -1)} />)
     }
-    let toggleButtons = this.props.videos.map((video, i) => {
+    const toggleButtons = this.props.videos.map((video, i) => {
       return <RaisedButton style={buttonStyle} primary={this.state.focus === i} key={i} label={ABC[i]} onTouchTap={() => this.setState({ focus: i } as any)}/>
     });
     toggleButtons.push(<RaisedButton style={buttonStyle} primary={this.state.focus === -1} key="split" label={"Split"} onTouchTap={(event, focus) => this.setState({ focus: -1 } as any)} />);
 
-    let customContentStyle = {
+    const customContentStyle = {
       width: '1200px',
       maxWidth: 'none'
     };
@@ -479,7 +479,7 @@ export class PlayerSplitComponent extends React.Component<PlayerSplitComponentPr
           { this.state.directionsStepIndex === 1 &&
             <div className="playerStep">
               <p>
-                All squares should be distinguishable from the background. Increase your screen's brightness level or use a different monitor.
+                All squares should be distinguishable from the background. Increase your screen&#39;s brightness level or use a different monitor.
               </p>
               <CalibrateComponent width={1100} height={256}/>
               {this.renderStepActions(1)}

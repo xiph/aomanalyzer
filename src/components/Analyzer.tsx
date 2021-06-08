@@ -25,9 +25,9 @@ import TextField from 'material-ui/TextField';
 import Slider from 'material-ui/Slider';
 
 declare const Mousetrap;
-declare var shortenUrl;
-declare var document;
-declare var window;
+declare let shortenUrl;
+declare let document;
+declare let window;
 
 const SUPER_BLOCK_SIZE = 64;
 const ZOOM_WIDTH = 500;
@@ -61,7 +61,7 @@ function colorScale(v, colors) {
 
 function keyForValue(o: Object, value: any): string {
   if (o) {
-    for (let k in o) {
+    for (const k in o) {
       if (o[k] === value) {
         return k;
       }
@@ -73,9 +73,9 @@ function keyForValue(o: Object, value: any): string {
 function shuffle(array: any[], count: number) {
   // Shuffle Indices
   for (let j = 0; j < count; j++) {
-    let a = Math.random() * array.length | 0;
-    let b = Math.random() * array.length | 0;
-    let t = array[a];
+    const a = Math.random() * array.length | 0;
+    const b = Math.random() * array.length | 0;
+    const t = array[a];
     array[a] = array[b];
     array[b] = t;
   }
@@ -85,7 +85,7 @@ function blockSizeArea(frame: AnalyzerFrame, size: number) {
   return (1 << map[size][0]) * (1 << map[size][1]);
 }
 function forEachValue(o: any, fn: (v: any) => void) {
-  for (let n in o) {
+  for (const n in o) {
     fn(o[n]);
   }
 }
@@ -112,12 +112,12 @@ function getLineOffset(lineWidth: number) {
 function toCflAlphas(cfl_alpha_idx: number, cfl_alpha_sign: number) {
   cfl_alpha_idx &= 255;
   cfl_alpha_sign &= 7;
-  let sign_u = ((cfl_alpha_sign + 1) * 11) >> 5;
-  let sign_v = cfl_alpha_sign + 1 - 3 * sign_u;
-  let alpha_u = 1 + (cfl_alpha_idx >> 4);
-  let alpha_v = 1 + (cfl_alpha_idx & 15);
-  let cfl_alpha_u = [0, -1, 1][sign_u] * alpha_u;
-  let cfl_alpha_v = [0, -1, 1][sign_v] * alpha_v;
+  const sign_u = ((cfl_alpha_sign + 1) * 11) >> 5;
+  const sign_v = cfl_alpha_sign + 1 - 3 * sign_u;
+  const alpha_u = 1 + (cfl_alpha_idx >> 4);
+  const alpha_v = 1 + (cfl_alpha_idx & 15);
+  const cfl_alpha_u = [0, -1, 1][sign_u] * alpha_u;
+  const cfl_alpha_v = [0, -1, 1][sign_v] * alpha_v;
   return [cfl_alpha_u, cfl_alpha_v];
 }
 
@@ -196,16 +196,16 @@ export class AccountingComponent extends React.Component<{
 
   }> {
   render() {
-    let symbols = this.props.symbols;
+    const symbols = this.props.symbols;
     let total = 0;
     forEachValue(symbols, (symbol) => {
       total += symbol.bits;
     });
 
-    let rows = []
-    let valueStyle = { textAlign: "right", fontSize: "12px" };
-    for (let name in symbols) {
-      let symbol = symbols[name];
+    const rows = []
+    const valueStyle = { textAlign: "right", fontSize: "12px" };
+    for (const name in symbols) {
+      const symbol = symbols[name];
       rows.push(<TableRow key={name}>
         <TableRowColumn>{name}</TableRowColumn>
         <TableRowColumn style={valueStyle}>{fractionalBitsToString(symbol.bits)}</TableRowColumn>
@@ -240,8 +240,8 @@ export class FrameInfoComponent extends React.Component<{
 
   }> {
   render() {
-    let frame = this.props.frame;
-    let valueStyle = { textAlign: "right", fontSize: "12px" };
+    const frame = this.props.frame;
+    const valueStyle = { textAlign: "right", fontSize: "12px" };
     return <div>
       <Table>
         <TableBody displayRowCheckbox={false}>
@@ -282,50 +282,50 @@ export class ModeInfoComponent extends React.Component<{
 
   }> {
   render() {
-    let c = this.props.position.x;
-    let r = this.props.position.y;
-    let json = this.props.frame.json;
+    const c = this.props.position.x;
+    const r = this.props.position.y;
+    const json = this.props.frame.json;
     function getProperty(name: string): string {
       if (!json[name]) return "N/A";
-      let v = json[name][r][c];
+      const v = json[name][r][c];
       if (!json[name + "Map"]) return String(v);
       return keyForValue(json[name + "Map"], v);
     }
     function getSuperBlockProperty(name: string): string {
       if (!json[name]) return "N/A";
-      let v = json[name][r & ~7][c & ~7];
+      const v = json[name][r & ~7][c & ~7];
       if (!json[name + "Map"]) return String(v);
       return keyForValue(json[name + "Map"], v);
     }
     function getMotionVector() {
-      let motionVectors = json["motionVectors"];
+      const motionVectors = json["motionVectors"];
       if (!motionVectors) return "N/A";
-      let v = motionVectors[r][c];
+      const v = motionVectors[r][c];
       return `${v[0]},${v[1]} ${v[2]},${v[3]}`;
     }
     function getReferenceFrame() {
-      let referenceFrame = json["referenceFrame"];
+      const referenceFrame = json["referenceFrame"];
       if (!referenceFrame) return "N/A";
-      let map = json["referenceFrameMap"];
-      let v = referenceFrame[r][c];
-      let a = v[0] >= 0 ? keyForValue(map, v[0]) : "N/A";
-      let b = v[1] >= 0 ? keyForValue(map, v[1]) : "N/A";
+      const map = json["referenceFrameMap"];
+      const v = referenceFrame[r][c];
+      const a = v[0] >= 0 ? keyForValue(map, v[0]) : "N/A";
+      const b = v[1] >= 0 ? keyForValue(map, v[1]) : "N/A";
       return `${a}, ${b}`;
     }
     function getCFL() {
       if (json["cfl_alpha_idx"] === undefined) {
         return "N/A";
       }
-      let cfl_alpha_idx = json["cfl_alpha_idx"][r][c];
-      let cfl_alpha_sign = json["cfl_alpha_sign"][r][c];
-      let [cfl_alpha_u, cfl_alpha_v] = toCflAlphas(cfl_alpha_idx, cfl_alpha_sign);
+      const cfl_alpha_idx = json["cfl_alpha_idx"][r][c];
+      const cfl_alpha_sign = json["cfl_alpha_sign"][r][c];
+      const [cfl_alpha_u, cfl_alpha_v] = toCflAlphas(cfl_alpha_idx, cfl_alpha_sign);
       return `${cfl_alpha_u},${cfl_alpha_v}`;
     }
     function getDualFilterType() {
       if (json["dualFilterType"] === undefined) {
         return "N/A";
       }
-      let map = json["dualFilterTypeMap"];
+      const map = json["dualFilterTypeMap"];
       return keyForValue(map, json["dualFilterType"][r][c]);
     }
     function getDeltaQIndex() {
@@ -340,7 +340,7 @@ export class ModeInfoComponent extends React.Component<{
       }
       return json["seg_id"][r][c];
     }
-    let valueStyle = { textAlign: "right", fontSize: "12px" };
+    const valueStyle = { textAlign: "right", fontSize: "12px" };
     return <div>
       <Table>
         <TableBody displayRowCheckbox={false}>
@@ -622,8 +622,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   };
   constructor(props: AnalyzerViewProps) {
     super();
-    let ratio = window.devicePixelRatio || 1;
-    let activeGroupScore = [];
+    const ratio = window.devicePixelRatio || 1;
+    const activeGroupScore = [];
     this.state = {
       activeFrame: -1,
       activeGroup: 0,
@@ -668,7 +668,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.activeGroupScore = activeGroupScore;
   }
   resetCanvas(w: number, h: number) {
-    let scale = this.state.scale;
+    const scale = this.state.scale;
     // Pad to SUPER_BLOCK_SIZE
     w = (w + (SUPER_BLOCK_SIZE - 1)) & ~(SUPER_BLOCK_SIZE - 1);
     h = (h + (SUPER_BLOCK_SIZE - 1)) & ~(SUPER_BLOCK_SIZE - 1);
@@ -707,14 +707,14 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.zoomContext = this.zoomCanvas.getContext("2d");
   }
   draw(group: number, index: number) {
-    let frame = this.props.groups[group][index];
+    const frame = this.props.groups[group][index];
     // this.frameContext.putImageData(frame.imageData, 0, 0);
     this.frameContext.drawImage(frame.image as any, 0, 0);
 
     // Draw frameCanvas to displayCanvas
     (this.displayContext as any).imageSmoothingEnabled = false;
-    let dw = this.frameSize.w * this.state.scale * this.ratio;
-    let dh = this.frameSize.h * this.state.scale * this.ratio;
+    const dw = this.frameSize.w * this.state.scale * this.ratio;
+    const dh = this.frameSize.h * this.state.scale * this.ratio;
     if (this.state.showDecodedImage) {
       this.displayContext.drawImage(this.frameCanvas, 0, 0, dw, dh);
     } else {
@@ -727,13 +727,13 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     }
 
     // Draw Layers
-    let scale = this.state.scale;
-    let ctx = this.overlayContext;
-    let ratio = window.devicePixelRatio || 1;
+    const scale = this.state.scale;
+    const ctx = this.overlayContext;
+    const ratio = window.devicePixelRatio || 1;
     ctx.clearRect(0, 0, this.frameSize.w * scale * ratio, this.frameSize.h * scale * ratio);
 
-    let src = Rectangle.createRectangleFromSize(this.frameSize);
-    let dst = src.clone().multiplyScalar(scale * this.ratio);
+    const src = Rectangle.createRectangleFromSize(this.frameSize);
+    const dst = src.clone().multiplyScalar(scale * this.ratio);
 
     this.drawLayers(frame, ctx, src, dst);
   }
@@ -742,10 +742,10 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       return;
     }
     TRACE_RENDERING && console.log("drawZoom");
-    let frame = this.props.groups[group][index];
-    let mousePosition = this.mouseZoomPosition.clone().divideScalar(this.state.scale).snap();
-    let src = Rectangle.createRectangleCenteredAtPoint(mousePosition, ZOOM_SOURCE, ZOOM_SOURCE);
-    let dst = new Rectangle(0, 0, ZOOM_WIDTH * this.ratio, ZOOM_WIDTH * this.ratio);
+    const frame = this.props.groups[group][index];
+    const mousePosition = this.mouseZoomPosition.clone().divideScalar(this.state.scale).snap();
+    const src = Rectangle.createRectangleCenteredAtPoint(mousePosition, ZOOM_SOURCE, ZOOM_SOURCE);
+    const dst = new Rectangle(0, 0, ZOOM_WIDTH * this.ratio, ZOOM_WIDTH * this.ratio);
 
     this.zoomContext.clearRect(0, 0, dst.w, dst.h);
     if (this.state.showDecodedImage) {
@@ -781,17 +781,17 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.restore();
   }
   drawSelection(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    let scale = dst.w / src.w;
-    let ratio = 1;
+    const scale = dst.w / src.w;
+    const ratio = 1;
     ctx.save();
-    let lineOffset = getLineOffset(3);
+    const lineOffset = getLineOffset(3);
     ctx.translate(lineOffset, lineOffset);
     ctx.translate(-src.x * scale, -src.y * scale);
     // ctx.strokeStyle = "white";
     // ctx.setLineDash([2, 4]);
     // let w = ZOOM_SOURCE * ratio * scale;
     // ctx.strokeRect(this.mouseZoomPosition.x * ratio - w / 2, this.mouseZoomPosition.y * ratio - w / 2, w, w);
-    let r = this.getParentMIRect(frame, this.mousePosition);
+    const r = this.getParentMIRect(frame, this.mousePosition);
     if (r) {
       ctx.strokeStyle = "orange";
       ctx.lineWidth = 3;
@@ -801,11 +801,11 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.restore();
   }
   drawGrid(frame: AnalyzerFrame, mode: VisitMode, color: string, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, lineWidth = 1) {
-    let scale = dst.w / src.w;
+    const scale = dst.w / src.w;
     ctx.save();
     ctx.lineWidth = 1;
     ctx.strokeStyle = color;
-    let lineOffset = getLineOffset(lineWidth);
+    const lineOffset = getLineOffset(lineWidth);
     ctx.translate(lineOffset, lineOffset);
     ctx.translate(-src.x * scale, -src.y * scale);
     ctx.lineWidth = lineWidth;
@@ -826,12 +826,12 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.overlayCanvas.addEventListener("mousedown", this.onMouseDown.bind(this));
   }
   componentDidUpdate(prevProps, prevState) {
-    let image = this.props.groups[this.state.activeGroup][0].image;
+    const image = this.props.groups[this.state.activeGroup][0].image;
     let w = image.width;
     let h = image.height;
     w = (w + (SUPER_BLOCK_SIZE - 1)) & ~(SUPER_BLOCK_SIZE - 1);
     h = (h + (SUPER_BLOCK_SIZE - 1)) & ~(SUPER_BLOCK_SIZE - 1);
-    let frameSizeChanged = this.frameSize.w !== w || this.frameSize.h != h;
+    const frameSizeChanged = this.frameSize.w !== w || this.frameSize.h != h;
     if (this.state.scale != prevState.scale || frameSizeChanged) {
       this.reset();
     }
@@ -843,8 +843,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     }
   }
   reset() {
-    let image = this.props.groups[this.state.activeGroup][0].image;
-    let w = image.width, h = image.height;
+    const image = this.props.groups[this.state.activeGroup][0].image;
+    const w = image.width, h = image.height;
     this.resetCanvas(w, h);
   }
   handleSelect(frame) {
@@ -881,7 +881,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.setActiveFrame(activeFrame);
   }
   zoom(value) {
-    let scale = this.state.scale * value;
+    const scale = this.state.scale * value;
     this.setState({ scale } as any);
   }
   installKeyboardShortcuts() {
@@ -934,15 +934,15 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       this.setState({lockSelection: !this.state.lockSelection} as any);
       e.preventDefault();
     });
-    let self = this;
+    const self = this;
     function toggle(name, event) {
       self.toggleLayer(name);
       event.preventDefault();
     }
 
-    let installedKeys = {};
-    for (let name in this.options) {
-      let option = this.options[name];
+    const installedKeys = {};
+    for (const name in this.options) {
+      const option = this.options[name];
       if (option.key) {
         if (installedKeys[option.key]) {
           console.error("Key: " + option.key + " for " + option.description + ", is already mapped to " + installedKeys[option.key].description);
@@ -977,22 +977,22 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.setState({ showTools: !this.state.showTools, layerMenuIsOpen: false } as any);
   }
   resetLayers() {
-    let o: any = {};
-    for (let name in this.options) {
+    const o: any = {};
+    for (const name in this.options) {
       o[name] = false;
     }
     o.showDecodedImage = true;
     this.setState(o as any);
   }
   resetLayersAndActiveFrame() {
-    let o: any = {};
+    const o: any = {};
     o.activeFrame = 0;
     o.activeGroup = 0;
     this.setState(o as any);
     this.resetLayers();
   }
   toggleLayer(name) {
-    let o = {};
+    const o = {};
     o[name] = !this.state[name];
     this.setState(o as any);
   }
@@ -1004,7 +1004,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
   handleMouseEvent(event: MouseEvent, click: boolean) {
     function getMousePosition(canvas: HTMLCanvasElement, event: MouseEvent) {
-      let rect = canvas.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect();
       return new Vector(
         event.clientX - rect.left,
         event.clientY - rect.top
@@ -1017,7 +1017,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     }
   }
   getMIBlockSize(frame: AnalyzerFrame, c: number, r: number): number {
-    let blockSize = frame.json["blockSize"];
+    const blockSize = frame.json["blockSize"];
     if (!blockSize) {
       return undefined;
     }
@@ -1030,10 +1030,10 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     return blockSize[r][c];
   }
   getParentMIPosition(frame: AnalyzerFrame, v: Vector): Vector {
-    let p = this.getMIPosition(frame, v);
+    const p = this.getMIPosition(frame, v);
     let c = p.x;
     let r = p.y;
-    let size = this.getMIBlockSize(frame, c, r);
+    const size = this.getMIBlockSize(frame, c, r);
     if (size === undefined) {
       return null;
     }
@@ -1042,10 +1042,10 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     return new Vector(c, r);
   }
   getParentMIRect(frame: AnalyzerFrame, v: Vector): Rectangle {
-    let p = this.getMIPosition(frame, v);
+    const p = this.getMIPosition(frame, v);
     let c = p.x;
     let r = p.y;
-    let size = this.getMIBlockSize(frame, c, r);
+    const size = this.getMIBlockSize(frame, c, r);
     if (size === undefined) {
       return null;
     }
@@ -1060,8 +1060,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
    */
   getMIPosition(frame: AnalyzerFrame, v: Vector): Vector {
     const miSizeLog2 = frame.miSizeLog2;
-    let c = (v.x / this.state.scale) >> miSizeLog2;
-    let r = (v.y / this.state.scale) >> miSizeLog2;
+    const c = (v.x / this.state.scale) >> miSizeLog2;
+    const r = (v.y / this.state.scale) >> miSizeLog2;
     return new Vector(c, r);
   }
   getActiveFrame(): AnalyzerFrame {
@@ -1074,25 +1074,25 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.forceUpdate();
   }
   getSymbolHist(frames: AnalyzerFrame[]): Histogram[] {
-    let data = [];
-    let names = Accounting.getSortedSymbolNames(frames.map(frame => frame.accounting));
+    const data = [];
+    const names = Accounting.getSortedSymbolNames(frames.map(frame => frame.accounting));
     frames.forEach((frame, i) => {
-      let row = { frame: i, total: 0 };
-      let symbols = frame.accounting.createFrameSymbols();
+      const row = { frame: i, total: 0 };
+      const symbols = frame.accounting.createFrameSymbols();
       let total = 0;
       names.forEach(name => {
-        let symbol = symbols[name];
-        let bits = symbol ? symbol.bits : 0;
+        const symbol = symbols[name];
+        const bits = symbol ? symbol.bits : 0;
         total += bits;
       });
       names.forEach((name, i) => {
-        let symbol = symbols[name];
-        let bits = symbol ? symbol.bits : 0;
+        const symbol = symbols[name];
+        const bits = symbol ? symbol.bits : 0;
         row[i] = bits;
       });
       data.push(row);
     });
-    let nameMap = {};
+    const nameMap = {};
     names.forEach((name, i) => {
       nameMap[name] = i;
     });
@@ -1100,23 +1100,23 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
 
   onBitsScaleSelect(eventKey: any, event: Object) {
-    let showBitsScale = eventKey;
+    const showBitsScale = eventKey;
     this.setState({ showBitsScale } as any);
   }
 
   onBitsModeSelect(eventKey: any, event: Object) {
-    let showBitsMode = eventKey;
+    const showBitsMode = eventKey;
     this.setState({ showBitsMode } as any);
   }
 
   onBitsFilterSelect(eventKey: any, event: Object) {
-    let showBitsFilter = eventKey;
+    const showBitsFilter = eventKey;
     this.setState({ showBitsFilter } as any);
   }
 
   getActiveGroupScore() {
     let s = 0;
-    let j = this.state.activeGroup;
+    const j = this.state.activeGroup;
     for (let i = 0; i < this.activeGroupScore.length; i++) {
       s += this.activeGroupScore[i][j];
     }
@@ -1154,7 +1154,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     } as any);
 
     if (value) {
-      let count = this.state.decodeFrameCount;
+      const count = this.state.decodeFrameCount;
       if (this.props.onDecodeAdditionalFrames) {
         this.props.onDecodeAdditionalFrames(count);
       }
@@ -1232,8 +1232,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
 
   getActiveFrameConfig() {
     // Ignore default options.
-    let defaultOptions = DEFAULT_CONFIG.split(" ");
-    let options = this.getActiveFrame().config.split(" ");
+    const defaultOptions = DEFAULT_CONFIG.split(" ");
+    const options = this.getActiveFrame().config.split(" ");
     return options.filter(option => defaultOptions.indexOf(option) < 0).join(" ");
   }
 
@@ -1242,29 +1242,29 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
 
   downloadY4m() {
-    let decoder = this.props.decoderVideoUrlPairs[this.state.activeGroup].decoderUrl;
-    let file = this.props.decoderVideoUrlPairs[this.state.activeGroup].videoUrl;
+    const decoder = this.props.decoderVideoUrlPairs[this.state.activeGroup].decoderUrl;
+    const file = this.props.decoderVideoUrlPairs[this.state.activeGroup].videoUrl;
     window.open("?download=1&decoder=" + encodeURIComponent(decoder) + "&file=" + encodeURIComponent(file),'_blank');
   }
 
   render() {
-    let groups = this.props.groups;
+    const groups = this.props.groups;
     let sidePanel = null;
-    let frames = this.props.groups[this.state.activeGroup];
-    let frame = this.getActiveFrame();
+    const frames = this.props.groups[this.state.activeGroup];
+    const frame = this.getActiveFrame();
     if (this.state.showTools) {
       if (frame) {
-        let names = Accounting.getSortedSymbolNames(frames.map(frame => frame.accounting));
-        let accounting = this.getActiveFrame().accounting;
-        let p = this.getParentMIPosition(frame, this.mousePosition);
+        const names = Accounting.getSortedSymbolNames(frames.map(frame => frame.accounting));
+        const accounting = this.getActiveFrame().accounting;
+        const p = this.getParentMIPosition(frame, this.mousePosition);
 
         const iconStyles = {
           marginRight: 24,
         };
 
-        let layerMenuItems = [];
-        for (let name in this.options) {
-          let option = this.options[name];
+        const layerMenuItems = [];
+        for (const name in this.options) {
+          const option = this.options[name];
           layerMenuItems.push(
             <MenuItem key={name} onTouchTap={this.toggleLayer.bind(this, name)} insetChildren={true} checked={!!this.state[name]} primaryText={option.description} secondaryText={option.key.toUpperCase()} />
           );
@@ -1282,7 +1282,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
 
         let bitLayerToolbar = null;
         if (this.state.showBits) {
-          let names = Accounting.getSortedSymbolNames(frames.map(frame => frame.accounting));
+          const names = Accounting.getSortedSymbolNames(frames.map(frame => frame.accounting));
           bitLayerToolbar = <Toolbar>
             <ToolbarGroup firstChild={true} >
               <DropDownMenu style={{ width: 150 }} autoWidth={false} value={this.state.showBitsScale} onChange={(event, index, value) => this.setState({ showBitsScale: value } as any)}>
@@ -1307,7 +1307,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
 
         let groupTabs = null;
         if (this.props.groups.length > 1) {
-          let tabs = [];
+          const tabs = [];
           for (let i = 0; i < this.props.groups.length; i++) {
             tabs.push(<Tab key={i} label={i + 1} value={i} />);
           }
@@ -1481,10 +1481,10 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       }
     }
 
-    let activeGroup = this.state.activeGroup;
-    let groupName = this.props.groupNames ? this.props.groupNames[activeGroup] : String(activeGroup);
+    const activeGroup = this.state.activeGroup;
+    const groupName = this.props.groupNames ? this.props.groupNames[activeGroup] : String(activeGroup);
 
-    let result = <div className="maxWidthAndHeight">
+    const result = <div className="maxWidthAndHeight">
       <a style={{ display: "none" }} ref={(self: any) => this.downloadLink = self} />
       {this.state.showFrameComment &&
         <div id="frameComment">
@@ -1516,10 +1516,10 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
 
   drawSkip(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    let skipGrid = frame.json["skip"];
-    let skipMap = frame.json["skipMap"];
+    const skipGrid = frame.json["skip"];
+    const skipMap = frame.json["skipMap"];
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
-      let v = skipGrid[r][c];
+      const v = skipGrid[r][c];
       if (v == skipMap.NO_SKIP) {
         return false;
       }
@@ -1529,9 +1529,9 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
 
   drawFilters(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    let dualFilterTypeGrid = frame.json["dualFilterType"];
+    const dualFilterTypeGrid = frame.json["dualFilterType"];
     if (!dualFilterTypeGrid) return;
-    let dualFilterTypeMapByValue = reverseMap(frame.json["dualFilterTypeMap"]);
+    const dualFilterTypeMapByValue = reverseMap(frame.json["dualFilterTypeMap"]);
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       ctx.fillStyle = getColor(dualFilterTypeMapByValue[dualFilterTypeGrid[r][c]], palette.dualFilterType);
       return true;
@@ -1539,12 +1539,12 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
 
   drawCDEF(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    let skipGrid = frame.json["skip"];
+    const skipGrid = frame.json["skip"];
     if (!skipGrid) return;
-    let rows = skipGrid.length;
-    let cols = skipGrid[0].length;
+    const rows = skipGrid.length;
+    const cols = skipGrid[0].length;
     function allSkip(c: number, r: number) {
-      let s = 1 << (frame.miSuperSizeLog2 - frame.miSizeLog2);
+      const s = 1 << (frame.miSuperSizeLog2 - frame.miSizeLog2);
       for (let y = 0; y < s; y++) {
         for (let x = 0; x < s; x++) {
           if (r + y >= rows || c + x >= cols) {
@@ -1558,8 +1558,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       return true;
     }
 
-    let levelGrid = frame.json["cdef_level"];
-    let strengthGrid = frame.json["cdef_strength"];
+    const levelGrid = frame.json["cdef_level"];
+    const strengthGrid = frame.json["cdef_strength"];
     if (!levelGrid) return;
     if (!strengthGrid) return;
     ctx.globalAlpha = 0.2;
@@ -1567,7 +1567,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       if (allSkip(c, r)) {
         return;
       }
-      let v = levelGrid[r][c] + strengthGrid[r][c];
+      const v = levelGrid[r][c] + strengthGrid[r][c];
       if (!v) {
         return false;
       }
@@ -1583,16 +1583,16 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       if (allSkip(c, r)) {
         return;
       }
-      let s = strengthGrid[r][c];
-      let l = levelGrid[r][c];
-      let o = bounds.getCenter();
+      const s = strengthGrid[r][c];
+      const l = levelGrid[r][c];
+      const o = bounds.getCenter();
       ctx.fillText(l + "/" + s, o.x, o.y);
       return true;
     }, VisitMode.SuperBlock);
   }
   drawReferenceFrames(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    let referenceGrid = frame.json["referenceFrame"];
-    let referenceMapByValue = reverseMap(frame.json["referenceFrameMap"]);
+    const referenceGrid = frame.json["referenceFrame"];
+    const referenceMapByValue = reverseMap(frame.json["referenceFrameMap"]);
     const triangles = true;
     this.drawBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr, bounds) => {
       ctx.save();
@@ -1626,23 +1626,23 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
 
   drawMotionVectors(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    let motionVectorsGrid = frame.json["motionVectors"];
-    let scale = dst.w / src.w;
-    let scaledFrameSize = this.frameSize.clone().multiplyScalar(scale);
+    const motionVectorsGrid = frame.json["motionVectors"];
+    const scale = dst.w / src.w;
+    const scaledFrameSize = this.frameSize.clone().multiplyScalar(scale);
     ctx.save();
     ctx.globalAlpha = 1;
-    let aColor = "red";
-    let bColor = "blue";
+    const aColor = "red";
+    const bColor = "blue";
     ctx.fillStyle = aColor;
     ctx.lineWidth = scale / 2;
 
     ctx.translate(-src.x * scale, -src.y * scale);
     this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
       bounds.multiplyScalar(scale);
-      let o = bounds.getCenter();
-      let m = motionVectorsGrid[r][c];
-      let a = new Vector(m[0], m[1])
-      let b = new Vector(m[2], m[3])
+      const o = bounds.getCenter();
+      const m = motionVectorsGrid[r][c];
+      const a = new Vector(m[0], m[1])
+      const b = new Vector(m[2], m[3])
 
       if (a.length() > 0) {
         ctx.globalAlpha = Math.min(0.3, a.length() / 128);
@@ -1657,9 +1657,9 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       }
 
       a.divideScalar(8 / scale);
-      let va = o.clone().add(a);
+      const va = o.clone().add(a);
       b.divideScalar(8 / scale);
-      let vb = o.clone().add(b);
+      const vb = o.clone().add(b);
 
       // Draw small vectors with a ligher color.
       ctx.globalAlpha = Math.max(0.2, Math.min(a.length() + b.length(), 1));
@@ -1678,23 +1678,23 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.restore();
   }
   drawSegment(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    let segGrid = frame.json["seg_id"];
-    let segMapByValue = reverseMap(frame.json["seg_idMap"]);
+    const segGrid = frame.json["seg_id"];
+    const segMapByValue = reverseMap(frame.json["seg_idMap"]);
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       ctx.fillStyle = getColor(segGrid[r][c], palette.seg_id);
       return true;
     });
   }
   drawTransformType(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    let typeGrid = frame.json["transformType"];
-    let transformTypeMapByValue = reverseMap(frame.json["transformTypeMap"]);
+    const typeGrid = frame.json["transformType"];
+    const transformTypeMapByValue = reverseMap(frame.json["transformTypeMap"]);
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       ctx.fillStyle = getColor(transformTypeMapByValue[typeGrid[r][c]], palette.transformType);
       return true;
     });
   }
   drawBits(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    let { blocks, total } = frame.accounting.countBits(this.state.showBitsFilter);
+    const { blocks, total } = frame.accounting.countBits(this.state.showBitsFilter);
     function getBits(blocks, c, r) {
       if (!blocks[r]) {
         return 0;
@@ -1704,28 +1704,28 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     let maxBitsPerPixel = 0;
     if (this.state.showBitsScale == "frame") {
       this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
-        let area = blockSizeArea(frame, blockSize);
-        let bits = getBits(blocks, c, r);
+        const area = blockSizeArea(frame, blockSize);
+        const bits = getBits(blocks, c, r);
         maxBitsPerPixel = Math.max(maxBitsPerPixel, bits / area);
       });
     } else {
-      let groups = this.state.showBitsScale === "video" ? [this.getActiveGroup()] : this.props.groups;
+      const groups = this.state.showBitsScale === "video" ? [this.getActiveGroup()] : this.props.groups;
       groups.forEach(frames => {
         frames.forEach(frame => {
-          let { blocks } = frame.accounting.countBits(this.state.showBitsFilter);
+          const { blocks } = frame.accounting.countBits(this.state.showBitsFilter);
           this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
-            let area = blockSizeArea(frame, blockSize);
-            let bits = getBits(blocks, c, r);
+            const area = blockSizeArea(frame, blockSize);
+            const bits = getBits(blocks, c, r);
             maxBitsPerPixel = Math.max(maxBitsPerPixel, bits / area);
           });
         });
       });
     }
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
-      let area = blockSizeArea(frame, blockSize);
-      let bits = getBits(blocks, c, r);
-      let value = (bits / area) / maxBitsPerPixel;
-      let mode = this.state.showBitsMode;
+      const area = blockSizeArea(frame, blockSize);
+      const bits = getBits(blocks, c, r);
+      const value = (bits / area) / maxBitsPerPixel;
+      const mode = this.state.showBitsMode;
       if (mode == "linear") {
         ctx.globalAlpha = value;
         ctx.fillStyle = "#9400D3";
@@ -1740,12 +1740,12 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     });
   }
   drawMode(type: string, frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    let skipGrid = frame.json["skip"];
-    let modeGrid = frame.json[type];
-    let modeMap = frame.json["modeMap"];
-    let uvModeMap = frame.json["uv_modeMap"];
-    let alphaIndex = frame.json["cfl_alpha_idx"];
-    let modeMapByValue = reverseMap(modeMap);
+    const skipGrid = frame.json["skip"];
+    const modeGrid = frame.json[type];
+    const modeMap = frame.json["modeMap"];
+    const uvModeMap = frame.json["uv_modeMap"];
+    const alphaIndex = frame.json["cfl_alpha_idx"];
+    const modeMapByValue = reverseMap(modeMap);
     const V_PRED = modeMap.V_PRED;
     const H_PRED = modeMap.H_PRED;
     const D45_PRED = modeMap.D45_PRED;
@@ -1757,14 +1757,14 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     const DC_PRED = modeMap.DC_PRED;
     const UV_CFL_PRED = uvModeMap.UV_CFL_PRED;
 
-    let scale = dst.w / src.w;
+    const scale = dst.w / src.w;
     ctx.save();
     ctx.lineWidth = 1;
     ctx.strokeStyle = "white";
-    let lineOffset = getLineOffset(1);
+    const lineOffset = getLineOffset(1);
     ctx.translate(lineOffset, lineOffset);
     ctx.translate(-src.x * scale, -src.y * scale);
-    let lineWidth = 1;
+    const lineWidth = 1;
     ctx.lineWidth = lineWidth;
 
     ctx.globalAlpha = 1;
@@ -1779,10 +1779,10 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         if (bounds.w < 16 * this.ratio || bounds.h < 16 * this.ratio) {
           return;
         }
-        let o = bounds.getCenter();
-        let cfl_alpha_idx = frame.json["cfl_alpha_idx"][r][c];
-        let cfl_alpha_sign = frame.json["cfl_alpha_sign"][r][c];
-        let [cfl_alpha_u, cfl_alpha_v] = toCflAlphas(cfl_alpha_idx, cfl_alpha_sign);
+        const o = bounds.getCenter();
+        const cfl_alpha_idx = frame.json["cfl_alpha_idx"][r][c];
+        const cfl_alpha_sign = frame.json["cfl_alpha_sign"][r][c];
+        const [cfl_alpha_u, cfl_alpha_v] = toCflAlphas(cfl_alpha_idx, cfl_alpha_sign);
         ctx.fillStyle = "black";
         ctx.fillText(`${cfl_alpha_u}`, o.x, o.y - 4 * this.ratio);
         ctx.fillText(`${cfl_alpha_v}`, o.x, o.y + 4 * this.ratio);
@@ -1790,12 +1790,12 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     });
 
     function drawMode(m: number, bounds: Rectangle) {
-      let x = bounds.x;
-      let y = bounds.y;
-      let w = bounds.w;
-      let h = bounds.h;
-      let hw = w / 2;
-      let hh = h / 2;
+      const x = bounds.x;
+      const y = bounds.y;
+      const w = bounds.w;
+      const h = bounds.h;
+      const hw = w / 2;
+      const hh = h / 2;
       ctx.fillStyle = getColor(modeMapByValue[m], palette.predictionMode);
       ctx.fillRect(x, y, w, h);
       switch (m) {
@@ -1839,7 +1839,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
 
   drawBlock(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, visitor: BlockVisitor, mode = VisitMode.Block) {
-    let scale = dst.w / src.w;
+    const scale = dst.w / src.w;
     ctx.save();
     ctx.translate(-src.x * scale, -src.y * scale);
     this.visitBlocks(mode, frame, (blockSize, c, r, sc, sr, bounds) => {
@@ -1861,19 +1861,19 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     const cols = blockSizeGrid[0].length;
 
     if (mode === VisitMode.Tile) {
-      let tileCols = frame.json["tileCols"];
-      let tileRows = frame.json["tileRows"];
+      const tileCols = frame.json["tileCols"];
+      const tileRows = frame.json["tileRows"];
       if (!tileCols || !tileRows) return;
       for (let c = 0; c < cols; c += tileCols) {
         for (let r = 0; r < rows; r += tileRows) {
-          let size = blockSizeGrid[r][c];
+          const size = blockSizeGrid[r][c];
           visitor(size, c, r, 0, 0, rect.set(c << miSizeLog2, r << miSizeLog2, (1 << miSizeLog2) * tileCols, (1 << miSizeLog2) * tileRows), 1);
         }
       }
     } else if (mode === VisitMode.SuperBlock) {
       for (let c = 0; c < cols; c += 1 << (miSuperSizeLog2 - miSizeLog2)) {
         for (let r = 0; r < rows; r += 1 << (miSuperSizeLog2 - miSizeLog2)) {
-          let size = blockSizeGrid[r][c];
+          const size = blockSizeGrid[r][c];
           visitor(size, c, r, 0, 0, rect.set(c << miSizeLog2, r << miSizeLog2, 1 << miSuperSizeLog2, 1 << miSuperSizeLog2), 1);
         }
       }
@@ -1895,15 +1895,15 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         if (sizeLog2[0] < miSizeLog2 || sizeLog2[1] < miSizeLog2) {
           continue;
         }
-        let dc = 1 << (sizeLog2[0] - miSizeLog2);
-        let dr = 1 << (sizeLog2[1] - miSizeLog2);
+        const dc = 1 << (sizeLog2[0] - miSizeLog2);
+        const dr = 1 << (sizeLog2[1] - miSizeLog2);
         for (let r = 0; r < rows; r += dr) {
-          let sizeGridRow = sizeGrid[r];
+          const sizeGridRow = sizeGrid[r];
           for (let c = 0; c < cols; c += dc) {
-            let size = sizeGridRow[c];
+            const size = sizeGridRow[c];
             if (size == i) {
-              let w = dc << miSizeLog2;
-              let h = dr << miSizeLog2;
+              const w = dc << miSizeLog2;
+              const h = dr << miSizeLog2;
               visitor(size, c, r, 0, 0, rect.set(c << miSizeLog2, r << miSizeLog2, w, h), 1);
             }
           }
@@ -1925,7 +1925,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       this.setState({showShareUrlDialog: true, shareUrl: link} as any);
     });
   }
-  fileIssue(label: string = "") {
+  fileIssue(label = "") {
     this.createSharingLink().then(link => {
       window.open("https://github.com/mbebenita/aomanalyzer/issues/new?labels=" + label + "&body=" + encodeURIComponent(link));
     });

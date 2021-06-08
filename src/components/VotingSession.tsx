@@ -9,9 +9,9 @@ import {deepOrangeA400} from 'material-ui/styles/colors';
 function shuffle(array: any[], count: number) {
   // Shuffle Indices
   for (let j = 0; j < count; j++) {
-    let a = Math.random() * array.length | 0;
-    let b = Math.random() * array.length | 0;
-    let t = array[a];
+    const a = Math.random() * array.length | 0;
+    const b = Math.random() * array.length | 0;
+    const t = array[a];
     array[a] = array[b];
     array[b] = t;
   }
@@ -69,7 +69,7 @@ export class VotingSessionComponent extends React.Component < VotingSessionCompo
     });
   }
   renderVoteResults() {
-    let decoders = {};
+    const decoders = {};
     this.votes.forEach(vote => {
       vote.videos.forEach(video => {
         if (!(video.decoder in decoders)) {
@@ -80,8 +80,8 @@ export class VotingSessionComponent extends React.Component < VotingSessionCompo
         }
       })
     });
-    let decoderList = [];
-    for (var k in decoders) {
+    const decoderList = [];
+    for (const k in decoders) {
       decoderList.push([k, decoders[k]]);
     }
     return <div className="voteResult">
@@ -93,8 +93,8 @@ export class VotingSessionComponent extends React.Component < VotingSessionCompo
     </div>
   }
   render() {
-    let index = this.state.index;
-    let videos = this.props.videos;
+    const index = this.state.index;
+    const videos = this.props.videos;
     let body;
     if (index < 0) {
       body = <Dialog

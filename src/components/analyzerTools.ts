@@ -3,7 +3,7 @@ declare let TextDecoder: any;
 
 export const TRACE_RENDERING = 0;
 
-let YUV2RGB_TABLE = new Uint32Array(256 * 256 * 256);
+const YUV2RGB_TABLE = new Uint32Array(256 * 256 * 256);
 function YUV2RGB(y, u, v) {
   return YUV2RGB_TABLE[(y << 16) | (u << 8) | v];
 }
@@ -13,12 +13,12 @@ export function clamp(v, a, b) {
   return v;
 }
 function computeYUV2RGB(y, u, v) {
-  let rTmp = y + (1.370705 * (v - 128));
-  let gTmp = y - (0.698001 * (v - 128)) - (0.337633 * (u - 128));
-  let bTmp = y + (1.732446 * (u - 128));
-  let r = clamp(rTmp | 0, 0, 255) | 0;
-  let g = clamp(gTmp | 0, 0, 255) | 0;
-  let b = clamp(bTmp | 0, 0, 255) | 0;
+  const rTmp = y + (1.370705 * (v - 128));
+  const gTmp = y - (0.698001 * (v - 128)) - (0.337633 * (u - 128));
+  const bTmp = y + (1.732446 * (u - 128));
+  const r = clamp(rTmp | 0, 0, 255) | 0;
+  const g = clamp(gTmp | 0, 0, 255) | 0;
+  const b = clamp(bTmp | 0, 0, 255) | 0;
   return (b << 16) | (g << 8) | (r << 0);
 }
 function buildYUVTable() {
@@ -50,41 +50,41 @@ export interface FrameImage {
 }
 
 function createImageData(image: FrameImage) {
-  let w = image.Y.width;
-  let h = image.Y.height;
-  let depth = image.Y.depth;
+  const w = image.Y.width;
+  const h = image.Y.height;
+  const depth = image.Y.depth;
   assert(depth == 8);
 
-  let YH = new Uint8Array(image.Y.buffer);
-  let UH = new Uint8Array(image.U.buffer);
-  let VH = new Uint8Array(image.V.buffer);
+  const YH = new Uint8Array(image.Y.buffer);
+  const UH = new Uint8Array(image.U.buffer);
+  const VH = new Uint8Array(image.V.buffer);
 
-  let Ys = image.Y.stride;
-  let Us = image.U.stride;
-  let Vs = image.V.stride;
+  const Ys = image.Y.stride;
+  const Us = image.U.stride;
+  const Vs = image.V.stride;
 
-  let imageData = new ImageData(w, h);
-  let I = imageData.data;
+  const imageData = new ImageData(w, h);
+  const I = imageData.data;
 
-  let p = 0;
+  const p = 0;
   let bgr = 0;
-  let uxdec = image.U.xdec;
-  let vxdec = image.V.xdec;
-  let uydec = image.U.ydec;
-  let vydec = image.V.ydec;
+  const uxdec = image.U.xdec;
+  const vxdec = image.V.xdec;
+  const uydec = image.U.ydec;
+  const vydec = image.V.ydec;
   for (let y = 0; y < h; y++) {
-    let yYs = y * Ys;
-    let yUs = (y >> uydec) * Us;
-    let yVs = (y >> vydec) * Vs;
+    const yYs = y * Ys;
+    const yUs = (y >> uydec) * Us;
+    const yVs = (y >> vydec) * Vs;
     for (let x = 0; x < w; x++) {
-      let Y = YH[yYs + x];
-      let U = UH[yUs + (x >> uxdec)];
-      let V = VH[yVs + (x >> vxdec)];
+      const Y = YH[yYs + x];
+      const U = UH[yUs + (x >> uxdec)];
+      const V = VH[yVs + (x >> vxdec)];
       bgr = YUV2RGB(Y, U, V);
-      let r = (bgr >> 0) & 0xFF;
-      let g = (bgr >> 8) & 0xFF;
-      let b = (bgr >> 16) & 0xFF;
-      let index = (Math.imul(y, w) + x) << 2;
+      const r = (bgr >> 0) & 0xFF;
+      const g = (bgr >> 8) & 0xFF;
+      const b = (bgr >> 16) & 0xFF;
+      const index = (Math.imul(y, w) + x) << 2;
       I[index + 0] = r;
       I[index + 1] = g;
       I[index + 2] = b;
@@ -95,29 +95,29 @@ function createImageData(image: FrameImage) {
 }
 
 function makeCanvas(image: FrameImage): HTMLCanvasElement {
-  var canvas = document.createElement("canvas");
-  var imageData = createImageData(image);
+  const canvas = document.createElement("canvas");
+  const imageData = createImageData(image);
   canvas.width = imageData.width;
   canvas.height = imageData.height;
-  var ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d");
   ctx.putImageData(imageData, 0, 0);
   return canvas;
 }
 
 export function makePattern(uri: string, scale: number, ready: (canvas: HTMLCanvasElement) => void) {
-  let image = new Image();
+  const image = new Image();
   image.onload = function () {
-    var canvas = document.createElement("canvas");
+    const canvas = document.createElement("canvas");
     canvas.width = image.width * scale;
     canvas.height = image.height * scale;
-    let ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, canvas.width, canvas.height);
     ready(canvas);
   }
   image.src = uri;
 }
-export function assert(c: any, message: string = "") {
+export function assert(c: any, message = "") {
   if (!c) {
     throw new Error(message);
   }
@@ -178,7 +178,7 @@ export const COLORS = [
 export const HEAT_COLORS = [];
 function generateHeatColors() {
   function color(value) {
-    var h = (1.0 - value) * 240;
+    const h = (1.0 - value) * 240;
     return "hsl(" + h + ", 100%, 50%)";
   }
   for (let i = 0; i < 256; i++) {
@@ -217,14 +217,14 @@ export class Accounting {
     if (this.countCache[filter]) {
       return this.countCache[filter];
     }
-    let blocks = [];
+    const blocks = [];
     let total = 0;
     let leftover = 0;
     this.symbols.forEach(symbol => {
       if (filter !== "__none__" && symbol.name != filter) {
         return;
       }
-      let { x, y } = symbol;
+      const { x, y } = symbol;
       if (x < 0 || y < 0) {
         leftover += symbol.bits;
         return;
@@ -246,7 +246,7 @@ export class Accounting {
     }));
   }
   static flatten(sybmols: AccountingSymbol[]): AccountingSymbolMap {
-    let map = Object.create(null);
+    const map = Object.create(null);
     sybmols.forEach(symbol => {
       let s = map[symbol.name];
       if (!s) {
@@ -255,9 +255,9 @@ export class Accounting {
       s.bits += symbol.bits;
       s.samples += symbol.samples;
     });
-    let ret = Object.create(null);
-    let names = [];
-    for (let name in map) names.push(name);
+    const ret = Object.create(null);
+    const names = [];
+    for (const name in map) names.push(name);
     // Sort by bits.
     names.sort((a, b) => map[b].bits - map[a].bits);
     names.forEach(name => {
@@ -267,14 +267,14 @@ export class Accounting {
   }
 
   static getSortedSymbolNames(accountings: Accounting[]): string[] {
-    let set = {};
+    const set = {};
     accountings.forEach(accounting => {
-      let frameSymbols = accounting.createFrameSymbols();
-      for (let name in frameSymbols) {
+      const frameSymbols = accounting.createFrameSymbols();
+      for (const name in frameSymbols) {
         set[name] = undefined;
       }
     });
-    let names = Object.keys(set);
+    const names = Object.keys(set);
     names.sort();
     return names;
   }
@@ -337,20 +337,20 @@ export class AnalyzerFrame {
 }
 
 function getAccountingFromJson(json: any, name: string): Accounting {
-  var accounting = new Accounting();
+  const accounting = new Accounting();
   if (json[name]) {
-    let names = json[name + "Map"];
-    let symbols = [];
+    const names = json[name + "Map"];
+    const symbols = [];
     let x = -1, y = -1;
     for (let i = 0; i < json.symbols.length; i++) {
-      let symbol = json.symbols[i];
+      const symbol = json.symbols[i];
       if (symbol.length == 2) {
         x = symbol[0];
         y = symbol[1];
       } else {
-        let name = symbol[0];
-        let bits = symbol[1];
-        let samples = symbol[2];
+        const name = symbol[0];
+        const bits = symbol[1];
+        const samples = symbol[2];
         symbols.push(new AccountingSymbol(names[name], bits, samples, x, y));
       }
     }
@@ -363,7 +363,7 @@ function getHistogramFromJson(json: any, name: string): Histogram {
   if (!json[name]) {
     return null;
   }
-  let counts = {};
+  const counts = {};
   json[name].forEach(row => {
     row.forEach(v => {
       if (counts[v] === undefined) {
@@ -382,11 +382,11 @@ function getHistogramFromJson(json: any, name: string): Histogram {
  */
 function uncompressArray(src: any []) {
   let pre;
-  let dst = [];
+  const dst = [];
   let allUint8 = true;
   for (let i = 0; i < src.length; i++) {
     if (Array.isArray(src[i]) && src[i].length == 1) {
-      let count = src[i][0];
+      const count = src[i][0];
       for (let j = 0; j < count; j++) {
         dst.push(pre);
       }
@@ -432,7 +432,7 @@ function readFrameFromJson(json): AnalyzerFrame {
   uncompress(json["delta_q"]);
   uncompress(json["seg_id"]);
 
-  let frame = new AnalyzerFrame();
+  const frame = new AnalyzerFrame();
   frame.json = json;
   frame.accounting = getAccountingFromJson(json, "symbols");
   frame.blockSizeHist = getHistogramFromJson(json, "blockSize");
@@ -452,8 +452,8 @@ function readFrameFromJson(json): AnalyzerFrame {
 export function downloadFile(url: string): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     if (url.startsWith(localFileProtocol)) {
-      let localFile = url.substring(localFileProtocol.length);
-      let file = localFiles[localFile];
+      const localFile = url.substring(localFileProtocol.length);
+      const file = localFiles[localFile];
       if (file) {
         resolve(new Uint8Array(file));
         return;
@@ -462,13 +462,13 @@ export function downloadFile(url: string): Promise<Uint8Array> {
         return;
       }
     }
-    let xhr = new XMLHttpRequest();
-    let self = this;
+    const xhr = new XMLHttpRequest();
+    const self = this;
     xhr.open("GET", url, true);
     xhr.responseType = "arraybuffer";
     xhr.send();
     xhr.addEventListener("progress", (e) => {
-      let progress = (e.loaded / e.total) * 100;
+      const progress = (e.loaded / e.total) * 100;
     });
     xhr.addEventListener("load", function () {
       if (xhr.status != 200) {
@@ -485,13 +485,13 @@ export function downloadFile(url: string): Promise<Uint8Array> {
 
 export function downloadJson(url: string): Promise<Object> {
   return new Promise((resolve, reject) => {
-    let xhr = new XMLHttpRequest();
-    let self = this;
+    const xhr = new XMLHttpRequest();
+    const self = this;
     xhr.open("GET", url, true);
     xhr.responseType = "json";
     xhr.send();
     xhr.addEventListener("progress", (e) => {
-      let progress = (e.loaded / e.total) * 100;
+      const progress = (e.loaded / e.total) * 100;
     });
     xhr.addEventListener("load", function () {
       if (xhr.status != 200) {
@@ -537,7 +537,7 @@ export class Size {
     return this;
   }
   roundUpToMultipleOfLog2(roundToLog2) {
-    let roundTo = 1 << roundToLog2;
+    const roundTo = 1 << roundToLog2;
     this.w = (this.w + roundTo - 1) & ~(roundTo - 1);
     this.h = (this.h + roundTo - 1) & ~(roundTo - 1);
     return this;
@@ -609,8 +609,8 @@ export class Vector {
     return Math.sqrt(this.x * this.x + this.y * this.y);
   }
   distanceTo(v: Vector) {
-    let x = this.x - v.x;
-    let y = this.y - v.y;
+    const x = this.x - v.x;
+    const y = this.y - v.y;
     return Math.sqrt(x * x + y * y);
   }
   normalize() {
@@ -651,7 +651,7 @@ export class Vector {
     return this;
   }
   clampLength(min: number, max: number) {
-    let length = this.length();
+    const length = this.length();
     this.multiplyScalar(Math.max(min, Math.min(max, length)) / length);
     return this;
   }
@@ -671,7 +671,7 @@ function getFramesIvf(ivf: Uint8Array): number {
   let i = 32;
   let frames = 0;
   while (i < length) {
-    let frame_length = ivf[i] + (ivf[i+1]<<8) + (ivf[i+2]<<16) + (ivf[i+3]<<24);
+    const frame_length = ivf[i] + (ivf[i+1]<<8) + (ivf[i+2]<<16) + (ivf[i+3]<<24);
     i += 12 + frame_length;
     frames++;
   }
@@ -685,10 +685,10 @@ export class Decoder {
   decoder: string;
   buffer: Uint8Array;
   frames: AnalyzerFrame[] = [];
-  frameRate: number = 30;
+  frameRate = 30;
   totalFrames: number;
   /** Whether to read image data after decoding a frame. */
-  shouldReadImageData: boolean = true;
+  shouldReadImageData = true;
 
   constructor(nativeModule, worker) {
     this.buffer = new Uint8Array(0);
@@ -707,7 +707,7 @@ export class Decoder {
       url = window.location.origin + '/' + url;
     }
     return new Promise((resolve, reject) => {
-      var id = String(Math.random());
+      const id = String(Math.random());
       this.addWorkerCallback(id, (e) => {
         3
         if (e.data.payload) {
@@ -777,20 +777,20 @@ export class Decoder {
   }
 
   readFrame(): Promise<AnalyzerFrame[]> {
-    let worker = this.worker;
-    let self = this;
-    let id = String(Math.random());
+    const worker = this.worker;
+    const self = this;
+    const id = String(Math.random());
     return new Promise((resolve, reject) => {
       this.addWorkerCallback(id, function (e) {
-        let o = e.data.payload.json as Object[];
+        const o = e.data.payload.json as Object[];
         if (!o) {
           reject();
           return;
         }
-        let frames: AnalyzerFrame[] = [];
+        const frames: AnalyzerFrame[] = [];
         for (let i = 0; i < o.length - 1; i++) {
-          let json = o[i];
-          let frame = readFrameFromJson(json);
+          const json = o[i];
+          const frame = readFrameFromJson(json);
           frame.config = self.workerInfo.buildConfig;
           frames.push(frame);
           self.frames && self.frames.push(frame);
@@ -801,7 +801,7 @@ export class Decoder {
         frames[frames.length - 1].decodeTime = e.data.payload.decodeTime;
         resolve(frames);
       });
-      let shouldReadImageData = self.shouldReadImageData;
+      const shouldReadImageData = self.shouldReadImageData;
       worker.postMessage({
         command: "readFrame",
         id,
@@ -812,8 +812,8 @@ export class Decoder {
 
   static loadDecoder(url: string): Promise<Decoder> {
     return new Promise((resolve, reject) => {
-      let worker = new Worker("dist/analyzer_worker.bundle.js");
-      let decoder = new Decoder(null, worker);
+      const worker = new Worker("dist/analyzer_worker.bundle.js");
+      const decoder = new Decoder(null, worker);
       decoder.load(url).then(() => {
         resolve(decoder);
       }).catch((x) => {
@@ -823,8 +823,8 @@ export class Decoder {
   }
 }
 
-export let localFileProtocol = "local://";
-export let localFiles = {};
+export const localFileProtocol = "local://";
+export const localFiles = {};
 
 const blockSizeLog2MapByName = {
   BLOCK_2X2: [1, 1],
@@ -899,8 +899,8 @@ export function log2(n: number): number {
   }
 }
 export function makeBlockSizeLog2MapByValue(blockSizeMap): [number, number][] {
-  let byValue = [];
-  for (let key in blockSizeMap) {
+  const byValue = [];
+  for (const key in blockSizeMap) {
     assert(key in blockSizeLog2MapByName, `Key ${key} not found in blockSizeLog2MapByName.`);
     byValue[blockSizeMap[key]] = blockSizeLog2MapByName[key];
   }
@@ -908,8 +908,8 @@ export function makeBlockSizeLog2MapByValue(blockSizeMap): [number, number][] {
 }
 
 export function makeTransformSizeLog2MapByValue(transformSizeMap): [number, number][] {
-  let byValue = [];
-  for (let key in transformSizeMap) {
+  const byValue = [];
+  for (const key in transformSizeMap) {
     assert(key in transformSizeLog2MapByName, `Key ${key} not found in transformSizeLog2MapByName.`);
     byValue[transformSizeMap[key]] = transformSizeLog2MapByName[key];
   }
@@ -917,8 +917,8 @@ export function makeTransformSizeLog2MapByValue(transformSizeMap): [number, numb
 }
 
 export function reverseMap(map: { [name: string]: number }): { [id: number]: string } {
-  let o = [];
-  for (let k in map) {
+  const o = [];
+  for (const k in map) {
     o[map[k]] = k
   }
   return o;

@@ -28,37 +28,37 @@ import {grey900, grey800, grey100, grey200} from 'material-ui/styles/colors';
 export function forEachUrlParameter(callback: (key: string, value: string) => void) {
   let url = window.location.search.substring(1);
   url = url.replace(/\/$/, ""); // Replace / at the end that gets inserted by browsers.
-  let params = {};
+  const params = {};
   url.split('&').forEach(function (s) {
-    let t = s.split('=');
+    const t = s.split('=');
     callback(t[0], decodeURIComponent(t[1]));
   });
 }
 
 export function getUrlParameters(): any {
-  let params = {};
+  const params = {};
   forEachUrlParameter((key, value) => {
     params[key] = value;
   });
   return params;
-};
+}
 
-let parameters = getUrlParameters();
-let decoder = parameters.decoder;
-let file = parameters.file;
-let playbackFrameRate = parameters.playbackFrameRate;
-let layers = parameters.layers;
-let maxFrames = parameters.maxFrames;
-let local = parameters.local | 0;
-let blind = parameters.blind | 0;
-let split = parameters.split | 0;
-let bench = parameters.bench | 0;
-let download = parameters.download | 0;
-let showVoteResult = parameters.showVoteResult | 0;
-let player = parameters.player | 0;
-let vote = parameters.vote;
-let voteDescription = parameters.voteDescription || "";
-let benchmark = parameters.benchmark | 0;
+const parameters = getUrlParameters();
+const decoder = parameters.decoder;
+const file = parameters.file;
+const playbackFrameRate = parameters.playbackFrameRate;
+const layers = parameters.layers;
+const maxFrames = parameters.maxFrames;
+const local = parameters.local | 0;
+const blind = parameters.blind | 0;
+const split = parameters.split | 0;
+const bench = parameters.bench | 0;
+const download = parameters.download | 0;
+const showVoteResult = parameters.showVoteResult | 0;
+const player = parameters.player | 0;
+const vote = parameters.vote;
+const voteDescription = parameters.voteDescription || "";
+const benchmark = parameters.benchmark | 0;
 
 /**
  * Extracts decoder / file pairs from the url parameter string.
@@ -67,7 +67,7 @@ function getDecoderVideoUrls(): {decoderUrl: string, videoUrl: string, decoderNa
   let currentDecoderUrl = null;
   let currentDecoderName = null;
   let currentUrlPrefix = "";
-  let pairs = [];
+  const pairs = [];
   forEachUrlParameter((key, value) => {
     if (key == "decoder" || key == "d") {
       currentDecoderUrl = value;
@@ -86,9 +86,9 @@ function getDecoderVideoUrls(): {decoderUrl: string, videoUrl: string, decoderNa
   return pairs;
 }
 
-let pairs = getDecoderVideoUrls();
+const pairs = getDecoderVideoUrls();
 
-let overrideTheme = {
+const overrideTheme = {
   palette: {
     accent1Color: "red"
   },
@@ -116,10 +116,10 @@ let overrideTheme = {
   }
 };
 
-let theme = getMuiTheme(darkBaseTheme, overrideTheme);
+const theme = getMuiTheme(darkBaseTheme, overrideTheme);
 
 if (player || vote) {
-  let videos = vote.split(",").map(x => {
+  const videos = vote.split(",").map(x => {
     return x.split(":").map(y => pairs[y|0]);
   });
   ReactDOM.render(

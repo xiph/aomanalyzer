@@ -17,7 +17,7 @@ import Toggle from 'material-ui/Toggle';
 import TextField from 'material-ui/TextField';
 import { YUVCanvas } from '../YUVCanvas';
 
-declare var dragscroll;
+declare let dragscroll;
 const MAX_FRAME_BUFFER_SIZE = 300;
 
 function fixedRatio(n: number) {
@@ -119,7 +119,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       this.pauseIfPlaying();
       return;
     }
-    let self = this;
+    const self = this;
     this.playerInterval = window.setInterval(() => {
       self.advanceOffset(true, false);
       self.forceUpdateIfMounted();
@@ -130,7 +130,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     if (this.frameBuffer.length < this.state.maxFrameBufferSize) {
       return;
     }
-    let frame = this.frameBuffer.shift();
+    const frame = this.frameBuffer.shift();
     this.state.decoder.releaseFrameImageBuffers(frame.frameImage);
     frame.frameImage = null; // Release Buffer
     this.setState({ baseFrameOffset: this.state.baseFrameOffset + 1 } as any);
@@ -139,7 +139,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
   /**
    * Not the React way.
    */
-  isComponentMounted: boolean = false;
+  isComponentMounted = false;
 
   componentDidMount() {
     this.setState({ status: "Loading Decoder" } as any);
@@ -222,7 +222,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
   drainFetchBuffer() {
     while (this.frameBuffer.length < this.state.maxFrameBufferSize) {
       if (this.fetchBuffer.length) {
-        let frame = this.fetchBuffer.shift();
+        const frame = this.fetchBuffer.shift();
         this.frameBuffer.push(frame);
         this.frames.push(frame);
       } else {
@@ -237,7 +237,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
         this.frames.push(frame);
         this.frameBuffer.push(frame);
       });
-      let image = frames[0].frameImage;
+      const image = frames[0].frameImage;
       this.canvas.width = image.Y.width;
       this.canvas.height = image.Y.height;
       this.sink = new YUVCanvas(this.canvas);
@@ -258,11 +258,11 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     if (index >= this.frameBuffer.length) {
       return;
     }
-    let image = this.frameBuffer[index].frameImage;
+    const image = this.frameBuffer[index].frameImage;
     if (this.lastFrameImage === image) {
       return;
     } else {
-      let elapsed = performance.now() - this.lastFrameImageDrawTime;
+      const elapsed = performance.now() - this.lastFrameImageDrawTime;
       // console.log("Time Since Last Draw Frame: " + elapsed);
     }
     this.sink.drawFrame(prepareBuffer(image));
@@ -329,7 +329,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       return;
     }
     this.canvasContainer = el;
-    let label = this.props.labelPrefix;
+    const label = this.props.labelPrefix;
     let lastClientX;
     let lastClientY;
     let mouseDown = false;
@@ -347,10 +347,10 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     });
     document.documentElement.addEventListener("mousemove", (e: MouseEvent) => {
       if (mouseDown) {
-        var X = e.pageX - el.offsetLeft;
-        var Y = e.pageY - el.offsetTop;
-        let dx = -lastClientX + (lastClientX = X);
-        let dy = -lastClientY + (lastClientY = Y);
+        const X = e.pageX - el.offsetLeft;
+        const Y = e.pageY - el.offsetTop;
+        const dx = -lastClientX + (lastClientX = X);
+        const dy = -lastClientY + (lastClientY = Y);
         this.props.onScroll && this.props.onScroll(el.scrollTop - dy, el.scrollLeft - dx);
       }
     });
@@ -359,14 +359,14 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     this.updateScroll(this.props.scrollTop, this.props.scrollLeft);
   }
   render() {
-    let valueStyle = { textAlign: "right", fontSize: "12px" };
+    const valueStyle = { textAlign: "right", fontSize: "12px" };
 
     this.drainFetchBuffer();
     this.drawFrame(this.state.frameOffset);
 
     let allStats, lastStats, benchStats;
     if (this.state.decoder) {
-      let length = this.frames.length;
+      const length = this.frames.length;
       allStats = this.getFrameDecodeStats(0, length);
       lastStats = this.getFrameDecodeStats(length - this.state.decoder.frameRate, length);
       if (this.props.bench && length >= this.props.bench) {
@@ -382,7 +382,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
         </div>
       </div>
     }
-    let canvasStyle: any = {};
+    const canvasStyle: any = {};
     let scaleLabel = "";
     if (this.props.shouldFitWidth) {
       canvasStyle.width = "100%";
@@ -467,16 +467,16 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     let sum = 0;
     let max = Number.MIN_VALUE;
     let min = Number.MAX_VALUE;
-    let frames = this.frames.slice(start, end);
+    const frames = this.frames.slice(start, end);
     frames.forEach(frame => {
       sum += frame.decodeTime;
       max = Math.max(max, frame.decodeTime);
       min = Math.min(min, frame.decodeTime);
     });
-    let avg = sum / frames.length;
+    const avg = sum / frames.length;
     let std = 0;
     frames.forEach(frame => {
-      let diff = frame.decodeTime - avg;
+      const diff = frame.decodeTime - avg;
       std += diff * diff;
     });
     std = Math.sqrt(std / frames.length);

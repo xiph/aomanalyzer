@@ -19,7 +19,7 @@ export class DownloadComponent extends React.Component<DownloadComponentProps, {
 
   decoder: Decoder;
   y4m: Blob;
-  wroteHeader: boolean = false;
+  wroteHeader = false;
 
   constructor() {
     super();
@@ -53,9 +53,9 @@ export class DownloadComponent extends React.Component<DownloadComponentProps, {
       this.wroteHeader = true;
     }
     this.y4m = new Blob([this.y4m, "FRAME\n"]);
-    for (let plane of [image.Y, image.U, image.V]) {
-      let plane_uint8 = new Uint8Array(plane.buffer);
-      let plane_export = new Uint8Array(plane.width * plane.height);
+    for (const plane of [image.Y, image.U, image.V]) {
+      const plane_uint8 = new Uint8Array(plane.buffer);
+      const plane_export = new Uint8Array(plane.width * plane.height);
       for (let y = 0; y < plane.height; y++) {
         for (let x = 0; x < plane.width; x++) {
           plane_export[y * plane.width + x] = plane_uint8[y * plane.stride + x];
@@ -69,7 +69,7 @@ export class DownloadComponent extends React.Component<DownloadComponentProps, {
     this.decoder.readFrame().then(frames => {
       this.setState({ status: "Decoding video" } as any);
       frames.forEach(frame => {
-        let image = frame.frameImage;
+        const image = frame.frameImage;
         this.dumpY4MFrame(image);
       });
       this.dumpFrames();

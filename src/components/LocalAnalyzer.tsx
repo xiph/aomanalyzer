@@ -18,8 +18,8 @@ import Checkbox from 'material-ui/Checkbox';
 import Toggle from 'material-ui/Toggle';
 import TextField from 'material-ui/TextField';
 import Select from 'react-select';
-declare var require;
-declare var shortenUrl;
+declare let require;
+declare let shortenUrl;
 
 export interface Option {
   label: string;
@@ -28,37 +28,37 @@ export interface Option {
 }
 
 export function daysSince(date: Date) {
-  var oneSecond = 1000;
-  var oneMinute = 60 * oneSecond;
-  var oneHour = 60 * oneMinute;
-  var oneDay = 24 * oneHour;
-  let diff = new Date().getTime() - date.getTime();
+  const oneSecond = 1000;
+  const oneMinute = 60 * oneSecond;
+  const oneHour = 60 * oneMinute;
+  const oneDay = 24 * oneHour;
+  const diff = new Date().getTime() - date.getTime();
   return Math.round(Math.abs(diff / oneDay));
 }
 
 export function secondsSince(date: Date) {
-  var oneSecond = 1000;
-  let diff = new Date().getTime() - date.getTime();
+  const oneSecond = 1000;
+  const diff = new Date().getTime() - date.getTime();
   return Math.round(Math.abs(diff / oneSecond));
 }
 
 export function minutesSince(date: Date) {
-  var oneSecond = 1000;
-  var oneMinute = 60 * oneSecond;
-  let diff = new Date().getTime() - date.getTime();
+  const oneSecond = 1000;
+  const oneMinute = 60 * oneSecond;
+  const diff = new Date().getTime() - date.getTime();
   return Math.round(Math.abs(diff / oneMinute));
 }
 
 export function timeSince(date: Date) {
-  var oneSecond = 1000;
-  var oneMinute = 60 * oneSecond;
-  var oneHour = 60 * oneMinute;
-  var oneDay = 24 * oneHour;
-  let diff = new Date().getTime() - date.getTime();
-  var days = Math.round(Math.abs(diff / oneDay));
-  var hours = Math.round(Math.abs(diff % oneDay) / oneHour);
-  var minutes = Math.round(Math.abs(diff % oneHour) / oneMinute);
-  let s = [];
+  const oneSecond = 1000;
+  const oneMinute = 60 * oneSecond;
+  const oneHour = 60 * oneMinute;
+  const oneDay = 24 * oneHour;
+  const diff = new Date().getTime() - date.getTime();
+  const days = Math.round(Math.abs(diff / oneDay));
+  const hours = Math.round(Math.abs(diff % oneDay) / oneHour);
+  const minutes = Math.round(Math.abs(diff % oneHour) / oneMinute);
+  const s = [];
   if (days > 0) {
     s.push(`${days} day${days === 1 ? "" : "s"}`);
   }
@@ -72,7 +72,7 @@ export function timeSince(date: Date) {
 }
 
 function unique<T>(array: Array<T>): Array<T> {
-  let result = [];
+  const result = [];
   for (let i = 0; i < array.length; i++) {
     if (result.indexOf(array[i]) < 0) {
       result.push(array[i]);
@@ -82,7 +82,7 @@ function unique<T>(array: Array<T>): Array<T> {
 }
 
 const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-declare var process;
+declare let process;
 let masterUrl = window.location.origin + '/';
 if (window.location.origin.startsWith('file://') || window.location.origin.startsWith('http://localhost')) {
   masterUrl = 'https://arewecompressedyet.com/';
@@ -94,8 +94,8 @@ export class RunDetails extends React.Component<{
 
   }> {
   render() {
-    let json = this.props.json;
-    let info = json.info;
+    const json = this.props.json;
+    const info = json.info;
     return <div className="runDetail">
       <div>Commit: {info.commit}</div>
       <div>Nick: {info.nick}</div>
@@ -151,8 +151,8 @@ export class LocalAnalyzerComponent extends React.Component<{
   }
   loadXHR<T>(path: string, type = "json"): Promise<T> {
     return new Promise((resolve, reject) => {
-      let xhr = new XMLHttpRequest();
-      let self = this;
+      const xhr = new XMLHttpRequest();
+      const self = this;
       xhr.open("GET", path, true);
       xhr.responseType = "text";
       xhr.send();
@@ -207,46 +207,46 @@ export class LocalAnalyzerComponent extends React.Component<{
       this.setState({ setsJson } as any);
     });
   }
-  handleAction(value) {
+  handleAction(value) { /* tslint:disable:no-empty */
 
   }
   resetURL() {
     this.setState({shortURL: ""} as any);
   }
   onChangeTaskFilter(option) {
-    let taskFilter = option ? option.value : undefined;
+    const taskFilter = option ? option.value : undefined;
     this.setState({ taskFilter } as any);
   }
   onChangeNickFilter(option) {
-    let nickFilter = option ? option.value : undefined;
+    const nickFilter = option ? option.value : undefined;
     this.setState({ nickFilter } as any);
   }
   onChangeConfigFilter(option) {
-    let configFilter = option || [];
+    const configFilter = option || [];
     this.setState({ configFilter } as any);
   }
   onChangeStatusFilter(option) {
-    let statusFilter = option || [];
+    const statusFilter = option || [];
     this.setState({ statusFilter } as any);
   }
   onChangeCommandLineFilter(option) {
-    let commandLineFilter = option || [];
+    const commandLineFilter = option || [];
     this.setState({ commandLineFilter } as any);
   }
   onChangeRun(slot, option) {
-    let slots = this.state.slots;
+    const slots = this.state.slots;
     slots[slot].runId = option ? option.value : undefined;
     this.setState({ slots } as any);
     this.resetURL();
   }
   onChangeVideo(slot, option) {
-    let slots = this.state.slots;
+    const slots = this.state.slots;
     slots[slot].video = option ? option.value : undefined;
     this.setState({ slots } as any);
     this.resetURL();
   }
   onChangeQuality(slot, option) {
-    let slots = this.state.slots;
+    const slots = this.state.slots;
     slots[slot].quality = option ? option.value : undefined;
     this.setState({ slots } as any);
     this.resetURL();
@@ -256,31 +256,31 @@ export class LocalAnalyzerComponent extends React.Component<{
     this.resetURL();
   }
   onDeleteRun(slot) {
-    let slots = this.state.slots;
+    const slots = this.state.slots;
     slots.splice(slot, 1);
     this.setState({ slots } as any);
     this.resetURL();
   }
   onDuplicateRun(slot) {
-    let slots = this.state.slots;
-    let oldSlot = slots[slot];
-    let newSlot = { runId: oldSlot.runId, video: oldSlot.video, quality: oldSlot.quality };
+    const slots = this.state.slots;
+    const oldSlot = slots[slot];
+    const newSlot = { runId: oldSlot.runId, video: oldSlot.video, quality: oldSlot.quality };
     slots.splice(slot, 0, newSlot);
     this.setState({ slots } as any);
     this.resetURL();
   }
   onMoveRun(slot, offset) {
     if (slot + offset < 0) return;
-    let slots = this.state.slots;
+    const slots = this.state.slots;
     if (slot + offset >= slots.length) return;
-    let tmp = slots[slot + offset];
+    const tmp = slots[slot + offset];
     slots[slot + offset] = slots[slot];
     slots[slot] = tmp;
     this.setState({ slots } as any);
     this.resetURL();
   }
   onAddRun() {
-    let slots = this.state.slots;
+    const slots = this.state.slots;
     slots.push({ runId: "", video: "", quality: 0 });
     this.setState({ slots } as any);
     this.resetURL();
@@ -291,14 +291,14 @@ export class LocalAnalyzerComponent extends React.Component<{
   }
   makePairs(): any {
     return this.state.slots.map(slot => {
-      let run = this.getRunById(slot.runId);
-      let videoUrl = masterUrl + `runs/${run.run_id}/${run.info.task}/${slot.video}-${slot.quality}.ivf`;
-      let decoderUrl = masterUrl + `runs/${run.run_id}/js/decoder.js`;
+      const run = this.getRunById(slot.runId);
+      const videoUrl = masterUrl + `runs/${run.run_id}/${run.info.task}/${slot.video}-${slot.quality}.ivf`;
+      const decoderUrl = masterUrl + `runs/${run.run_id}/js/decoder.js`;
       return {decoderUrl, videoUrl};
     });
   }
   findLongestPrefix(pairs: {decoderUrl: string, videoUrl: string} []): string {
-    let list = [];
+    const list = [];
     pairs.forEach(pair => {
       list.push(pair.decoderUrl);
       list.push(pair.videoUrl);
@@ -306,12 +306,12 @@ export class LocalAnalyzerComponent extends React.Component<{
     if (list.length == 0) {
       return "";
     }
-    let first = list[0];
+    const first = list[0];
     let prefix = "";
     // Find longest prefix.
     for (let i = 0; i < first.length; i++) {
-      let tmp = first.slice(0, i);
-      let isCommon = list.every(s => s.indexOf(tmp) == 0);
+      const tmp = first.slice(0, i);
+      const isCommon = list.every(s => s.indexOf(tmp) == 0);
       if (!isCommon) {
         break;
       }
@@ -335,7 +335,7 @@ export class LocalAnalyzerComponent extends React.Component<{
     if (!this.state.setsJson || !(task in this.state.setsJson)) {
       return [];
     }
-    let array = this.state.setsJson[task].sources;
+    const array = this.state.setsJson[task].sources;
     if (!array) {
       return [];
     }
@@ -349,12 +349,12 @@ export class LocalAnalyzerComponent extends React.Component<{
     return array.map(q => { return { value: q, label: q }; })
   }
   cannotAnalyze() {
-    let slots = this.state.slots;
+    const slots = this.state.slots;
     if (slots.length == 0) {
       return true;
     }
     for (let i = 0; i < slots.length; i++) {
-      let slot = slots[i];
+      const slot = slots[i];
       if (!slot.quality || !slot.runId || !slot.video) {
         return true;
       }
@@ -363,8 +363,8 @@ export class LocalAnalyzerComponent extends React.Component<{
   }
   createURL() {
     try {
-      let pairs = this.makePairs();
-      let prefix = this.findLongestPrefix(pairs);
+      const pairs = this.makePairs();
+      const prefix = this.findLongestPrefix(pairs);
       let url = window.location.origin + window.location.pathname + "?";
       if (this.state.votingEnabled) {
         let vote = this.state.vote;
@@ -417,7 +417,7 @@ export class LocalAnalyzerComponent extends React.Component<{
     }
     for (let i = 0; i < vote.length; i++) {
       for (let j = 0; j < vote[i].length; j++) {
-        let run = vote[i][j];
+        const run = vote[i][j];
         if (!this.state.slots[run]) {
           return `Run ${run} is missing.`;
         }
@@ -429,14 +429,14 @@ export class LocalAnalyzerComponent extends React.Component<{
     function logChange(val) {
       console.log("Selected: " + val);
     }
-    let listJson = this.state.listJson;
+    const listJson = this.state.listJson;
     if (!listJson) {
       return <Dialog title="Downloading AWCY Runs" modal={true} open={true}>
         <CircularProgress size={40} thickness={7} />
       </Dialog>;
     } else {
-      let filtersEnabled = this.state.filtersEnabled;
-      let runOptions = listJson.filter(run => {
+      const filtersEnabled = this.state.filtersEnabled;
+      const runOptions = listJson.filter(run => {
         if (!this.state.filtersEnabled) {
           return true;
         }
@@ -454,13 +454,13 @@ export class LocalAnalyzerComponent extends React.Component<{
           pass = false;
         }
         if (pass && this.state.configFilter.length) {
-          let buildOptions = run.info.build_options.split(" ").filter(x => !!x);
+          const buildOptions = run.info.build_options.split(" ").filter(x => !!x);
           pass = this.state.configFilter.every(option => {
             return buildOptions.indexOf(option.value) >= 0;
           });
         }
         if (pass && this.state.commandLineFilter.length) {
-          let commandLineOptions = run.info.extra_options.split(" ").filter(x => !!x);
+          const commandLineOptions = run.info.extra_options.split(" ").filter(x => !!x);
           pass = this.state.commandLineFilter.every(option => {
             return commandLineOptions.indexOf(option.value) >= 0;
           });
@@ -470,23 +470,23 @@ export class LocalAnalyzerComponent extends React.Component<{
         return { value: run.run_id, label: run.run_id }
       }).slice(0, 1000);
 
-      let taskFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.task)).map(task => {
+      const taskFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.task)).map(task => {
         return { value: task, label: task }
       });
 
-      let nickFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.nick)).map(nick => {
+      const nickFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.nick)).map(nick => {
         return { value: nick, label: nick }
       });
 
-      let configFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.build_options.split(" ").filter(x => !!x)).reduce((a, b) => a.concat(b))).map(option => {
+      const configFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.build_options.split(" ").filter(x => !!x)).reduce((a, b) => a.concat(b))).map(option => {
         return {value: option, label: option}
       });
 
-      let commandLineFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.extra_options.split(" ").filter(x => !!x)).reduce((a, b) => a.concat(b))).map(option => {
+      const commandLineFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.extra_options.split(" ").filter(x => !!x)).reduce((a, b) => a.concat(b))).map(option => {
         return {value: option, label: option}
       });
 
-      let statusFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.status)).map(status => {
+      const statusFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.status)).map(status => {
         return { value: status, label: status }
       });
 
@@ -557,8 +557,8 @@ export class LocalAnalyzerComponent extends React.Component<{
           Runs ({runOptions.length})
         </div>
         {this.state.slots.map((_, i) => {
-          let slot = this.state.slots[i];
-          let run = this.getRunById(slot.runId);
+          const slot = this.state.slots[i];
+          const run = this.getRunById(slot.runId);
 
           return <div key={i} className="builderVideoContainer">
             <div className="builderContainer">

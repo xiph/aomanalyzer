@@ -35,8 +35,8 @@ export class HistogramComponent extends React.Component<{
     this.renderHistogram(this.ctx, this.props.histograms);
   }
   componentDidMount() {
-    let w = this.w = this.props.width;
-    let h = this.h = this.props.height;
+    const w = this.w = this.props.width;
+    const h = this.h = this.props.height;
     this.canvas.style.width = w + "px";
     this.canvas.style.height = h + "px";
     this.canvas.width = w * this.ratio;
@@ -45,23 +45,21 @@ export class HistogramComponent extends React.Component<{
     this.renderHistogram(this.ctx, this.props.histograms);
     this.canvas.addEventListener("mousemove", this.handleMouseEvent.bind(this));
   }
-  componentWillUnmount() {
+  componentWillUnmount() { /* tslint:disable:no-empty */
 
   }
   renderHistogram(ctx: CanvasRenderingContext2D, histograms: Histogram[]) {
     TRACE_RENDERING && console.log("renderHistogram");
-    let names: string [] = null;
-    let nameMap: { [id: string]: number };
     if (!histograms.length || !histograms[0]) {
       return;
     }
-    nameMap = histograms[0].names;
-    names = Object.keys(nameMap);
+    const nameMap: { [id: string]: number } = histograms[0].names;
+    const names: string [] = Object.keys(nameMap);
     function valueOf(histogram: Histogram, name: string) {
-      let count = histogram.counts[histogram.names[name]];
+      const count = histogram.counts[histogram.names[name]];
       return count === undefined ? 0 : count;
     }
-    let rows = [];
+    const rows = [];
     let scale = 1;
     if (this.props.scale == "max") {
       let max = 0;
@@ -75,7 +73,7 @@ export class HistogramComponent extends React.Component<{
       scale = max;
     }
     histograms.forEach((histogram: Histogram, i) => {
-      let row = { frame: i, total: 0 };
+      const row = { frame: i, total: 0 };
       if (this.props.scale == "relative") {
         scale = 0;
         names.forEach(name => {
@@ -95,7 +93,7 @@ export class HistogramComponent extends React.Component<{
 
   handleMouseEvent(event: MouseEvent) {
     function getMousePosition(canvas: HTMLCanvasElement, event: MouseEvent) {
-      let rect = canvas.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect();
       return new Vector(
         event.clientX - rect.left,
         event.clientY - rect.top
@@ -108,21 +106,21 @@ export class HistogramComponent extends React.Component<{
   renderChart(ctx: CanvasRenderingContext2D, names: string[], nameMap: { [id: string]: number }, data: any[], yDomain = [0, 1]) {
     ctx.save();
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    let w = this.w * this.ratio;
-    let h = this.h * this.ratio;
-    let bw = Math.min(16 * this.ratio, w / data.length | 0);
-    let bh = Math.min(16 * this.ratio, h / data.length | 0);
+    const w = this.w * this.ratio;
+    const h = this.h * this.ratio;
+    const bw = Math.min(16 * this.ratio, w / data.length | 0);
+    const bh = Math.min(16 * this.ratio, h / data.length | 0);
     let selectedName = null;
     let selectedValue = undefined;
     let selectedFrame = -1;
     for (let i = 0; i < data.length; i++) {
       let t = 0;
-      let r = new Rectangle(0, 0, 0, 0);
+      const r = new Rectangle(0, 0, 0, 0);
       names.forEach(k => {
-        let v = data[i][k];
+        const v = data[i][k];
         ctx.fillStyle = this.props.color(k);
         if (this.props.horizontal) {
-          let y = (h - ((t + v) * h));
+          const y = (h - ((t + v) * h));
           r.set(i * bw, y | 0, bw - 1, (v * h + (y - (y | 0))) | 0);
         } else {
           r.set((t * w | 0), bh * i, (v * w) | 0, bh - 1);
@@ -149,12 +147,12 @@ export class HistogramComponent extends React.Component<{
       }
     }
     if (selectedName) {
-      let top = this.position.distanceTo(new Vector(0, 0)) > this.position.distanceTo(new Vector(0, h));
-      let text = selectedName + " " + (selectedValue * 100).toFixed(2) + "%" + " (" + String(selectedFrame) + ")";
+      const top = this.position.distanceTo(new Vector(0, 0)) > this.position.distanceTo(new Vector(0, h));
+      const text = selectedName + " " + (selectedValue * 100).toFixed(2) + "%" + " (" + String(selectedFrame) + ")";
       ctx.globalAlpha = 0.75;
       ctx.font = (10 * this.ratio) + "px Arial";
       ctx.fillStyle = "black";
-      let tw = ctx.measureText(text).width + 8 * this.ratio;
+      const tw = ctx.measureText(text).width + 8 * this.ratio;
       if (top) {
         ctx.fillRect(0, 0, tw, 20 * this.ratio);
       } else {

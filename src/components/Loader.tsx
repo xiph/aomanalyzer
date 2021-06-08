@@ -46,9 +46,9 @@ export class LoaderComponent extends React.Component<LoaderComponentProps, {
     } as any;
   }
   componentWillMount() {
-    let decoderUrls = [];
-    let decoderNames = [];
-    let videoUrls = [];
+    const decoderUrls = [];
+    const decoderNames = [];
+    const videoUrls = [];
     this.props.decoderVideoUrlPairs.forEach(pair => {
       decoderUrls.push(pair.decoderUrl);
       decoderNames.push(pair.decoderName);
@@ -63,27 +63,27 @@ export class LoaderComponent extends React.Component<LoaderComponentProps, {
       this.decoders = decoders;
       this.setState({ status: "Downloading Files" } as any);
       Promise.all(videoPaths.map(path => downloadFile(path))).then(bytes => {
-        let decodedFrames = [];
+        const decodedFrames = [];
         for (let i = 0; i < decoders.length; i++) {
-          let decoder = decoders[i];
+          const decoder = decoders[i];
           decoder.openFileBytes(bytes[i]);
         }
-        let groupNames = decoderNames.slice();
+        const groupNames = decoderNames.slice();
         for (let i = 0; i < decoderPaths.length; i++) {
           if (groupNames[i]) {
             continue;
           }
           let videoPath = videoPaths[i];
-          let j = videoPath.lastIndexOf("/");
+          const j = videoPath.lastIndexOf("/");
           if (j >= 0) {
             videoPath = videoPath.substring(j + 1);
           }
           groupNames[i] = videoPath;
         }
         this.setState({ status: "Decoding Frames" } as any);
-        let s = performance.now();
+        const s = performance.now();
         Promise.all(decoders.map(decoder => this.decodeFrames(decoder, this.props.maxFrames))).then(frames => {
-          let playbackFrameRate = Math.min(this.props.playbackFrameRate, decoders[0].frameRate);
+          const playbackFrameRate = Math.min(this.props.playbackFrameRate, decoders[0].frameRate);
           if (this.props.bench) {
             this.setState({ status: "Decoded Frames in " + (performance.now() - s).toFixed(2) + " ms." } as any);
           } else {
@@ -100,7 +100,7 @@ export class LoaderComponent extends React.Component<LoaderComponentProps, {
 
   decodeAdditionalFrames(count: number) {
     Promise.all(this.decoders.map(decoder => this.decodeFrames(decoder, count))).then(frames => {
-      let currentFrames = this.state.frames;
+      const currentFrames = this.state.frames;
       for (let i = 0; i < frames.length; i++) {
         currentFrames[i] = currentFrames[i].concat(frames[i]);
       }
@@ -118,7 +118,7 @@ export class LoaderComponent extends React.Component<LoaderComponentProps, {
       decoder.shouldReadImageData = false;
     }
     return new Promise((resolve, reject) => {
-      let time = performance.now();
+      const time = performance.now();
       let decodedFrames = [];
       let framePromises = [];
       for (let i = 0; i < count; i++) {
@@ -145,9 +145,9 @@ export class LoaderComponent extends React.Component<LoaderComponentProps, {
     });
   }
   render() {
-    let frames = this.state.frames;
+    const frames = this.state.frames;
     if (this.state.loading != "done") {
-      let icon = this.state.loading === "loading" ? <span className="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> : <span className="glyphicon glyphicon-ban-circle"></span>;
+      const icon = this.state.loading === "loading" ? <span className="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> : <span className="glyphicon glyphicon-ban-circle"></span>;
       return <Dialog
         modal={false}
         open={true}

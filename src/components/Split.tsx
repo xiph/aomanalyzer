@@ -89,7 +89,7 @@ export class SplitView extends React.Component<SplitViewProps, {
   }
   mountView(name, el: HTMLDivElement, group) {
     this[name] = el;
-    let self = this;
+    const self = this;
     function lock(a, b) {
       if (self.state.lockScroll) {
         self[a].scrollTop = self[b].scrollTop;
@@ -191,7 +191,7 @@ export class SplitView extends React.Component<SplitViewProps, {
       backgroundColor: grey900
     };
 
-    let self = this;
+    const self = this;
     function getLabel(i) {
       switch (self.state.mode) {
         // case SplitMode.Left: return ["Visible", "Hidden"][i];
@@ -202,7 +202,7 @@ export class SplitView extends React.Component<SplitViewProps, {
       }
     }
     function getGroupName(i) {
-      let groupNames = self.props.groupNames;
+      const groupNames = self.props.groupNames;
       if (groupNames && groupNames.length) {
         return groupNames[i];
       }

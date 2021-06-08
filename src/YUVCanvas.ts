@@ -1,31 +1,31 @@
 const trace = false;
-function assert(c: any, message: string = "") {
+function assert(c: any, message = "") {
   if (!c) {
     throw new Error(message);
   }
 }
 function compileShader(gl: any, type: number, source: string) {
-  let shader = gl.createShader(type);
+  const shader = gl.createShader(type);
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    let err = gl.getShaderInfoLog(shader);
+    const err = gl.getShaderInfoLog(shader);
     gl.deleteShader(shader);
     throw new Error('GL shader compilation for ' + type + ' failed: ' + err);
   }
   return shader;
 }
 function compileProgram(gl: any, vertSource: string, fragSource: string) {
-  let vs = compileShader(gl, gl.VERTEX_SHADER, vertSource);
-  let fs = compileShader(gl, gl.FRAGMENT_SHADER, fragSource);
-  let program = gl.createProgram();
+  const vs = compileShader(gl, gl.VERTEX_SHADER, vertSource);
+  const fs = compileShader(gl, gl.FRAGMENT_SHADER, fragSource);
+  const program = gl.createProgram();
   gl.attachShader(program, vs);
   gl.attachShader(program, fs);
   gl.deleteShader(vs);
   gl.deleteShader(fs);
   gl.linkProgram(program);
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    var err = gl.getProgramInfoLog(program);
+    const err = gl.getProgramInfoLog(program);
     gl.deleteProgram(program);
     throw new Error('GL program linking failed: ' + err);
   }
@@ -47,10 +47,10 @@ export interface YCbCrBuffer {
 
 export class YUVCanvas {
   gl: any;
-  firstRun: boolean = true;
-  useWebGL2: boolean = true;
+  firstRun = true;
+  useWebGL2 = true;
   constructor(public canvas: HTMLCanvasElement) {
-    let creationAttribs = {
+    const creationAttribs = {
       antialias: false,
       alpha: false,
       depth: false,
@@ -63,9 +63,9 @@ export class YUVCanvas {
       this.useWebGL2 = false;
     }
     assert(this.gl, "WebGL 2 is Unavailable");
-    let gl = this.gl;
+    const gl = this.gl;
 
-    let vertSource = `
+    const vertSource = `
 attribute vec2 aPosition; // [0, 1]
 varying vec2 vTexCoord;
 void main() {
@@ -80,7 +80,7 @@ void main() {
     [G] = [1.16438, -0.21325, -0.53291] x [Cb - 0.50196]
     [B]   [1.16438,  2.11240,  0.00000]   [Cr - 0.50196]
     */
-    let fragSource = `
+    const fragSource = `
 precision mediump float;
 uniform sampler2D uTextureY;
 uniform sampler2D uTextureCb;
@@ -101,7 +101,7 @@ void main() {
 }
     `;
 
-    let program = compileProgram(gl, vertSource, fragSource);
+    const program = compileProgram(gl, vertSource, fragSource);
     program.aPosition = gl.getAttribLocation(program, 'aPosition');
     program.uTexture = [
       gl.getUniformLocation(program, 'uTextureY'),
@@ -123,7 +123,7 @@ void main() {
     }
     this.checkError();
 
-    let vertData = [
+    const vertData = [
       0, 0,
       1, 0,
       0, 1,
@@ -136,20 +136,20 @@ void main() {
     this.checkError();
   }
   checkError() {
-    let err = this.gl.getError();
+    const err = this.gl.getError();
     if (err != 0) {
       console.error("WebGL Error " + err);
     }
   }
   drawFrame(yCbCrBuffer: YCbCrBuffer) {
-    let gl = this.gl;
+    const gl = this.gl;
 
-    let format = this.useWebGL2 ? gl.RED : gl.LUMINANCE;
-    let internalFormat = this.useWebGL2 ? gl.R8 : gl.LUMINANCE;
-    let width = yCbCrBuffer.width;
-    let height = yCbCrBuffer.height;
-    let hdec = yCbCrBuffer.hdec;
-    let vdec = yCbCrBuffer.vdec;
+    const format = this.useWebGL2 ? gl.RED : gl.LUMINANCE;
+    const internalFormat = this.useWebGL2 ? gl.R8 : gl.LUMINANCE;
+    const width = yCbCrBuffer.width;
+    const height = yCbCrBuffer.height;
+    const hdec = yCbCrBuffer.hdec;
+    const vdec = yCbCrBuffer.vdec;
 
     if (this.firstRun ||
         gl.drawingBufferWidth != yCbCrBuffer.width ||
@@ -180,7 +180,7 @@ void main() {
     const start = performance.now();
     let lastLapTime = start;
     function lap(name: string) {
-      let now = performance.now();
+      const now = performance.now();
       const diff = now - lastLapTime;
       lastLapTime = now;
       trace && console.log(diff.toFixed(2) + " ms");
@@ -220,5 +220,5 @@ void main() {
     lap("Draw");
     trace && console.log('total:', (performance.now() - start).toFixed(2));
     this.checkError();
-  };
+  }
 }
