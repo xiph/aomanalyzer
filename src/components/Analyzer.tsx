@@ -1,8 +1,29 @@
-import * as React from "react";
+import * as React from 'react';
 
-import { getColor, makePattern, reverseMap, palette, hashString, makeBlockSizeLog2MapByValue, HEAT_COLORS, Decoder, Rectangle, Size, AnalyzerFrame, loadFramesFromJson, downloadFile, Histogram, Accounting, AccountingSymbolMap, clamp, Vector, localFiles, localFileProtocol } from "./analyzerTools";
-import { HistogramComponent } from "./Histogram";
-import { TRACE_RENDERING, padLeft, log2, assert, unreachable } from "./analyzerTools";
+import {
+  getColor,
+  makePattern,
+  reverseMap,
+  palette,
+  hashString,
+  makeBlockSizeLog2MapByValue,
+  HEAT_COLORS,
+  Decoder,
+  Rectangle,
+  Size,
+  AnalyzerFrame,
+  loadFramesFromJson,
+  downloadFile,
+  Histogram,
+  Accounting,
+  AccountingSymbolMap,
+  clamp,
+  Vector,
+  localFiles,
+  localFileProtocol,
+} from './analyzerTools';
+import { HistogramComponent } from './Histogram';
+import { TRACE_RENDERING, padLeft, log2, assert, unreachable } from './analyzerTools';
 
 import RaisedButton from 'material-ui/RaisedButton';
 import Popover from 'material-ui/Popover';
@@ -32,7 +53,8 @@ declare let window;
 const SUPER_BLOCK_SIZE = 64;
 const ZOOM_WIDTH = 500;
 const ZOOM_SOURCE = 64;
-const DEFAULT_CONFIG = "--disable-multithread --disable-runtime-cpu-detect --target=generic-gnu --enable-accounting --enable-analyzer --enable-aom_highbitdepth --extra-cflags=-D_POSIX_SOURCE --enable-inspection --disable-docs --disable-webm-io --enable-experimental";
+const DEFAULT_CONFIG =
+  '--disable-multithread --disable-runtime-cpu-detect --target=generic-gnu --enable-accounting --enable-analyzer --enable-aom_highbitdepth --extra-cflags=-D_POSIX_SOURCE --enable-inspection --disable-docs --disable-webm-io --enable-experimental';
 const DERING_STRENGTHS = 21;
 const CLPF_STRENGTHS = 4;
 
@@ -40,7 +62,7 @@ enum VisitMode {
   Block,
   SuperBlock,
   TransformBlock,
-  Tile
+  Tile,
 }
 
 enum HistogramTab {
@@ -52,7 +74,7 @@ enum HistogramTab {
   PredictionMode,
   UVPredictionMode,
   Skip,
-  DualFilterType
+  DualFilterType,
 }
 
 function colorScale(v, colors) {
@@ -73,8 +95,8 @@ function keyForValue(o: Object, value: any): string {
 function shuffle(array: any[], count: number) {
   // Shuffle Indices
   for (let j = 0; j < count; j++) {
-    const a = Math.random() * array.length | 0;
-    const b = Math.random() * array.length | 0;
+    const a = (Math.random() * array.length) | 0;
+    const b = (Math.random() * array.length) | 0;
     const t = array[a];
     array[a] = array[b];
     array[b] = t;
@@ -102,7 +124,7 @@ function withCommas(v: number) {
   return v.toLocaleString();
 }
 function toByteSize(v: number) {
-  return withCommas(v) + " Bytes";
+  return withCommas(v) + ' Bytes';
 }
 
 function getLineOffset(lineWidth: number) {
@@ -143,12 +165,12 @@ interface BlockVisitor {
 }
 
 interface AnalyzerViewProps {
-  groups: AnalyzerFrame[][],
-  groupNames?: string[],
+  groups: AnalyzerFrame[][];
+  groupNames?: string[];
   playbackFrameRate?: number;
   blind?: number;
   onDecodeAdditionalFrames: (count: number) => void;
-  decoderVideoUrlPairs?: { decoderUrl: string, videoUrl: string, decoderName: string }[];
+  decoderVideoUrlPairs?: { decoderUrl: string; videoUrl: string; decoderName: string }[];
 }
 
 interface AlertProps {
@@ -157,8 +179,7 @@ interface AlertProps {
   title: string;
   description: string;
 }
-export class Alert extends React.Component<AlertProps, {
-}> {
+export class Alert extends React.Component<AlertProps, {}> {
   constructor(props: AlertProps) {
     super();
   }
@@ -166,35 +187,30 @@ export class Alert extends React.Component<AlertProps, {
     this.props.onClose(value);
   }
   render() {
-    return <div>
-      <Dialog
-        title={this.props.title}
-        actions={[
-          <FlatButton
-            label="Cancel"
-            primary={true}
-            onTouchTap={this.handleAction.bind(this, false)}
-          />,
-          <FlatButton
-            label="OK"
-            primary={true}
-            onTouchTap={this.handleAction.bind(this, true)}
-          />
-        ]}
-        modal={true}
-        open={this.props.open}
-      >
-        {this.props.description}
-      </Dialog>
-    </div>
+    return (
+      <div>
+        <Dialog
+          title={this.props.title}
+          actions={[
+            <FlatButton label="Cancel" primary={true} onTouchTap={this.handleAction.bind(this, false)} />,
+            <FlatButton label="OK" primary={true} onTouchTap={this.handleAction.bind(this, true)} />,
+          ]}
+          modal={true}
+          open={this.props.open}
+        >
+          {this.props.description}
+        </Dialog>
+      </div>
+    );
   }
 }
 
-export class AccountingComponent extends React.Component<{
-  symbols: AccountingSymbolMap;
-}, {
-
-  }> {
+export class AccountingComponent extends React.Component<
+  {
+    symbols: AccountingSymbolMap;
+  },
+  {}
+> {
   render() {
     const symbols = this.props.symbols;
     let total = 0;
@@ -202,242 +218,283 @@ export class AccountingComponent extends React.Component<{
       total += symbol.bits;
     });
 
-    const rows = []
-    const valueStyle = { textAlign: "right", fontSize: "12px" };
+    const rows = [];
+    const valueStyle = { textAlign: 'right', fontSize: '12px' };
     for (const name in symbols) {
       const symbol = symbols[name];
-      rows.push(<TableRow key={name}>
-        <TableRowColumn>{name}</TableRowColumn>
-        <TableRowColumn style={valueStyle}>{fractionalBitsToString(symbol.bits)}</TableRowColumn>
-        <TableRowColumn style={valueStyle}>{toPercent(symbol.bits / total)}</TableRowColumn>
-        <TableRowColumn style={valueStyle}>{withCommas(symbol.samples)}</TableRowColumn>
-      </TableRow>);
+      rows.push(
+        <TableRow key={name}>
+          <TableRowColumn>{name}</TableRowColumn>
+          <TableRowColumn style={valueStyle}>{fractionalBitsToString(symbol.bits)}</TableRowColumn>
+          <TableRowColumn style={valueStyle}>{toPercent(symbol.bits / total)}</TableRowColumn>
+          <TableRowColumn style={valueStyle}>{withCommas(symbol.samples)}</TableRowColumn>
+        </TableRow>,
+      );
     }
 
-    return <div>
-      <Table>
-        <TableHeader adjustForCheckbox={false} displaySelectAll={false}>
-          <TableRow>
-            <TableHeaderColumn style={{ textAlign: "left" }}>Symbol</TableHeaderColumn>
-            <TableHeaderColumn style={{ textAlign: "right" }}>Bits {fractionalBitsToString(total)}</TableHeaderColumn>
-            <TableHeaderColumn style={{ textAlign: "right" }}>%</TableHeaderColumn>
-            <TableHeaderColumn style={{ textAlign: "right" }}>Samples</TableHeaderColumn>
-          </TableRow>
-        </TableHeader>
-        <TableBody displayRowCheckbox={false}>
-          {rows}
-        </TableBody>
-      </Table>
-    </div>
+    return (
+      <div>
+        <Table>
+          <TableHeader adjustForCheckbox={false} displaySelectAll={false}>
+            <TableRow>
+              <TableHeaderColumn style={{ textAlign: 'left' }}>Symbol</TableHeaderColumn>
+              <TableHeaderColumn style={{ textAlign: 'right' }}>Bits {fractionalBitsToString(total)}</TableHeaderColumn>
+              <TableHeaderColumn style={{ textAlign: 'right' }}>%</TableHeaderColumn>
+              <TableHeaderColumn style={{ textAlign: 'right' }}>Samples</TableHeaderColumn>
+            </TableRow>
+          </TableHeader>
+          <TableBody displayRowCheckbox={false}>{rows}</TableBody>
+        </Table>
+      </div>
+    );
   }
 }
 
-export class FrameInfoComponent extends React.Component<{
-  frame: AnalyzerFrame;
-  activeFrame: number;
-  activeGroup: number;
-}, {
-
-  }> {
+export class FrameInfoComponent extends React.Component<
+  {
+    frame: AnalyzerFrame;
+    activeFrame: number;
+    activeGroup: number;
+  },
+  {}
+> {
   render() {
     const frame = this.props.frame;
-    const valueStyle = { textAlign: "right", fontSize: "12px" };
-    return <div>
-      <Table>
-        <TableBody displayRowCheckbox={false}>
-          <TableRow>
-            <TableRowColumn>Video</TableRowColumn><TableRowColumn style={valueStyle}>{this.props.activeGroup}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>Frame</TableRowColumn><TableRowColumn style={valueStyle}>{this.props.activeFrame + 1}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>Frame Type</TableRowColumn><TableRowColumn style={valueStyle}>{frame.json.frameType}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>Show Frame</TableRowColumn><TableRowColumn style={valueStyle}>{frame.json.showFrame}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>BaseQIndex</TableRowColumn><TableRowColumn style={valueStyle}>{frame.json.baseQIndex}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>Frame Size</TableRowColumn><TableRowColumn style={valueStyle}>{frame.image.width} x {frame.image.height}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>MI Size</TableRowColumn><TableRowColumn style={valueStyle}>{1 << frame.miSizeLog2}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>DeltaQ Res / Present Flag</TableRowColumn><TableRowColumn style={valueStyle}>{frame.json.deltaQRes} / {frame.json.deltaQPresentFlag}</TableRowColumn>
-          </TableRow>
-        </TableBody>
-      </Table>
-    </div>
+    const valueStyle = { textAlign: 'right', fontSize: '12px' };
+    return (
+      <div>
+        <Table>
+          <TableBody displayRowCheckbox={false}>
+            <TableRow>
+              <TableRowColumn>Video</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{this.props.activeGroup}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Frame</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{this.props.activeFrame + 1}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Frame Type</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{frame.json.frameType}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Show Frame</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{frame.json.showFrame}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>BaseQIndex</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{frame.json.baseQIndex}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Frame Size</TableRowColumn>
+              <TableRowColumn style={valueStyle}>
+                {frame.image.width} x {frame.image.height}
+              </TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>MI Size</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{1 << frame.miSizeLog2}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>DeltaQ Res / Present Flag</TableRowColumn>
+              <TableRowColumn style={valueStyle}>
+                {frame.json.deltaQRes} / {frame.json.deltaQPresentFlag}
+              </TableRowColumn>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+    );
   }
 }
 
-export class ModeInfoComponent extends React.Component<{
-  frame: AnalyzerFrame;
-  position: Vector;
-}, {
-
-  }> {
+export class ModeInfoComponent extends React.Component<
+  {
+    frame: AnalyzerFrame;
+    position: Vector;
+  },
+  {}
+> {
   render() {
     const c = this.props.position.x;
     const r = this.props.position.y;
     const json = this.props.frame.json;
     function getProperty(name: string): string {
-      if (!json[name]) return "N/A";
+      if (!json[name]) return 'N/A';
       const v = json[name][r][c];
-      if (!json[name + "Map"]) return String(v);
-      return keyForValue(json[name + "Map"], v);
+      if (!json[name + 'Map']) return String(v);
+      return keyForValue(json[name + 'Map'], v);
     }
     function getSuperBlockProperty(name: string): string {
-      if (!json[name]) return "N/A";
+      if (!json[name]) return 'N/A';
       const v = json[name][r & ~7][c & ~7];
-      if (!json[name + "Map"]) return String(v);
-      return keyForValue(json[name + "Map"], v);
+      if (!json[name + 'Map']) return String(v);
+      return keyForValue(json[name + 'Map'], v);
     }
     function getMotionVector() {
-      const motionVectors = json["motionVectors"];
-      if (!motionVectors) return "N/A";
+      const motionVectors = json['motionVectors'];
+      if (!motionVectors) return 'N/A';
       const v = motionVectors[r][c];
       return `${v[0]},${v[1]} ${v[2]},${v[3]}`;
     }
     function getReferenceFrame() {
-      const referenceFrame = json["referenceFrame"];
-      if (!referenceFrame) return "N/A";
-      const map = json["referenceFrameMap"];
+      const referenceFrame = json['referenceFrame'];
+      if (!referenceFrame) return 'N/A';
+      const map = json['referenceFrameMap'];
       const v = referenceFrame[r][c];
-      const a = v[0] >= 0 ? keyForValue(map, v[0]) : "N/A";
-      const b = v[1] >= 0 ? keyForValue(map, v[1]) : "N/A";
+      const a = v[0] >= 0 ? keyForValue(map, v[0]) : 'N/A';
+      const b = v[1] >= 0 ? keyForValue(map, v[1]) : 'N/A';
       return `${a}, ${b}`;
     }
     function getCFL() {
-      if (json["cfl_alpha_idx"] === undefined) {
-        return "N/A";
+      if (json['cfl_alpha_idx'] === undefined) {
+        return 'N/A';
       }
-      const cfl_alpha_idx = json["cfl_alpha_idx"][r][c];
-      const cfl_alpha_sign = json["cfl_alpha_sign"][r][c];
+      const cfl_alpha_idx = json['cfl_alpha_idx'][r][c];
+      const cfl_alpha_sign = json['cfl_alpha_sign'][r][c];
       const [cfl_alpha_u, cfl_alpha_v] = toCflAlphas(cfl_alpha_idx, cfl_alpha_sign);
       return `${cfl_alpha_u},${cfl_alpha_v}`;
     }
     function getDualFilterType() {
-      if (json["dualFilterType"] === undefined) {
-        return "N/A";
+      if (json['dualFilterType'] === undefined) {
+        return 'N/A';
       }
-      const map = json["dualFilterTypeMap"];
-      return keyForValue(map, json["dualFilterType"][r][c]);
+      const map = json['dualFilterTypeMap'];
+      return keyForValue(map, json['dualFilterType'][r][c]);
     }
     function getDeltaQIndex() {
-      if (json["delta_q"] === undefined) {
-        return "N/A";
+      if (json['delta_q'] === undefined) {
+        return 'N/A';
       }
-      return json["delta_q"][r][c];
+      return json['delta_q'][r][c];
     }
     function getSegId() {
-      if (json["seg_id"] === undefined) {
-        return "N/A";
+      if (json['seg_id'] === undefined) {
+        return 'N/A';
       }
-      return json["seg_id"][r][c];
+      return json['seg_id'][r][c];
     }
-    const valueStyle = { textAlign: "right", fontSize: "12px" };
-    return <div>
-      <Table>
-        <TableBody displayRowCheckbox={false}>
-          <TableRow>
-            <TableRowColumn>Block Position: MI (col, row)</TableRowColumn><TableRowColumn style={valueStyle}>({c}, {r})</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>Block Size</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("blockSize")}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>Transform Size</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("transformSize")}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>Transform Type</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("transformType")}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>Mode</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("mode")}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>UV Mode</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("uv_mode")}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>Skip</TableRowColumn><TableRowColumn style={valueStyle}>{getProperty("skip")}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>CDEF</TableRowColumn><TableRowColumn style={valueStyle}>{getSuperBlockProperty("cdef_level")} / {getSuperBlockProperty("cdef_strength")}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>Motion Vectors</TableRowColumn><TableRowColumn style={valueStyle}>{getMotionVector()}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>Reference Frame</TableRowColumn><TableRowColumn style={valueStyle}>{getReferenceFrame()}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>CFL</TableRowColumn><TableRowColumn style={valueStyle}>{getCFL()}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>Dual Filter Type</TableRowColumn><TableRowColumn style={valueStyle}>{getDualFilterType()}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>DeltaQ Index</TableRowColumn><TableRowColumn style={valueStyle}>{getDeltaQIndex()}</TableRowColumn>
-          </TableRow>
-          <TableRow>
-            <TableRowColumn>Segment ID</TableRowColumn><TableRowColumn style={valueStyle}>{getSegId()}</TableRowColumn>
-          </TableRow>
-        </TableBody>
-      </Table>
-    </div>
+    const valueStyle = { textAlign: 'right', fontSize: '12px' };
+    return (
+      <div>
+        <Table>
+          <TableBody displayRowCheckbox={false}>
+            <TableRow>
+              <TableRowColumn>Block Position: MI (col, row)</TableRowColumn>
+              <TableRowColumn style={valueStyle}>
+                ({c}, {r})
+              </TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Block Size</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{getProperty('blockSize')}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Transform Size</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{getProperty('transformSize')}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Transform Type</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{getProperty('transformType')}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Mode</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{getProperty('mode')}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>UV Mode</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{getProperty('uv_mode')}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Skip</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{getProperty('skip')}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>CDEF</TableRowColumn>
+              <TableRowColumn style={valueStyle}>
+                {getSuperBlockProperty('cdef_level')} / {getSuperBlockProperty('cdef_strength')}
+              </TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Motion Vectors</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{getMotionVector()}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Reference Frame</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{getReferenceFrame()}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>CFL</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{getCFL()}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Dual Filter Type</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{getDualFilterType()}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>DeltaQ Index</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{getDeltaQIndex()}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Segment ID</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{getSegId()}</TableRowColumn>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+    );
   }
 }
 
-export class AnalyzerView extends React.Component<AnalyzerViewProps, {
-  activeFrame: number;
-  activeGroup: number;
-  scale: number;
-  showDecodedImage: boolean;
-  showMotionVectors: boolean;
-  showReferenceFrames: boolean;
-  showBlockGrid: boolean;
-  showTileGrid: boolean;
-  showSuperBlockGrid: boolean;
-  showTransformGrid: boolean;
-  showSkip: boolean;
-  showFilters: boolean;
-  showCDEF: boolean;
-  showMode: boolean;
-  showUVMode: boolean;
-  showSegment: boolean;
-  showBits: boolean;
-  showBitsScale: "frame" | "video" | "videos";
-  showBitsMode: "linear" | "heat" | "heat-opaque";
-  showBitsFilter: "";
-  showTransformType: boolean;
-  showTools: boolean;
-  showFrameComment: boolean;
-  activeHistogramTab: number;
-  layerMenuIsOpen: boolean;
-  layerMenuAnchorEl: any;
+export class AnalyzerView extends React.Component<
+  AnalyzerViewProps,
+  {
+    activeFrame: number;
+    activeGroup: number;
+    scale: number;
+    showDecodedImage: boolean;
+    showMotionVectors: boolean;
+    showReferenceFrames: boolean;
+    showBlockGrid: boolean;
+    showTileGrid: boolean;
+    showSuperBlockGrid: boolean;
+    showTransformGrid: boolean;
+    showSkip: boolean;
+    showFilters: boolean;
+    showCDEF: boolean;
+    showMode: boolean;
+    showUVMode: boolean;
+    showSegment: boolean;
+    showBits: boolean;
+    showBitsScale: 'frame' | 'video' | 'videos';
+    showBitsMode: 'linear' | 'heat' | 'heat-opaque';
+    showBitsFilter: '';
+    showTransformType: boolean;
+    showTools: boolean;
+    showFrameComment: boolean;
+    activeHistogramTab: number;
+    layerMenuIsOpen: boolean;
+    layerMenuAnchorEl: any;
 
-  showDecodeDialog: boolean;
-  decodeFrameCount: number;
-  activeTab: number;
-  playInterval: any;
+    showDecodeDialog: boolean;
+    decodeFrameCount: number;
+    activeTab: number;
+    playInterval: any;
 
-  showLayersInZoom: boolean;
-  lockSelection: boolean;
-  layerAlpha: number;
-  shareUrl: string;
-  showShareUrlDialog: boolean;
-}> {
+    showLayersInZoom: boolean;
+    lockSelection: boolean;
+    layerAlpha: number;
+    shareUrl: string;
+    showShareUrlDialog: boolean;
+  }
+> {
   public static defaultProps: AnalyzerViewProps = {
     groups: [],
     groupNames: null,
     playbackFrameRate: 30,
     blind: 0,
     onDecodeAdditionalFrames: null,
-    decoderVideoUrlPairs: []
+    decoderVideoUrlPairs: [],
   };
 
   activeGroupScore: number[][];
@@ -493,13 +550,13 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     //   value: undefined
     // },
     showDecodedImage: {
-      key: "i",
-      description: "Decoded Image",
-      detail: "Display decoded image.",
+      key: 'i',
+      description: 'Decoded Image',
+      detail: 'Display decoded image.',
       updatesImage: true,
       default: true,
       value: undefined,
-      icon: "glyphicon glyphicon-picture" // glyphicon glyphicon-film
+      icon: 'glyphicon glyphicon-picture', // glyphicon glyphicon-film
     },
     // showPredictedImage: {
     //   key: "p",
@@ -510,115 +567,115 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     //   value: undefined
     // },
     showSuperBlockGrid: {
-      key: "g",
-      description: "Super Block Grid",
-      detail: "Display the 64x64 super block grid.",
+      key: 'g',
+      description: 'Super Block Grid',
+      detail: 'Display the 64x64 super block grid.',
       default: false,
       value: undefined,
-      icon: "glyphicon glyphicon-th-large"
+      icon: 'glyphicon glyphicon-th-large',
     },
     showBlockGrid: {
-      key: "s",
-      description: "Split Grid",
-      detail: "Display block partitions.",
+      key: 's',
+      description: 'Split Grid',
+      detail: 'Display block partitions.',
       default: false,
       value: undefined,
-      icon: "glyphicon glyphicon-th"
+      icon: 'glyphicon glyphicon-th',
     },
     showTransformGrid: {
-      key: "t",
-      description: "Transform Grid",
-      detail: "Display transform blocks.",
+      key: 't',
+      description: 'Transform Grid',
+      detail: 'Display transform blocks.',
       default: false,
       value: undefined,
-      icon: "icon-j"
+      icon: 'icon-j',
     },
     showTransformType: {
-      key: "y",
-      description: "Transform Type",
-      detail: "Display transform type.",
+      key: 'y',
+      description: 'Transform Type',
+      detail: 'Display transform type.',
       default: false,
       value: undefined,
-      icon: "icon-m"
+      icon: 'icon-m',
     },
     showMotionVectors: {
-      key: "m",
-      description: "Motion Vectors",
-      detail: "Display motion vectors.",
+      key: 'm',
+      description: 'Motion Vectors',
+      detail: 'Display motion vectors.',
       default: false,
       value: undefined,
-      icon: "icon-u"
+      icon: 'icon-u',
     },
     showReferenceFrames: {
-      key: "f",
-      description: "Frame References",
-      detail: "Display frame references.",
+      key: 'f',
+      description: 'Frame References',
+      detail: 'Display frame references.',
       default: false,
       value: undefined,
-      icon: "glyphicon glyphicon-transfer"
+      icon: 'glyphicon glyphicon-transfer',
     },
     showMode: {
-      key: "o",
-      description: "Mode",
-      detail: "Display prediction modes.",
+      key: 'o',
+      description: 'Mode',
+      detail: 'Display prediction modes.',
       default: false,
       value: undefined,
-      icon: "icon-l"
+      icon: 'icon-l',
     },
     showUVMode: {
-      key: "p",
-      description: "UV Mode",
-      detail: "Display UV prediction modes.",
+      key: 'p',
+      description: 'UV Mode',
+      detail: 'Display UV prediction modes.',
       default: false,
       value: undefined,
-      icon: "icon-l"
+      icon: 'icon-l',
     },
     showSegment: {
-      key: "v",
-      description: "Show Segment",
-      detail: "Display segment.",
+      key: 'v',
+      description: 'Show Segment',
+      detail: 'Display segment.',
       default: false,
       value: undefined,
-      icon: "icon-l"
+      icon: 'icon-l',
     },
     showBits: {
-      key: "b",
-      description: "Bits",
-      detail: "Display bits.",
+      key: 'b',
+      description: 'Bits',
+      detail: 'Display bits.',
       default: false,
       value: undefined,
-      icon: "icon-n"
+      icon: 'icon-n',
     },
     showSkip: {
-      key: "k",
-      description: "Skip",
-      detail: "Display skip flags.",
+      key: 'k',
+      description: 'Skip',
+      detail: 'Display skip flags.',
       default: false,
       value: undefined,
-      icon: "icon-t"
+      icon: 'icon-t',
     },
     showFilters: {
-      key: "e",
-      description: "Filters",
-      detail: "Display filters.",
+      key: 'e',
+      description: 'Filters',
+      detail: 'Display filters.',
       default: false,
       value: undefined,
-      icon: "icon-t"
+      icon: 'icon-t',
     },
     showCDEF: {
-      key: "d",
-      description: "CDEF",
-      detail: "Display blocks where the CDEF filter is applied.",
+      key: 'd',
+      description: 'CDEF',
+      detail: 'Display blocks where the CDEF filter is applied.',
       default: false,
-      value: undefined
+      value: undefined,
     },
     showTileGrid: {
-      key: "l",
-      description: "Tiles",
-      detail: "Display tile grid.",
+      key: 'l',
+      description: 'Tiles',
+      detail: 'Display tile grid.',
       default: false,
-      value: undefined
-    }
+      value: undefined,
+    },
   };
   constructor(props: AnalyzerViewProps) {
     super();
@@ -638,9 +695,9 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       showUVMode: false,
       showSegment: false,
       showBits: false,
-      showBitsScale: "frame",
-      showBitsMode: "heat",
-      showBitsFilter: "",
+      showBitsScale: 'frame',
+      showBitsMode: 'heat',
+      showBitsFilter: '',
       showDecodedImage: true,
       showMotionVectors: false,
       showReferenceFrames: false,
@@ -655,14 +712,14 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       showLayersInZoom: false,
       lockSelection: true,
       layerAlpha: 1,
-      shareUrl: "",
-      showShareUrlDialog: false
+      shareUrl: '',
+      showShareUrlDialog: false,
     } as any;
     this.ratio = ratio;
-    this.frameCanvas = document.createElement("canvas") as any;
-    this.frameContext = this.frameCanvas.getContext("2d");
-    this.compositionCanvas = document.createElement("canvas") as any;
-    this.compositionContext = this.compositionCanvas.getContext("2d");
+    this.frameCanvas = document.createElement('canvas') as any;
+    this.frameContext = this.frameCanvas.getContext('2d');
+    this.compositionCanvas = document.createElement('canvas') as any;
+    this.compositionContext = this.compositionCanvas.getContext('2d');
     this.mousePosition = new Vector(128, 128);
     this.mouseZoomPosition = new Vector(128, 128);
     this.activeGroupScore = activeGroupScore;
@@ -679,18 +736,18 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.compositionCanvas.width = w;
     this.compositionCanvas.height = h;
 
-    this.displayCanvas.style.width = (w * scale) + "px";
-    this.displayCanvas.style.height = (h * scale) + "px";
-    this.canvasContainer.style.width = (w * scale) + "px";
+    this.displayCanvas.style.width = w * scale + 'px';
+    this.displayCanvas.style.height = h * scale + 'px';
+    this.canvasContainer.style.width = w * scale + 'px';
     this.displayCanvas.width = w * scale * this.ratio;
     this.displayCanvas.height = h * scale * this.ratio;
-    this.displayContext = this.displayCanvas.getContext("2d");
+    this.displayContext = this.displayCanvas.getContext('2d');
 
-    this.overlayCanvas.style.width = (w * scale) + "px";
-    this.overlayCanvas.style.height = (h * scale) + "px";
+    this.overlayCanvas.style.width = w * scale + 'px';
+    this.overlayCanvas.style.height = h * scale + 'px';
     this.overlayCanvas.width = w * scale * this.ratio;
     this.overlayCanvas.height = h * scale * this.ratio;
-    this.overlayContext = this.overlayCanvas.getContext("2d");
+    this.overlayContext = this.overlayCanvas.getContext('2d');
 
     this.resetZoomCanvas(null);
   }
@@ -700,11 +757,11 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       this.zoomContext = null;
       return;
     }
-    this.zoomCanvas.style.width = ZOOM_WIDTH + "px";
-    this.zoomCanvas.style.height = ZOOM_WIDTH + "px";
+    this.zoomCanvas.style.width = ZOOM_WIDTH + 'px';
+    this.zoomCanvas.style.height = ZOOM_WIDTH + 'px';
     this.zoomCanvas.width = ZOOM_WIDTH * this.ratio;
     this.zoomCanvas.height = ZOOM_WIDTH * this.ratio;
-    this.zoomContext = this.zoomCanvas.getContext("2d");
+    this.zoomContext = this.zoomCanvas.getContext('2d');
   }
   draw(group: number, index: number) {
     const frame = this.props.groups[group][index];
@@ -718,7 +775,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     if (this.state.showDecodedImage) {
       this.displayContext.drawImage(this.frameCanvas, 0, 0, dw, dh);
     } else {
-      this.displayContext.fillStyle = "#333333";
+      this.displayContext.fillStyle = '#333333';
       this.displayContext.fillRect(0, 0, dw, dh);
     }
 
@@ -741,7 +798,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     if (!this.zoomCanvas) {
       return;
     }
-    TRACE_RENDERING && console.log("drawZoom");
+    TRACE_RENDERING && console.log('drawZoom');
     const frame = this.props.groups[group][index];
     const mousePosition = this.mouseZoomPosition.clone().divideScalar(this.state.scale).snap();
     const src = Rectangle.createRectangleCenteredAtPoint(mousePosition, ZOOM_SOURCE, ZOOM_SOURCE);
@@ -751,9 +808,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     if (this.state.showDecodedImage) {
       (this.zoomContext as any).imageSmoothingEnabled = false;
       this.zoomContext.clearRect(dst.x, dst.y, dst.w, dst.h);
-      this.zoomContext.drawImage(this.frameCanvas,
-        src.x, src.y, src.w, src.h,
-        dst.x, dst.y, dst.w, dst.h);
+      this.zoomContext.drawImage(this.frameCanvas, src.x, src.y, src.w, src.h, dst.x, dst.y, dst.w, dst.h);
     }
     if (this.state.showLayersInZoom) {
       this.drawLayers(frame, this.zoomContext, src, dst);
@@ -764,8 +819,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.globalAlpha = 0.5;
     this.state.showSkip && this.drawSkip(frame, ctx, src, dst);
     this.state.showFilters && this.drawFilters(frame, ctx, src, dst);
-    this.state.showMode && this.drawMode("mode", frame, ctx, src, dst);
-    this.state.showUVMode && this.drawMode("uv_mode", frame, ctx, src, dst);
+    this.state.showMode && this.drawMode('mode', frame, ctx, src, dst);
+    this.state.showUVMode && this.drawMode('uv_mode', frame, ctx, src, dst);
     this.state.showSegment && this.drawSegment(frame, ctx, src, dst);
     this.state.showBits && this.drawBits(frame, ctx, src, dst);
     this.state.showCDEF && this.drawCDEF(frame, ctx, src, dst);
@@ -773,10 +828,10 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.state.showMotionVectors && this.drawMotionVectors(frame, ctx, src, dst);
     this.state.showReferenceFrames && this.drawReferenceFrames(frame, ctx, src, dst);
     ctx.globalAlpha = 1;
-    this.state.showSuperBlockGrid && this.drawGrid(frame, VisitMode.SuperBlock, "#87CEEB", ctx, src, dst, 2);
-    this.state.showTransformGrid && this.drawGrid(frame, VisitMode.TransformBlock, "yellow", ctx, src, dst);
-    this.state.showBlockGrid && this.drawGrid(frame, VisitMode.Block, "white", ctx, src, dst);
-    this.state.showTileGrid && this.drawGrid(frame, VisitMode.Tile, "orange", ctx, src, dst, 5);
+    this.state.showSuperBlockGrid && this.drawGrid(frame, VisitMode.SuperBlock, '#87CEEB', ctx, src, dst, 2);
+    this.state.showTransformGrid && this.drawGrid(frame, VisitMode.TransformBlock, 'yellow', ctx, src, dst);
+    this.state.showBlockGrid && this.drawGrid(frame, VisitMode.Block, 'white', ctx, src, dst);
+    this.state.showTileGrid && this.drawGrid(frame, VisitMode.Tile, 'orange', ctx, src, dst, 5);
     this.state.showTools && this.drawSelection(frame, ctx, src, dst);
     ctx.restore();
   }
@@ -793,14 +848,22 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     // ctx.strokeRect(this.mouseZoomPosition.x * ratio - w / 2, this.mouseZoomPosition.y * ratio - w / 2, w, w);
     const r = this.getParentMIRect(frame, this.mousePosition);
     if (r) {
-      ctx.strokeStyle = "orange";
+      ctx.strokeStyle = 'orange';
       ctx.lineWidth = 3;
       ctx.setLineDash([]);
       ctx.strokeRect(r.x * ratio * scale, r.y * ratio * scale, r.w * ratio * scale, r.h * ratio * scale);
     }
     ctx.restore();
   }
-  drawGrid(frame: AnalyzerFrame, mode: VisitMode, color: string, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, lineWidth = 1) {
+  drawGrid(
+    frame: AnalyzerFrame,
+    mode: VisitMode,
+    color: string,
+    ctx: CanvasRenderingContext2D,
+    src: Rectangle,
+    dst: Rectangle,
+    lineWidth = 1,
+  ) {
     const scale = dst.w / src.w;
     ctx.save();
     ctx.lineWidth = 1;
@@ -816,14 +879,13 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.restore();
   }
   componentDidMount() {
-    if (!this.props.groups.length)
-      return;
+    if (!this.props.groups.length) return;
     this.reset();
     this.installKeyboardShortcuts();
     this.advanceFrame(1);
 
-    this.overlayCanvas.addEventListener("mousemove", this.onMouseMove.bind(this));
-    this.overlayCanvas.addEventListener("mousedown", this.onMouseDown.bind(this));
+    this.overlayCanvas.addEventListener('mousemove', this.onMouseMove.bind(this));
+    this.overlayCanvas.addEventListener('mousedown', this.onMouseDown.bind(this));
   }
   componentDidUpdate(prevProps, prevState) {
     const image = this.props.groups[this.state.activeGroup][0].image;
@@ -844,12 +906,13 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
   reset() {
     const image = this.props.groups[this.state.activeGroup][0].image;
-    const w = image.width, h = image.height;
+    const w = image.width,
+      h = image.height;
     this.resetCanvas(w, h);
   }
   handleSelect(frame) {
     this.setState({
-      activeFrame: frame
+      activeFrame: frame,
     } as any);
   }
   playPause() {
@@ -862,7 +925,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       clearInterval(playInterval);
       playInterval = 0;
     }
-    this.setState({playInterval} as any);
+    this.setState({ playInterval } as any);
   }
   advanceGroup(delta) {
     let activeGroup = this.state.activeGroup + delta;
@@ -927,11 +990,11 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       e.preventDefault();
     });
     Mousetrap.bind(['z'], (e) => {
-      this.setState({showLayersInZoom: !this.state.showLayersInZoom} as any);
+      this.setState({ showLayersInZoom: !this.state.showLayersInZoom } as any);
       e.preventDefault();
     });
     Mousetrap.bind(['x'], (e) => {
-      this.setState({lockSelection: !this.state.lockSelection} as any);
+      this.setState({ lockSelection: !this.state.lockSelection } as any);
       e.preventDefault();
     });
     const self = this;
@@ -945,7 +1008,14 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       const option = this.options[name];
       if (option.key) {
         if (installedKeys[option.key]) {
-          console.error("Key: " + option.key + " for " + option.description + ", is already mapped to " + installedKeys[option.key].description);
+          console.error(
+            'Key: ' +
+              option.key +
+              ' for ' +
+              option.description +
+              ', is already mapped to ' +
+              installedKeys[option.key].description,
+          );
         }
         installedKeys[option.key] = option;
         Mousetrap.bind([option.key], toggle.bind(this, name));
@@ -959,7 +1029,6 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     for (let i = 1; i <= this.props.groups.length; i++) {
       Mousetrap.bind([String(i)], toggleFrame.bind(this, i - 1));
     }
-
   }
   setActiveGroup(activeGroup) {
     this.setState({ activeGroup } as any);
@@ -1005,10 +1074,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   handleMouseEvent(event: MouseEvent, click: boolean) {
     function getMousePosition(canvas: HTMLCanvasElement, event: MouseEvent) {
       const rect = canvas.getBoundingClientRect();
-      return new Vector(
-        event.clientX - rect.left,
-        event.clientY - rect.top
-      );
+      return new Vector(event.clientX - rect.left, event.clientY - rect.top);
     }
     if (click || !this.state.lockSelection) {
       this.mousePosition = getMousePosition(this.overlayCanvas, event);
@@ -1017,7 +1083,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     }
   }
   getMIBlockSize(frame: AnalyzerFrame, c: number, r: number): number {
-    const blockSize = frame.json["blockSize"];
+    const blockSize = frame.json['blockSize'];
     if (!blockSize) {
       return undefined;
     }
@@ -1075,12 +1141,12 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
   getSymbolHist(frames: AnalyzerFrame[]): Histogram[] {
     const data = [];
-    const names = Accounting.getSortedSymbolNames(frames.map(frame => frame.accounting));
+    const names = Accounting.getSortedSymbolNames(frames.map((frame) => frame.accounting));
     frames.forEach((frame, i) => {
       const row = { frame: i, total: 0 };
       const symbols = frame.accounting.createFrameSymbols();
       let total = 0;
-      names.forEach(name => {
+      names.forEach((name) => {
         const symbol = symbols[name];
         const bits = symbol ? symbol.bits : 0;
         total += bits;
@@ -1096,7 +1162,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     names.forEach((name, i) => {
       nameMap[name] = i;
     });
-    return data.map(data => new Histogram(data, nameMap));
+    return data.map((data) => new Histogram(data, nameMap));
   }
 
   onBitsScaleSelect(eventKey: any, event: Object) {
@@ -1124,9 +1190,9 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
 
   downloadImage() {
-    this.downloadLink.href = this.frameCanvas.toDataURL("image/png");
-    this.downloadLink.download = "frame.png";
-    if (this.downloadLink.href as any != document.location) {
+    this.downloadLink.href = this.frameCanvas.toDataURL('image/png');
+    this.downloadLink.download = 'frame.png';
+    if ((this.downloadLink.href as any) != document.location) {
       this.downloadLink.click();
     }
   }
@@ -1139,7 +1205,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     } else {
       this.setState({
         showDecodeDialog: true,
-        decodeFrameCount: count
+        decodeFrameCount: count,
       } as any);
     }
   }
@@ -1150,7 +1216,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
 
   decodeAdditionalFrames(value: boolean) {
     this.setState({
-      showDecodeDialog: false
+      showDecodeDialog: false,
     } as any);
 
     if (value) {
@@ -1161,26 +1227,25 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     }
   }
 
-
   getHistogram(tab: HistogramTab, frames: AnalyzerFrame[]): Histogram[] {
     switch (tab) {
       case HistogramTab.Bits:
       case HistogramTab.Symbols:
         return this.getSymbolHist(frames);
       case HistogramTab.BlockSize:
-        return frames.map(x => x.blockSizeHist);
+        return frames.map((x) => x.blockSizeHist);
       case HistogramTab.TransformSize:
-        return frames.map(x => x.transformSizeHist);
+        return frames.map((x) => x.transformSizeHist);
       case HistogramTab.TransformType:
-        return frames.map(x => x.transformTypeHist);
+        return frames.map((x) => x.transformTypeHist);
       case HistogramTab.PredictionMode:
-        return frames.map(x => x.predictionModeHist);
+        return frames.map((x) => x.predictionModeHist);
       case HistogramTab.UVPredictionMode:
-        return frames.map(x => x.uvPredictionModeHist);
+        return frames.map((x) => x.uvPredictionModeHist);
       case HistogramTab.Skip:
-        return frames.map(x => x.skipHist);
+        return frames.map((x) => x.skipHist);
       case HistogramTab.DualFilterType:
-        return frames.map(x => x.dualFilterTypeHist);
+        return frames.map((x) => x.dualFilterTypeHist);
     }
     return null;
   }
@@ -1216,7 +1281,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   showLayerMenu(event) {
     this.setState({
       layerMenuIsOpen: true,
-      layerMenuAnchorEl: event.currentTarget
+      layerMenuAnchorEl: event.currentTarget,
     } as any);
   }
 
@@ -1232,9 +1297,9 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
 
   getActiveFrameConfig() {
     // Ignore default options.
-    const defaultOptions = DEFAULT_CONFIG.split(" ");
-    const options = this.getActiveFrame().config.split(" ");
-    return options.filter(option => defaultOptions.indexOf(option) < 0).join(" ");
+    const defaultOptions = DEFAULT_CONFIG.split(' ');
+    const options = this.getActiveFrame().config.split(' ');
+    return options.filter((option) => defaultOptions.indexOf(option) < 0).join(' ');
   }
 
   downloadIvf() {
@@ -1244,7 +1309,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   downloadY4m() {
     const decoder = this.props.decoderVideoUrlPairs[this.state.activeGroup].decoderUrl;
     const file = this.props.decoderVideoUrlPairs[this.state.activeGroup].videoUrl;
-    window.open("?download=1&decoder=" + encodeURIComponent(decoder) + "&file=" + encodeURIComponent(file),'_blank');
+    window.open('?download=1&decoder=' + encodeURIComponent(decoder) + '&file=' + encodeURIComponent(file), '_blank');
   }
 
   render() {
@@ -1254,7 +1319,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     const frame = this.getActiveFrame();
     if (this.state.showTools) {
       if (frame) {
-        const names = Accounting.getSortedSymbolNames(frames.map(frame => frame.accounting));
+        const names = Accounting.getSortedSymbolNames(frames.map((frame) => frame.accounting));
         const accounting = this.getActiveFrame().accounting;
         const p = this.getParentMIPosition(frame, this.mousePosition);
 
@@ -1266,43 +1331,74 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         for (const name in this.options) {
           const option = this.options[name];
           layerMenuItems.push(
-            <MenuItem key={name} onTouchTap={this.toggleLayer.bind(this, name)} insetChildren={true} checked={!!this.state[name]} primaryText={option.description} secondaryText={option.key.toUpperCase()} />
+            <MenuItem
+              key={name}
+              onTouchTap={this.toggleLayer.bind(this, name)}
+              insetChildren={true}
+              checked={!!this.state[name]}
+              primaryText={option.description}
+              secondaryText={option.key.toUpperCase()}
+            />,
           );
         }
 
-        const layerMenu = <IconMenu multiple={true}
-          iconButtonElement={<IconButton tooltip="Save Image">
-            <FontIcon className="material-icons md-24" style={iconStyles}>layers</FontIcon>
-          </IconButton>}
-          anchorOrigin={{ horizontal: 'left', vertical: 'top' }}
-          targetOrigin={{ horizontal: 'left', vertical: 'top' }}
-        >
-          {layerMenuItems}
-        </IconMenu>
+        const layerMenu = (
+          <IconMenu
+            multiple={true}
+            iconButtonElement={
+              <IconButton tooltip="Save Image">
+                <FontIcon className="material-icons md-24" style={iconStyles}>
+                  layers
+                </FontIcon>
+              </IconButton>
+            }
+            anchorOrigin={{ horizontal: 'left', vertical: 'top' }}
+            targetOrigin={{ horizontal: 'left', vertical: 'top' }}
+          >
+            {layerMenuItems}
+          </IconMenu>
+        );
 
         let bitLayerToolbar = null;
         if (this.state.showBits) {
-          const names = Accounting.getSortedSymbolNames(frames.map(frame => frame.accounting));
-          bitLayerToolbar = <Toolbar>
-            <ToolbarGroup firstChild={true} >
-              <DropDownMenu style={{ width: 150 }} autoWidth={false} value={this.state.showBitsScale} onChange={(event, index, value) => this.setState({ showBitsScale: value } as any)}>
-                <MenuItem value="frame" primaryText="Frame Relative" />
-                <MenuItem value="video" primaryText="Video Relative" />
-                <MenuItem value="videos" primaryText="Video Relative (all)" />
-              </DropDownMenu>
-              <DropDownMenu style={{ width: 150 }} autoWidth={false} value={this.state.showBitsMode} onChange={(event, index, value) => this.setState({ showBitsMode: value } as any)}>
-                <MenuItem value="linear" primaryText="Single Color" />
-                <MenuItem value="heat" primaryText="Heat Map" />
-                <MenuItem value="heat-opaque" primaryText="Heat Map (Opaque)" />
-              </DropDownMenu>
-              <DropDownMenu style={{ width: 150 }} autoWidth={false} value={this.state.showBitsFilter} onChange={(event, index, value) => this.setState({ showBitsFilter: value } as any)}>
-                <MenuItem value="" primaryText="None" />
-                {
-                  names.map(name => <MenuItem key={name} value={name} primaryText={name} />)
-                }
-              </DropDownMenu>
-            </ToolbarGroup>
-          </Toolbar>
+          const names = Accounting.getSortedSymbolNames(frames.map((frame) => frame.accounting));
+          bitLayerToolbar = (
+            <Toolbar>
+              <ToolbarGroup firstChild={true}>
+                <DropDownMenu
+                  style={{ width: 150 }}
+                  autoWidth={false}
+                  value={this.state.showBitsScale}
+                  onChange={(event, index, value) => this.setState({ showBitsScale: value } as any)}
+                >
+                  <MenuItem value="frame" primaryText="Frame Relative" />
+                  <MenuItem value="video" primaryText="Video Relative" />
+                  <MenuItem value="videos" primaryText="Video Relative (all)" />
+                </DropDownMenu>
+                <DropDownMenu
+                  style={{ width: 150 }}
+                  autoWidth={false}
+                  value={this.state.showBitsMode}
+                  onChange={(event, index, value) => this.setState({ showBitsMode: value } as any)}
+                >
+                  <MenuItem value="linear" primaryText="Single Color" />
+                  <MenuItem value="heat" primaryText="Heat Map" />
+                  <MenuItem value="heat-opaque" primaryText="Heat Map (Opaque)" />
+                </DropDownMenu>
+                <DropDownMenu
+                  style={{ width: 150 }}
+                  autoWidth={false}
+                  value={this.state.showBitsFilter}
+                  onChange={(event, index, value) => this.setState({ showBitsFilter: value } as any)}
+                >
+                  <MenuItem value="" primaryText="None" />
+                  {names.map((name) => (
+                    <MenuItem key={name} value={name} primaryText={name} />
+                  ))}
+                </DropDownMenu>
+              </ToolbarGroup>
+            </Toolbar>
+          );
         }
 
         let groupTabs = null;
@@ -1311,213 +1407,335 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
           for (let i = 0; i < this.props.groups.length; i++) {
             tabs.push(<Tab key={i} label={i + 1} value={i} />);
           }
-          groupTabs = <div><Tabs value={this.state.activeGroup} onChange={(value) => {
-            this.setState({
-              activeGroup: value,
-            } as any);
-          }}>{tabs}</Tabs>
-          </div>
+          groupTabs = (
+            <div>
+              <Tabs
+                value={this.state.activeGroup}
+                onChange={(value) => {
+                  this.setState({
+                    activeGroup: value,
+                  } as any);
+                }}
+              >
+                {tabs}
+              </Tabs>
+            </div>
+          );
         }
 
-        sidePanel = <div id="sidePanel">
-          <Dialog modal={false}
-            title="Share URL"
-            open={this.state.showShareUrlDialog}
-            actions={[<FlatButton
-              label="Ok"
-              primary={true}
-              onTouchTap={() => { this.setState({showShareUrlDialog: false} as any) }}
-            />]}
-          >
-          <TextField defaultValue={this.state.shareUrl} />
-          </Dialog>
-          <Alert open={this.state.showDecodeDialog} onClose={this.decodeAdditionalFrames.bind(this)} title={`Decode ${this.state.decodeFrameCount} Frame(s)?`} description="Frames will be decoded in the background and may take a while." />
-          {groupTabs}
-          <div className="activeContent">
-            Frame: {padLeft(this.state.activeFrame + 1, 2)}, Group: {this.getGroupName(this.state.activeGroup)} {this.getActiveFrameConfig()}
-          </div>
-          <Toolbar>
-            <ToolbarGroup firstChild={true}>
-              <IconButton onClick={this.showLayerMenu.bind(this)} tooltip="Layers">
-                <FontIcon className="material-icons md-24" style={iconStyles}>layers</FontIcon>
-              </IconButton>
-              <Popover open={this.state.layerMenuIsOpen}
-                animated={false}
-                anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
-                targetOrigin={{ horizontal: 'left', vertical: 'top' }}
-                anchorEl={this.state.layerMenuAnchorEl}
-                onRequestClose={this.hideLayerMenu.bind(this)}
-              >
-                <Menu desktop={true} width={250}>
-                  {layerMenuItems}
-                  <Divider />
-                  <MenuItem onTouchTap={this.resetLayers.bind(this, name)} primaryText="Reset Layers" />
-                </Menu>
-              </Popover>
-              {/*<IconButton onClick={this.toggleTools.bind(this)} iconClassName="icon-h" tooltip="Toggle Tools: tab"/>*/}
-              <IconButton onClick={this.downloadImage.bind(this)} tooltip="Save Image">
-                <FontIcon className="material-icons md-24" style={iconStyles}>image</FontIcon>
-              </IconButton>
-              <IconButton onClick={this.resetLayersAndActiveFrame.bind(this)} tooltip="Reset: r">
-                <FontIcon className="material-icons md-24" style={iconStyles}>clear</FontIcon>
-              </IconButton>
-              <IconButton onClick={this.advanceFrame.bind(this, -1)} tooltip="Previous: ,">
-                <FontIcon className="material-icons md-24" style={iconStyles}>skip_previous</FontIcon>
-              </IconButton>
-              <IconButton onClick={this.playPause.bind(this)} tooltip="Pause / Play: space">
-                <FontIcon className="material-icons md-24" style={iconStyles}>{!this.state.playInterval ? "play_arrow" : "stop"}</FontIcon>
-              </IconButton>
-              <IconButton onClick={this.advanceFrame.bind(this, 1)} tooltip="Next: .">
-                <FontIcon className="material-icons md-24" style={iconStyles}>skip_next</FontIcon>
-              </IconButton>
-              <IconButton onClick={this.zoom.bind(this, 1 / 2)} tooltip="Zoom Out: [">
-                <FontIcon className="material-icons md-24" style={iconStyles}>zoom_out</FontIcon>
-              </IconButton>
-              <IconButton onClick={this.zoom.bind(this, 2)} tooltip="Zoom In: ]">
-                <FontIcon className="material-icons md-24" style={iconStyles}>zoom_in</FontIcon>
-              </IconButton>
-              <IconButton onClick={this.alertDecodeAdditionalFrames.bind(this, 30)} tooltip="Decode 30 Additional Frames">
-                <FontIcon className="material-icons md-24" style={iconStyles}>replay_30</FontIcon>
-              </IconButton>
-              <IconButton onClick={this.shareLink.bind(this)} tooltip="Share Link">
-                <FontIcon className="material-icons md-24" style={iconStyles}>share</FontIcon>
-              </IconButton>
-              {/*<IconButton onClick={this.analyze.bind(this)} tooltip="Analyze Other AWCY Videos">
+        sidePanel = (
+          <div id="sidePanel">
+            <Dialog
+              modal={false}
+              title="Share URL"
+              open={this.state.showShareUrlDialog}
+              actions={[
+                <FlatButton
+                  label="Ok"
+                  primary={true}
+                  onTouchTap={() => {
+                    this.setState({ showShareUrlDialog: false } as any);
+                  }}
+                />,
+              ]}
+            >
+              <TextField defaultValue={this.state.shareUrl} />
+            </Dialog>
+            <Alert
+              open={this.state.showDecodeDialog}
+              onClose={this.decodeAdditionalFrames.bind(this)}
+              title={`Decode ${this.state.decodeFrameCount} Frame(s)?`}
+              description="Frames will be decoded in the background and may take a while."
+            />
+            {groupTabs}
+            <div className="activeContent">
+              Frame: {padLeft(this.state.activeFrame + 1, 2)}, Group: {this.getGroupName(this.state.activeGroup)}{' '}
+              {this.getActiveFrameConfig()}
+            </div>
+            <Toolbar>
+              <ToolbarGroup firstChild={true}>
+                <IconButton onClick={this.showLayerMenu.bind(this)} tooltip="Layers">
+                  <FontIcon className="material-icons md-24" style={iconStyles}>
+                    layers
+                  </FontIcon>
+                </IconButton>
+                <Popover
+                  open={this.state.layerMenuIsOpen}
+                  animated={false}
+                  anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+                  targetOrigin={{ horizontal: 'left', vertical: 'top' }}
+                  anchorEl={this.state.layerMenuAnchorEl}
+                  onRequestClose={this.hideLayerMenu.bind(this)}
+                >
+                  <Menu desktop={true} width={250}>
+                    {layerMenuItems}
+                    <Divider />
+                    <MenuItem onTouchTap={this.resetLayers.bind(this, name)} primaryText="Reset Layers" />
+                  </Menu>
+                </Popover>
+                {/*<IconButton onClick={this.toggleTools.bind(this)} iconClassName="icon-h" tooltip="Toggle Tools: tab"/>*/}
+                <IconButton onClick={this.downloadImage.bind(this)} tooltip="Save Image">
+                  <FontIcon className="material-icons md-24" style={iconStyles}>
+                    image
+                  </FontIcon>
+                </IconButton>
+                <IconButton onClick={this.resetLayersAndActiveFrame.bind(this)} tooltip="Reset: r">
+                  <FontIcon className="material-icons md-24" style={iconStyles}>
+                    clear
+                  </FontIcon>
+                </IconButton>
+                <IconButton onClick={this.advanceFrame.bind(this, -1)} tooltip="Previous: ,">
+                  <FontIcon className="material-icons md-24" style={iconStyles}>
+                    skip_previous
+                  </FontIcon>
+                </IconButton>
+                <IconButton onClick={this.playPause.bind(this)} tooltip="Pause / Play: space">
+                  <FontIcon className="material-icons md-24" style={iconStyles}>
+                    {!this.state.playInterval ? 'play_arrow' : 'stop'}
+                  </FontIcon>
+                </IconButton>
+                <IconButton onClick={this.advanceFrame.bind(this, 1)} tooltip="Next: .">
+                  <FontIcon className="material-icons md-24" style={iconStyles}>
+                    skip_next
+                  </FontIcon>
+                </IconButton>
+                <IconButton onClick={this.zoom.bind(this, 1 / 2)} tooltip="Zoom Out: [">
+                  <FontIcon className="material-icons md-24" style={iconStyles}>
+                    zoom_out
+                  </FontIcon>
+                </IconButton>
+                <IconButton onClick={this.zoom.bind(this, 2)} tooltip="Zoom In: ]">
+                  <FontIcon className="material-icons md-24" style={iconStyles}>
+                    zoom_in
+                  </FontIcon>
+                </IconButton>
+                <IconButton
+                  onClick={this.alertDecodeAdditionalFrames.bind(this, 30)}
+                  tooltip="Decode 30 Additional Frames"
+                >
+                  <FontIcon className="material-icons md-24" style={iconStyles}>
+                    replay_30
+                  </FontIcon>
+                </IconButton>
+                <IconButton onClick={this.shareLink.bind(this)} tooltip="Share Link">
+                  <FontIcon className="material-icons md-24" style={iconStyles}>
+                    share
+                  </FontIcon>
+                </IconButton>
+                {/*<IconButton onClick={this.analyze.bind(this)} tooltip="Analyze Other AWCY Videos">
                 <FontIcon className="material-icons md-24" style={iconStyles}>send</FontIcon>
               </IconButton>*/}
-            </ToolbarGroup>
-          </Toolbar>
-          {bitLayerToolbar}
-          <Tabs value={this.state.activeTab} onChange={(value) => {
-            this.setState({
-              activeTab: value,
-            } as any);
-          }}>
-            <Tab value={0} label="Zoom">
-              {this.state.activeTab == 0 && <div>
-                  <canvas ref={(self: any) => this.resetZoomCanvas(self)} width="256" height="256"></canvas>
-                  <div className="tabContent">
-                    <Checkbox
-                      label="Show Layers in Zoom: Z"
-                      checked={this.state.showLayersInZoom}
-                      onCheck={(event, value) => this.setState({ showLayersInZoom: value } as any)}
-                    />
-                    <Checkbox
-                      label="Lock Selection: X"
-                      checked={this.state.lockSelection}
-                      onCheck={(event, value) => this.setState({ lockSelection: value } as any)}
-                    />
-                    <div className="componentHeader">Layer Alpha</div>
-                    <Slider min={0} max={1} step={0.1} defaultValue={1} value={this.state.layerAlpha}
-                      onChange={(event, value) => {
-                        this.setState({layerAlpha: value} as any);
-                      }}
-                    />
+              </ToolbarGroup>
+            </Toolbar>
+            {bitLayerToolbar}
+            <Tabs
+              value={this.state.activeTab}
+              onChange={(value) => {
+                this.setState({
+                  activeTab: value,
+                } as any);
+              }}
+            >
+              <Tab value={0} label="Zoom">
+                {this.state.activeTab == 0 && (
+                  <div>
+                    <canvas ref={(self: any) => this.resetZoomCanvas(self)} width="256" height="256"></canvas>
+                    <div className="tabContent">
+                      <Checkbox
+                        label="Show Layers in Zoom: Z"
+                        checked={this.state.showLayersInZoom}
+                        onCheck={(event, value) => this.setState({ showLayersInZoom: value } as any)}
+                      />
+                      <Checkbox
+                        label="Lock Selection: X"
+                        checked={this.state.lockSelection}
+                        onCheck={(event, value) => this.setState({ lockSelection: value } as any)}
+                      />
+                      <div className="componentHeader">Layer Alpha</div>
+                      <Slider
+                        min={0}
+                        max={1}
+                        step={0.1}
+                        defaultValue={1}
+                        value={this.state.layerAlpha}
+                        onChange={(event, value) => {
+                          this.setState({ layerAlpha: value } as any);
+                        }}
+                      />
+                    </div>
                   </div>
+                )}
+              </Tab>
+              <Tab value={1} label="Histograms">
+                {this.state.activeTab == 1 && (
+                  <div>
+                    <Toolbar>
+                      <ToolbarGroup firstChild={true}>
+                        <DropDownMenu
+                          value={this.state.activeHistogramTab}
+                          onChange={(event, index, value) => this.setState({ activeHistogramTab: value } as any)}
+                        >
+                          <MenuItem value={HistogramTab.Bits} label="Bits" primaryText="Bits" />
+                          <MenuItem value={HistogramTab.Symbols} label="Symbols" primaryText="Symbols" />
+                          <MenuItem value={HistogramTab.BlockSize} label="Block Size" primaryText="Block Size" />
+                          <MenuItem
+                            value={HistogramTab.TransformSize}
+                            label="Transform Size"
+                            primaryText="Transform Size"
+                          />
+                          <MenuItem
+                            value={HistogramTab.TransformType}
+                            label="Transform Type"
+                            primaryText="Transform Type"
+                          />
+                          <MenuItem
+                            value={HistogramTab.PredictionMode}
+                            label="Prediction Mode"
+                            primaryText="Prediction Mode"
+                          />
+                          <MenuItem
+                            value={HistogramTab.UVPredictionMode}
+                            label="UV Prediction Mode"
+                            primaryText="UV Prediction Mode"
+                          />
+                          <MenuItem value={HistogramTab.Skip} label="Skip" primaryText="Skip" />
+                          <MenuItem
+                            value={HistogramTab.DualFilterType}
+                            label="Dual Filter Type"
+                            primaryText="Dual Filter Type"
+                          />
+                        </DropDownMenu>
+                      </ToolbarGroup>
+                    </Toolbar>
+                    <HistogramComponent
+                      histograms={this.getHistogram(this.state.activeHistogramTab, frames)}
+                      color={this.getHistogramColor.bind(this, this.state.activeHistogramTab)}
+                      highlight={this.state.activeFrame}
+                      height={512}
+                      width={500}
+                      scale={this.state.activeHistogramTab == 0 ? 'max' : undefined}
+                    ></HistogramComponent>
+                  </div>
+                )}
+              </Tab>
+              <Tab value={2} label="Block Info">
+                {p && this.state.activeTab == 2 && (
+                  <div>
+                    <ModeInfoComponent frame={frame} position={p}></ModeInfoComponent>
+                    <AccountingComponent
+                      symbols={this.getActiveFrame().accounting.createBlockSymbols(p.x, p.y)}
+                    ></AccountingComponent>
+                  </div>
+                )}
+              </Tab>
+              <Tab value={3} label="Frame Info">
+                {this.state.activeTab == 3 && (
+                  <div>
+                    <FrameInfoComponent
+                      frame={frame}
+                      activeFrame={this.state.activeFrame}
+                      activeGroup={this.state.activeGroup}
+                    ></FrameInfoComponent>
+                    <AccountingComponent symbols={accounting.frameSymbols}></AccountingComponent>
+                  </div>
+                )}
+              </Tab>
+              <Tab value={4} label="More">
+                <div className="tabContent">
+                  <RaisedButton
+                    primary={true}
+                    label="Feature Request"
+                    onTouchTap={this.fileIssue.bind(this, 'enhancement')}
+                  />{' '}
+                  <RaisedButton secondary={true} label="File a Bug" onTouchTap={this.fileIssue.bind(this, 'bug')} />
+                  <p>
+                    <RaisedButton label="Download this video (ivf)" onTouchTap={this.downloadIvf.bind(this)} />
+                  </p>
+                  <p>
+                    <RaisedButton label="Download this video (y4m)" onTouchTap={this.downloadY4m.bind(this)} />
+                  </p>
+                  <h3>Configuration</h3>
+                  <p>{frame.config}</p>
+                  <h3>Tips</h3>
+                  <ul>
+                    <li>Click anywhere on the image to lock focus and get mode info details.</li>
+                    <li>All analyzer features have keyboard shortcuts, use them.</li>
+                    <li>Toggle between video sequences by using the number keys: 1, 2, 3, etc.</li>
+                  </ul>
                 </div>
-              }
-            </Tab>
-            <Tab value={1} label="Histograms">
-              {this.state.activeTab == 1 && <div>
-                <Toolbar>
-                  <ToolbarGroup firstChild={true}>
-                    <DropDownMenu value={this.state.activeHistogramTab} onChange={(event, index, value) => this.setState({ activeHistogramTab: value } as any)}>
-                      <MenuItem value={HistogramTab.Bits} label="Bits" primaryText="Bits" />
-                      <MenuItem value={HistogramTab.Symbols} label="Symbols" primaryText="Symbols" />
-                      <MenuItem value={HistogramTab.BlockSize} label="Block Size" primaryText="Block Size" />
-                      <MenuItem value={HistogramTab.TransformSize} label="Transform Size" primaryText="Transform Size" />
-                      <MenuItem value={HistogramTab.TransformType} label="Transform Type" primaryText="Transform Type" />
-                      <MenuItem value={HistogramTab.PredictionMode} label="Prediction Mode" primaryText="Prediction Mode" />
-                      <MenuItem value={HistogramTab.UVPredictionMode} label="UV Prediction Mode" primaryText="UV Prediction Mode" />
-                      <MenuItem value={HistogramTab.Skip} label="Skip" primaryText="Skip" />
-                      <MenuItem value={HistogramTab.DualFilterType} label="Dual Filter Type" primaryText="Dual Filter Type" />
-                    </DropDownMenu>
-                  </ToolbarGroup>
-                </Toolbar>
-                <HistogramComponent
-                  histograms={this.getHistogram(this.state.activeHistogramTab, frames)}
-                  color={this.getHistogramColor.bind(this, this.state.activeHistogramTab)}
-                  highlight={this.state.activeFrame}
-                  height={512} width={500}
-                  scale={this.state.activeHistogramTab == 0 ? "max" : undefined}
-                ></HistogramComponent>
-              </div>
-              }
-            </Tab>
-            <Tab value={2} label="Block Info">
-              {p && this.state.activeTab == 2 && <div>
-                <ModeInfoComponent frame={frame} position={p}></ModeInfoComponent>
-                <AccountingComponent symbols={this.getActiveFrame().accounting.createBlockSymbols(p.x, p.y)}></AccountingComponent>
-              </div>
-              }
-            </Tab>
-            <Tab value={3} label="Frame Info">
-              {this.state.activeTab == 3 && <div>
-                <FrameInfoComponent frame={frame} activeFrame={this.state.activeFrame} activeGroup={this.state.activeGroup}></FrameInfoComponent>
-                <AccountingComponent symbols={accounting.frameSymbols}></AccountingComponent>
-              </div>
-              }
-            </Tab>
-            <Tab value={4} label="More">
-              <div className="tabContent">
-                <RaisedButton primary={true} label="Feature Request" onTouchTap={this.fileIssue.bind(this, "enhancement")}/>{' '}
-                <RaisedButton secondary={true} label="File a Bug" onTouchTap={this.fileIssue.bind(this, "bug")}/>
-                <p><RaisedButton label="Download this video (ivf)" onTouchTap={this.downloadIvf.bind(this)}/></p>
-                <p><RaisedButton label="Download this video (y4m)" onTouchTap={this.downloadY4m.bind(this)}/></p>
-                <h3>Configuration</h3>
-                <p>
-                  {frame.config}
-                </p>
-                <h3>Tips</h3>
-                <ul>
-                  <li>Click anywhere on the image to lock focus and get mode info details.</li>
-                  <li>All analyzer features have keyboard shortcuts, use them.</li>
-                  <li>Toggle between video sequences by using the number keys: 1, 2, 3, etc.</li>
-                </ul>
-              </div>
-            </Tab>
-          </Tabs>
-        </div>
+              </Tab>
+            </Tabs>
+          </div>
+        );
       }
     }
 
     const activeGroup = this.state.activeGroup;
     const groupName = this.props.groupNames ? this.props.groupNames[activeGroup] : String(activeGroup);
 
-    const result = <div className="maxWidthAndHeight">
-      <a style={{ display: "none" }} ref={(self: any) => this.downloadLink = self} />
-      {this.state.showFrameComment &&
-        <div id="frameComment">
-          <div>
-            <div className="sectionHeader">Config</div>
-            <div className="propertyValue">{this.getActiveFrame().config}</div>
-            <div className="sectionHeader">Video</div>
-            <div className="propertyValue">{groupName}</div>
-            <div className="sectionHeader">Group</div>
-            <div className="propertyValue">{activeGroup}: {this.props.groupNames[activeGroup]}</div>
-            <div className="sectionHeader">Score</div>
-            <div className="propertyValue">{this.getActiveGroupScore()}</div>
-            <div className="sectionHeader">Frame</div>
-            <div className="propertyValue">{this.state.activeFrame}</div>
+    const result = (
+      <div className="maxWidthAndHeight">
+        <a style={{ display: 'none' }} ref={(self: any) => (this.downloadLink = self)} />
+        {this.state.showFrameComment && (
+          <div id="frameComment">
+            <div>
+              <div className="sectionHeader">Config</div>
+              <div className="propertyValue">{this.getActiveFrame().config}</div>
+              <div className="sectionHeader">Video</div>
+              <div className="propertyValue">{groupName}</div>
+              <div className="sectionHeader">Group</div>
+              <div className="propertyValue">
+                {activeGroup}: {this.props.groupNames[activeGroup]}
+              </div>
+              <div className="sectionHeader">Score</div>
+              <div className="propertyValue">{this.getActiveGroupScore()}</div>
+              <div className="sectionHeader">Frame</div>
+              <div className="propertyValue">{this.state.activeFrame}</div>
+            </div>
           </div>
-        </div>
-      }
-      <div className="rootContainer">
-        <div className="contentContainer">
-          <div className="canvasContainer" ref={(self: any) => this.canvasContainer = self}>
-            <canvas ref={(self: any) => this.displayCanvas = self} width="256" height="256" style={{ position: "absolute", left: 0, top: 0, zIndex: 0, imageRendering: "pixelated", backgroundCcolor: "#F5F5F5" }}></canvas>
-            <canvas ref={(self: any) => this.overlayCanvas = self} width="256" height="256" style={{ position: "absolute", left: 0, top: 0, zIndex: 1, imageRendering: "pixelated", cursor: "crosshair", opacity: this.state.layerAlpha }}></canvas>
+        )}
+        <div className="rootContainer">
+          <div className="contentContainer">
+            <div className="canvasContainer" ref={(self: any) => (this.canvasContainer = self)}>
+              <canvas
+                ref={(self: any) => (this.displayCanvas = self)}
+                width="256"
+                height="256"
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  zIndex: 0,
+                  imageRendering: 'pixelated',
+                  backgroundCcolor: '#F5F5F5',
+                }}
+              ></canvas>
+              <canvas
+                ref={(self: any) => (this.overlayCanvas = self)}
+                width="256"
+                height="256"
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  zIndex: 1,
+                  imageRendering: 'pixelated',
+                  cursor: 'crosshair',
+                  opacity: this.state.layerAlpha,
+                }}
+              ></canvas>
+            </div>
           </div>
+          {this.state.showTools && sidePanel}
         </div>
-        {this.state.showTools && sidePanel}
       </div>
-    </div>
+    );
     return result;
   }
 
   drawSkip(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    const skipGrid = frame.json["skip"];
-    const skipMap = frame.json["skipMap"];
+    const skipGrid = frame.json['skip'];
+    const skipMap = frame.json['skipMap'];
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       const v = skipGrid[r][c];
       if (v == skipMap.NO_SKIP) {
@@ -1529,9 +1747,9 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
 
   drawFilters(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    const dualFilterTypeGrid = frame.json["dualFilterType"];
+    const dualFilterTypeGrid = frame.json['dualFilterType'];
     if (!dualFilterTypeGrid) return;
-    const dualFilterTypeMapByValue = reverseMap(frame.json["dualFilterTypeMap"]);
+    const dualFilterTypeMapByValue = reverseMap(frame.json['dualFilterTypeMap']);
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       ctx.fillStyle = getColor(dualFilterTypeMapByValue[dualFilterTypeGrid[r][c]], palette.dualFilterType);
       return true;
@@ -1539,7 +1757,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
 
   drawCDEF(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    const skipGrid = frame.json["skip"];
+    const skipGrid = frame.json['skip'];
     if (!skipGrid) return;
     const rows = skipGrid.length;
     const cols = skipGrid[0].length;
@@ -1558,41 +1776,55 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       return true;
     }
 
-    const levelGrid = frame.json["cdef_level"];
-    const strengthGrid = frame.json["cdef_strength"];
+    const levelGrid = frame.json['cdef_level'];
+    const strengthGrid = frame.json['cdef_strength'];
     if (!levelGrid) return;
     if (!strengthGrid) return;
     ctx.globalAlpha = 0.2;
-    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
-      if (allSkip(c, r)) {
-        return;
-      }
-      const v = levelGrid[r][c] + strengthGrid[r][c];
-      if (!v) {
-        return false;
-      }
-      ctx.fillStyle = colorScale(v / (DERING_STRENGTHS + CLPF_STRENGTHS), HEAT_COLORS);
-      return true;
-    }, VisitMode.SuperBlock);
+    this.fillBlock(
+      frame,
+      ctx,
+      src,
+      dst,
+      (blockSize, c, r, sc, sr) => {
+        if (allSkip(c, r)) {
+          return;
+        }
+        const v = levelGrid[r][c] + strengthGrid[r][c];
+        if (!v) {
+          return false;
+        }
+        ctx.fillStyle = colorScale(v / (DERING_STRENGTHS + CLPF_STRENGTHS), HEAT_COLORS);
+        return true;
+      },
+      VisitMode.SuperBlock,
+    );
     ctx.globalAlpha = 1;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "white";
-    ctx.font = String(8 * this.ratio) + "pt Courier New";
-    this.drawBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr, bounds, scale) => {
-      if (allSkip(c, r)) {
-        return;
-      }
-      const s = strengthGrid[r][c];
-      const l = levelGrid[r][c];
-      const o = bounds.getCenter();
-      ctx.fillText(l + "/" + s, o.x, o.y);
-      return true;
-    }, VisitMode.SuperBlock);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'white';
+    ctx.font = String(8 * this.ratio) + 'pt Courier New';
+    this.drawBlock(
+      frame,
+      ctx,
+      src,
+      dst,
+      (blockSize, c, r, sc, sr, bounds, scale) => {
+        if (allSkip(c, r)) {
+          return;
+        }
+        const s = strengthGrid[r][c];
+        const l = levelGrid[r][c];
+        const o = bounds.getCenter();
+        ctx.fillText(l + '/' + s, o.x, o.y);
+        return true;
+      },
+      VisitMode.SuperBlock,
+    );
   }
   drawReferenceFrames(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    const referenceGrid = frame.json["referenceFrame"];
-    const referenceMapByValue = reverseMap(frame.json["referenceFrameMap"]);
+    const referenceGrid = frame.json['referenceFrame'];
+    const referenceMapByValue = reverseMap(frame.json['referenceFrameMap']);
     const triangles = true;
     this.drawBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr, bounds) => {
       ctx.save();
@@ -1626,13 +1858,13 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
 
   drawMotionVectors(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    const motionVectorsGrid = frame.json["motionVectors"];
+    const motionVectorsGrid = frame.json['motionVectors'];
     const scale = dst.w / src.w;
     const scaledFrameSize = this.frameSize.clone().multiplyScalar(scale);
     ctx.save();
     ctx.globalAlpha = 1;
-    const aColor = "red";
-    const bColor = "blue";
+    const aColor = 'red';
+    const bColor = 'blue';
     ctx.fillStyle = aColor;
     ctx.lineWidth = scale / 2;
 
@@ -1641,8 +1873,8 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       bounds.multiplyScalar(scale);
       const o = bounds.getCenter();
       const m = motionVectorsGrid[r][c];
-      const a = new Vector(m[0], m[1])
-      const b = new Vector(m[2], m[3])
+      const a = new Vector(m[0], m[1]);
+      const b = new Vector(m[2], m[3]);
 
       if (a.length() > 0) {
         ctx.globalAlpha = Math.min(0.3, a.length() / 128);
@@ -1678,16 +1910,16 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.restore();
   }
   drawSegment(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    const segGrid = frame.json["seg_id"];
-    const segMapByValue = reverseMap(frame.json["seg_idMap"]);
+    const segGrid = frame.json['seg_id'];
+    const segMapByValue = reverseMap(frame.json['seg_idMap']);
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       ctx.fillStyle = getColor(segGrid[r][c], palette.seg_id);
       return true;
     });
   }
   drawTransformType(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    const typeGrid = frame.json["transformType"];
-    const transformTypeMapByValue = reverseMap(frame.json["transformTypeMap"]);
+    const typeGrid = frame.json['transformType'];
+    const transformTypeMapByValue = reverseMap(frame.json['transformTypeMap']);
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       ctx.fillStyle = getColor(transformTypeMapByValue[typeGrid[r][c]], palette.transformType);
       return true;
@@ -1702,16 +1934,16 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
       return blocks[r][c] | 0;
     }
     let maxBitsPerPixel = 0;
-    if (this.state.showBitsScale == "frame") {
+    if (this.state.showBitsScale == 'frame') {
       this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
         const area = blockSizeArea(frame, blockSize);
         const bits = getBits(blocks, c, r);
         maxBitsPerPixel = Math.max(maxBitsPerPixel, bits / area);
       });
     } else {
-      const groups = this.state.showBitsScale === "video" ? [this.getActiveGroup()] : this.props.groups;
-      groups.forEach(frames => {
-        frames.forEach(frame => {
+      const groups = this.state.showBitsScale === 'video' ? [this.getActiveGroup()] : this.props.groups;
+      groups.forEach((frames) => {
+        frames.forEach((frame) => {
           const { blocks } = frame.accounting.countBits(this.state.showBitsFilter);
           this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
             const area = blockSizeArea(frame, blockSize);
@@ -1724,15 +1956,15 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       const area = blockSizeArea(frame, blockSize);
       const bits = getBits(blocks, c, r);
-      const value = (bits / area) / maxBitsPerPixel;
+      const value = bits / area / maxBitsPerPixel;
       const mode = this.state.showBitsMode;
-      if (mode == "linear") {
+      if (mode == 'linear') {
         ctx.globalAlpha = value;
-        ctx.fillStyle = "#9400D3";
-      } else if (mode == "heat") {
+        ctx.fillStyle = '#9400D3';
+      } else if (mode == 'heat') {
         ctx.globalAlpha = value;
         ctx.fillStyle = colorScale(value, HEAT_COLORS);
-      } else if (mode == "heat-opaque") {
+      } else if (mode == 'heat-opaque') {
         ctx.globalAlpha = 1;
         ctx.fillStyle = colorScale(value, HEAT_COLORS);
       }
@@ -1740,11 +1972,11 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     });
   }
   drawMode(type: string, frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
-    const skipGrid = frame.json["skip"];
+    const skipGrid = frame.json['skip'];
     const modeGrid = frame.json[type];
-    const modeMap = frame.json["modeMap"];
-    const uvModeMap = frame.json["uv_modeMap"];
-    const alphaIndex = frame.json["cfl_alpha_idx"];
+    const modeMap = frame.json['modeMap'];
+    const uvModeMap = frame.json['uv_modeMap'];
+    const alphaIndex = frame.json['cfl_alpha_idx'];
     const modeMapByValue = reverseMap(modeMap);
     const V_PRED = modeMap.V_PRED;
     const H_PRED = modeMap.H_PRED;
@@ -1760,7 +1992,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     const scale = dst.w / src.w;
     ctx.save();
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "white";
+    ctx.strokeStyle = 'white';
     const lineOffset = getLineOffset(1);
     ctx.translate(lineOffset, lineOffset);
     ctx.translate(-src.x * scale, -src.y * scale);
@@ -1768,22 +2000,22 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.lineWidth = lineWidth;
 
     ctx.globalAlpha = 1;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.font = String(6 * this.ratio) + "pt Courier New";
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = String(6 * this.ratio) + 'pt Courier New';
 
     this.visitBlocks(VisitMode.Block, frame, (blockSize, c, r, sc, sr, bounds) => {
       bounds.multiplyScalar(scale);
       drawMode(modeGrid[r][c], bounds);
-      if (alphaIndex && type === "uv_mode" && modeGrid[r][c] === UV_CFL_PRED) {
+      if (alphaIndex && type === 'uv_mode' && modeGrid[r][c] === UV_CFL_PRED) {
         if (bounds.w < 16 * this.ratio || bounds.h < 16 * this.ratio) {
           return;
         }
         const o = bounds.getCenter();
-        const cfl_alpha_idx = frame.json["cfl_alpha_idx"][r][c];
-        const cfl_alpha_sign = frame.json["cfl_alpha_sign"][r][c];
+        const cfl_alpha_idx = frame.json['cfl_alpha_idx'][r][c];
+        const cfl_alpha_sign = frame.json['cfl_alpha_sign'][r][c];
         const [cfl_alpha_u, cfl_alpha_v] = toCflAlphas(cfl_alpha_idx, cfl_alpha_sign);
-        ctx.fillStyle = "black";
+        ctx.fillStyle = 'black';
         ctx.fillText(`${cfl_alpha_u}`, o.x, o.y - 4 * this.ratio);
         ctx.fillText(`${cfl_alpha_v}`, o.x, o.y + 4 * this.ratio);
       }
@@ -1830,15 +2062,36 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     ctx.restore();
   }
 
-  fillBlock(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, setFillStyle: (blockSize: number, c: number, r: number, sc: number, sr: number) => boolean, mode = VisitMode.Block) {
-    this.drawBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr, bounds, scale) => {
-      if (setFillStyle(blockSize, c, r, sc, sr)) {
-        ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-      }
-    }, mode);
+  fillBlock(
+    frame: AnalyzerFrame,
+    ctx: CanvasRenderingContext2D,
+    src: Rectangle,
+    dst: Rectangle,
+    setFillStyle: (blockSize: number, c: number, r: number, sc: number, sr: number) => boolean,
+    mode = VisitMode.Block,
+  ) {
+    this.drawBlock(
+      frame,
+      ctx,
+      src,
+      dst,
+      (blockSize, c, r, sc, sr, bounds, scale) => {
+        if (setFillStyle(blockSize, c, r, sc, sr)) {
+          ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+        }
+      },
+      mode,
+    );
   }
 
-  drawBlock(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle, visitor: BlockVisitor, mode = VisitMode.Block) {
+  drawBlock(
+    frame: AnalyzerFrame,
+    ctx: CanvasRenderingContext2D,
+    src: Rectangle,
+    dst: Rectangle,
+    visitor: BlockVisitor,
+    mode = VisitMode.Block,
+  ) {
     const scale = dst.w / src.w;
     ctx.save();
     ctx.translate(-src.x * scale, -src.y * scale);
@@ -1852,7 +2105,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
    * A variety of ways to visit the grid.
    */
   visitBlocks(mode: VisitMode, frame: AnalyzerFrame, visitor: BlockVisitor) {
-    const blockSizeGrid = frame.json["blockSize"];
+    const blockSizeGrid = frame.json['blockSize'];
     const miSizeLog2 = frame.miSizeLog2;
     const miSuperSizeLog2 = frame.miSuperSizeLog2;
 
@@ -1861,20 +2114,36 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
     const cols = blockSizeGrid[0].length;
 
     if (mode === VisitMode.Tile) {
-      const tileCols = frame.json["tileCols"];
-      const tileRows = frame.json["tileRows"];
+      const tileCols = frame.json['tileCols'];
+      const tileRows = frame.json['tileRows'];
       if (!tileCols || !tileRows) return;
       for (let c = 0; c < cols; c += tileCols) {
         for (let r = 0; r < rows; r += tileRows) {
           const size = blockSizeGrid[r][c];
-          visitor(size, c, r, 0, 0, rect.set(c << miSizeLog2, r << miSizeLog2, (1 << miSizeLog2) * tileCols, (1 << miSizeLog2) * tileRows), 1);
+          visitor(
+            size,
+            c,
+            r,
+            0,
+            0,
+            rect.set(c << miSizeLog2, r << miSizeLog2, (1 << miSizeLog2) * tileCols, (1 << miSizeLog2) * tileRows),
+            1,
+          );
         }
       }
     } else if (mode === VisitMode.SuperBlock) {
       for (let c = 0; c < cols; c += 1 << (miSuperSizeLog2 - miSizeLog2)) {
         for (let r = 0; r < rows; r += 1 << (miSuperSizeLog2 - miSizeLog2)) {
           const size = blockSizeGrid[r][c];
-          visitor(size, c, r, 0, 0, rect.set(c << miSizeLog2, r << miSizeLog2, 1 << miSuperSizeLog2, 1 << miSuperSizeLog2), 1);
+          visitor(
+            size,
+            c,
+            r,
+            0,
+            0,
+            rect.set(c << miSizeLog2, r << miSizeLog2, 1 << miSuperSizeLog2, 1 << miSuperSizeLog2),
+            1,
+          );
         }
       }
     } else if (mode === VisitMode.Block || mode === VisitMode.TransformBlock) {
@@ -1884,7 +2153,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
         sizeGrid = blockSizeGrid;
         allSizes = frame.blockSizeLog2Map;
       } else if (mode === VisitMode.TransformBlock) {
-        sizeGrid = frame.json["transformSize"];
+        sizeGrid = frame.json['transformSize'];
         allSizes = frame.transformSizeLog2Map;
       } else {
         unreachable();
@@ -1915,19 +2184,21 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
   }
   createSharingLink(): Promise<string> {
     return new Promise((resolve, reject) => {
-      shortenUrl(window.location.href , (url) => {
+      shortenUrl(window.location.href, (url) => {
         resolve(url);
       });
     });
   }
   shareLink() {
-    this.createSharingLink().then(link => {
-      this.setState({showShareUrlDialog: true, shareUrl: link} as any);
+    this.createSharingLink().then((link) => {
+      this.setState({ showShareUrlDialog: true, shareUrl: link } as any);
     });
   }
-  fileIssue(label = "") {
-    this.createSharingLink().then(link => {
-      window.open("https://github.com/mbebenita/aomanalyzer/issues/new?labels=" + label + "&body=" + encodeURIComponent(link));
+  fileIssue(label = '') {
+    this.createSharingLink().then((link) => {
+      window.open(
+        'https://github.com/mbebenita/aomanalyzer/issues/new?labels=' + label + '&body=' + encodeURIComponent(link),
+      );
     });
   }
 }

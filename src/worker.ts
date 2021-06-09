@@ -1,22 +1,22 @@
 declare let importScripts;
 declare let DecoderModule;
 
-function assert(c: boolean, message = "") {
+function assert(c: boolean, message = '') {
   if (!c) {
     throw new Error(message);
   }
 }
 
-let decoderPathPrefix = "";
+let decoderPathPrefix = '';
 
 onmessage = function (e) {
   // console.log("Worker: " + e.data.command);
   switch (e.data.command) {
-    case "load":
+    case 'load':
       try {
         const payload = e.data.payload;
         const path = payload[0];
-        decoderPathPrefix = path.substring(0, path.lastIndexOf("/") + 1);
+        decoderPathPrefix = path.substring(0, path.lastIndexOf('/') + 1);
         importScripts.apply(self, payload);
         load(payload[0], (nativeModule) => {
           native = nativeModule;
@@ -30,40 +30,46 @@ onmessage = function (e) {
           } else if (native._get_codec_build_config) {
             buildConfig = native.UTF8ToString(native._get_codec_build_config());
           } else {
-            buildConfig = "N/A";
+            buildConfig = 'N/A';
           }
-          postMessage({
-            command: "loadResult",
-            payload: {
-              buildConfig
+          postMessage(
+            {
+              command: 'loadResult',
+              payload: {
+                buildConfig,
+              },
+              id: e.data.id,
             },
-            id: e.data.id
-          }, undefined);
+            undefined,
+          );
         });
       } catch (x) {
-        postMessage({
-          command: "loadResult",
-          payload: false,
-          id: e.data.id
-        }, undefined);
+        postMessage(
+          {
+            command: 'loadResult',
+            payload: false,
+            id: e.data.id,
+          },
+          undefined,
+        );
       }
       break;
-    case "readFrame":
+    case 'readFrame':
       readFrame(e);
       break;
-    case "setLayers":
+    case 'setLayers':
       setLayers(e);
       break;
-    case "openFileBytes":
+    case 'openFileBytes':
       openFileBytes(e.data.payload);
       break;
-    case "releaseFrameBuffers":
+    case 'releaseFrameBuffers':
       releaseFrameBuffer(e.data.payload.Y);
       releaseFrameBuffer(e.data.payload.U);
       releaseFrameBuffer(e.data.payload.V);
       break;
   }
-}
+};
 
 interface Native {
   _read_frame(): number;
@@ -102,41 +108,43 @@ function load(path: string, ready: (native: any) => void) {
     noExitRuntime: true,
     noInitialRun: true,
     preRun: [],
-    postRun: [function () {
-      // console.info(`Loaded Decoder in Worker`);
-    }],
-    memoryInitializerPrefixURL: "bin/",
+    postRun: [
+      function () {
+        // console.info(`Loaded Decoder in Worker`);
+      },
+    ],
+    memoryInitializerPrefixURL: 'bin/',
     arguments: ['input.ivf', 'output.raw'],
     on_frame_decoded_json: function (p) {
-      let s = "";
-      if (typeof TextDecoder != "undefined") {
+      let s = '';
+      if (typeof TextDecoder != 'undefined') {
         const m = (Module as any).HEAP8;
         let e = p;
         while (m[e] != 0) {
           e++;
         }
-        const textDecoder = new TextDecoder("utf-8");
+        const textDecoder = new TextDecoder('utf-8');
         s = textDecoder.decode(m.subarray(p, e));
       } else {
         s = (Module as any).UTF8ToString(p);
       }
-      json = JSON.parse("[" + s + "null]");
+      json = JSON.parse('[' + s + 'null]');
     },
     onRuntimeInitialized: function () {
       ready(Module);
-    }
+    },
   };
-  DecoderModule(Module)
+  DecoderModule(Module);
 }
 
 function openFileBytes(buffer: Uint8Array) {
-  frameRate = buffer[16] | buffer[17] << 24 | buffer[18] << 16 | buffer[19] << 24;
+  frameRate = buffer[16] | (buffer[17] << 24) | (buffer[18] << 16) | (buffer[19] << 24);
   buffer = buffer;
-  native.FS.writeFile("/tmp/input.ivf", buffer, { encoding: "binary" });
+  native.FS.writeFile('/tmp/input.ivf', buffer, { encoding: 'binary' });
   native._open_file();
 }
 
-const bufferPool: ArrayBuffer [] = [];
+const bufferPool: ArrayBuffer[] = [];
 
 function releaseFrameBuffer(buffer: ArrayBuffer) {
   if (bufferPool.length < 64) {
@@ -157,9 +165,9 @@ function getReleasedBuffer(byteLength: number) {
 const AOM_IMG_FMT_PLANAR = 0x100;
 const AOM_IMG_FMT_HIGHBITDEPTH = 0x800;
 const AOM_IMG_FMT_I422 = AOM_IMG_FMT_PLANAR | 5;
-const AOM_IMG_FMT_I42216 = AOM_IMG_FMT_I422 | AOM_IMG_FMT_HIGHBITDEPTH
+const AOM_IMG_FMT_I42216 = AOM_IMG_FMT_I422 | AOM_IMG_FMT_HIGHBITDEPTH;
 const AOM_IMG_FMT_I444 = AOM_IMG_FMT_PLANAR | 6;
-const AOM_IMG_FMT_I44416 = AOM_IMG_FMT_I444 | AOM_IMG_FMT_HIGHBITDEPTH
+const AOM_IMG_FMT_I44416 = AOM_IMG_FMT_I444 | AOM_IMG_FMT_HIGHBITDEPTH;
 
 function getImageFormat() {
   // TODO: Just call |native._get_image_format| directly. Older analyzer builds may not have
@@ -247,45 +255,48 @@ function readPlane(plane) {
     width,
     height,
     xdec,
-    ydec
+    ydec,
   };
 }
 
 function readImage() {
   return {
-    hashCode: Math.random() * 1000000 | 0,
+    hashCode: (Math.random() * 1000000) | 0,
     Y: readPlane(0),
     U: readPlane(1),
-    V: readPlane(2)
-  }
+    V: readPlane(2),
+  };
 }
 
 function readFrame(e) {
   const s = performance.now();
   if (native._read_frame() != 0) {
-    postMessage({
-      command: "readFrameResult",
-      payload: { json: null, decodeTime: performance.now() - s },
-      id: e.data.id
-    }, undefined);
+    postMessage(
+      {
+        command: 'readFrameResult',
+        payload: { json: null, decodeTime: performance.now() - s },
+        id: e.data.id,
+      },
+      undefined,
+    );
     return null;
   }
   let image = null;
   if (e.data.shouldReadImageData) {
     image = readImage();
   }
-  self.postMessage({
-    command: "readFrameResult",
-    payload: { json, image, decodeTime: performance.now() - s },
-    id: e.data.id
-  }, image ? [
-    image.Y.buffer,
-    image.U.buffer,
-    image.V.buffer
-  ] : undefined as any);
-  assert(image.Y.buffer.byteLength === 0 &&
-         image.U.buffer.byteLength === 0 &&
-         image.V.buffer.byteLength === 0, "Buffers must be transferred.");
+  self.postMessage(
+    {
+      command: 'readFrameResult',
+      payload: { json, image, decodeTime: performance.now() - s },
+      id: e.data.id,
+    },
+    image ? [image.Y.buffer, image.U.buffer, image.V.buffer] : (undefined as any),
+  );
+  assert(
+    image.Y.buffer.byteLength === 0 && image.U.buffer.byteLength === 0 && image.V.buffer.byteLength === 0,
+    'Buffers must be transferred.',
+  );
 }
 
 function setLayers(e) {

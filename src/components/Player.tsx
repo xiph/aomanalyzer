@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from 'react';
 
 import Paper from 'material-ui/Paper';
 import Dialog from 'material-ui/Dialog';
@@ -6,8 +6,20 @@ import { Toolbar, ToolbarGroup, ToolbarSeparator, ToolbarTitle } from 'material-
 import IconButton from 'material-ui/IconButton';
 import FontIcon from 'material-ui/FontIcon';
 import Checkbox from 'material-ui/Checkbox';
-import { grey900, grey800, grey100, grey200, red100, red500, red600, red700, red800, red900, deepOrange500 } from 'material-ui/styles/colors';
-import { assert, clamp, downloadFile, Decoder, AnalyzerFrame, FrameImage } from "./analyzerTools";
+import {
+  grey900,
+  grey800,
+  grey100,
+  grey200,
+  red100,
+  red500,
+  red600,
+  red700,
+  red800,
+  red900,
+  deepOrange500,
+} from 'material-ui/styles/colors';
+import { assert, clamp, downloadFile, Decoder, AnalyzerFrame, FrameImage } from './analyzerTools';
 import LinearProgress from 'material-ui/LinearProgress';
 import CircularProgress from 'material-ui/CircularProgress';
 import RaisedButton from 'material-ui/RaisedButton';
@@ -44,12 +56,12 @@ function prepareBuffer(image: FrameImage) {
     height: image.Y.height,
 
     vdec: 1,
-    hdec: 1
+    hdec: 1,
   };
 }
 
 interface PlayerComponentProps {
-  video: { decoderUrl: string, videoUrl: string, decoderName: string };
+  video: { decoderUrl: string; videoUrl: string; decoderName: string };
   bench: number;
   areDetailsVisible: boolean;
   onScroll?: (top: number, left: number) => void;
@@ -62,22 +74,25 @@ interface PlayerComponentProps {
   onInitialized?: () => void;
 }
 
-export class PlayerComponent extends React.Component<PlayerComponentProps, {
-  decoder: Decoder;
-  status: string;
-  playInterval: number;
-  playbackFrameRate: number;
-  maxFrameBufferSize: number;
-  baseFrameOffset: number;
-  frameOffset: number;
-}> {
+export class PlayerComponent extends React.Component<
+  PlayerComponentProps,
+  {
+    decoder: Decoder;
+    status: string;
+    playInterval: number;
+    playbackFrameRate: number;
+    maxFrameBufferSize: number;
+    baseFrameOffset: number;
+    frameOffset: number;
+  }
+> {
   public static defaultProps: PlayerComponentProps = {
     scale: 1 / window.devicePixelRatio,
     scrollTop: 0,
     scrollLeft: 0,
-    label: "",
+    label: '',
     loop: false,
-    shouldFitWidth: true
+    shouldFitWidth: true,
   } as any;
 
   canvasContainer: HTMLDivElement;
@@ -92,12 +107,12 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     super();
     this.state = {
       decoder: null,
-      status: "",
+      status: '',
       playInterval: 0,
       playbackFrameRate: 30,
       maxFrameBufferSize: MAX_FRAME_BUFFER_SIZE,
       frameOffset: 0,
-      baseFrameOffset: 0
+      baseFrameOffset: 0,
     };
   }
 
@@ -142,15 +157,15 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
   isComponentMounted = false;
 
   componentDidMount() {
-    this.setState({ status: "Loading Decoder" } as any);
+    this.setState({ status: 'Loading Decoder' } as any);
 
-    Decoder.loadDecoder(this.props.video.decoderUrl).then(decoder => {
-      this.setState({ status: "Downloading Video" } as any);
-      downloadFile(this.props.video.videoUrl).then(bytes => {
+    Decoder.loadDecoder(this.props.video.decoderUrl).then((decoder) => {
+      this.setState({ status: 'Downloading Video' } as any);
+      downloadFile(this.props.video.videoUrl).then((bytes) => {
         decoder.openFileBytes(bytes);
         decoder.setLayers(0);
         this.setState({ decoder } as any);
-        this.setState({ status: "Ready" } as any);
+        this.setState({ status: 'Ready' } as any);
         this.initialize(decoder);
       });
     });
@@ -185,15 +200,18 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     if (this.fetchBuffer.length + this.fetchRequestsInFlight >= fetchBufferMaxSize) {
       return;
     }
-    this.state.decoder.readFrame().then(frames => {
-      assert(frames.length === 1);
-      this.fetchRequestsInFlight--;
-      this.fetchBuffer.push(frames[0]);
-      this.forceUpdateIfMounted();
-    }).catch(() => {
-      this.fetchRequestsInFlight--;
-      this.stopFetchPump();
-    });
+    this.state.decoder
+      .readFrame()
+      .then((frames) => {
+        assert(frames.length === 1);
+        this.fetchRequestsInFlight--;
+        this.fetchBuffer.push(frames[0]);
+        this.forceUpdateIfMounted();
+      })
+      .catch(() => {
+        this.fetchRequestsInFlight--;
+        this.stopFetchPump();
+      });
     this.fetchRequestsInFlight++;
   }
 
@@ -232,8 +250,8 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
   }
 
   initialize(decoder: Decoder) {
-    decoder.readFrame().then(frames => {
-      frames.forEach(frame => {
+    decoder.readFrame().then((frames) => {
+      frames.forEach((frame) => {
         this.frames.push(frame);
         this.frameBuffer.push(frame);
       });
@@ -333,19 +351,19 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     let lastClientX;
     let lastClientY;
     let mouseDown = false;
-    el.addEventListener("mousedown", (e: MouseEvent) => {
+    el.addEventListener('mousedown', (e: MouseEvent) => {
       lastClientX = e.clientX - el.offsetLeft;
       lastClientY = e.clientY - el.offsetTop;
       mouseDown = true;
       // TODO: Chrome needs a prefix, but it's also behaving strangely when updating the cursor.
       // I didn't investigate this too much.
-      el.style.cursor = "grabbing";
+      el.style.cursor = 'grabbing';
     });
-    document.documentElement.addEventListener("mouseup", (e: MouseEvent) => {
+    document.documentElement.addEventListener('mouseup', (e: MouseEvent) => {
       mouseDown = false;
-      el.style.cursor = "grab";
+      el.style.cursor = 'grab';
     });
-    document.documentElement.addEventListener("mousemove", (e: MouseEvent) => {
+    document.documentElement.addEventListener('mousemove', (e: MouseEvent) => {
       if (mouseDown) {
         const X = e.pageX - el.offsetLeft;
         const Y = e.pageY - el.offsetTop;
@@ -359,7 +377,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     this.updateScroll(this.props.scrollTop, this.props.scrollLeft);
   }
   render() {
-    const valueStyle = { textAlign: "right", fontSize: "12px" };
+    const valueStyle = { textAlign: 'right', fontSize: '12px' };
 
     this.drainFetchBuffer();
     this.drawFrame(this.state.frameOffset);
@@ -375,88 +393,120 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     }
 
     if (!this.state.decoder) {
-      return <div className="playerCenterContainer">
-        <div className="playerCenterContent">
-          <CircularProgress size={40} thickness={7} /><br /><br />
-          {this.state.status}
+      return (
+        <div className="playerCenterContainer">
+          <div className="playerCenterContent">
+            <CircularProgress size={40} thickness={7} />
+            <br />
+            <br />
+            {this.state.status}
+          </div>
         </div>
-      </div>
+      );
     }
     const canvasStyle: any = {};
-    let scaleLabel = "";
+    let scaleLabel = '';
     if (this.props.shouldFitWidth) {
-      canvasStyle.width = "100%";
-      scaleLabel = " Fit Width";
+      canvasStyle.width = '100%';
+      scaleLabel = ' Fit Width';
     } else if (this.canvas) {
-      canvasStyle.width = (this.canvas.width * this.props.scale) + "px";
+      canvasStyle.width = this.canvas.width * this.props.scale + 'px';
       // scaleLabel = " " + this.props.scale + "X" + (window.devicePixelRatio * this.props.scale) + " : 1";
-      scaleLabel = ` ${fixedRatio(window.devicePixelRatio * this.props.scale) + ":1"}`;
+      scaleLabel = ` ${fixedRatio(window.devicePixelRatio * this.props.scale) + ':1'}`;
     }
-    return <div className="maxWidthAndHeight">
-      { this.props.labelPrefix &&
-        <div className="playerLabel">{this.props.labelPrefix} {this.state.baseFrameOffset + 1 + this.state.frameOffset} {scaleLabel}</div>
-      }
-      <div className="playerCanvasContainer" ref={(self: any) => this.mountCanvasContainer(self)}>
-        <canvas className="playerCanvas" ref={(self: any) => this.canvas = self} style={canvasStyle} />
-      </div>
-      <LinearProgress style={{ borderRadius: "0px" }} color={red800} mode="determinate" value={this.frameBuffer.length} min={0} max={this.state.decoder.totalFrames} />
-      {this.props.areDetailsVisible && this.state.decoder &&
-        <div className="playerTableContainer">
-          <Table>
-            <TableBody displayRowCheckbox={false}>
-              <TableRow>
-                <TableRowColumn>Frame # (Base + Offset)</TableRowColumn>
-                <TableRowColumn style={{ textAlign: "right" }}>{this.state.baseFrameOffset + 1} + {this.state.frameOffset} = {this.state.baseFrameOffset + 1 + this.state.frameOffset}</TableRowColumn>
-              </TableRow>
-              <TableRow>
-                <TableRowColumn>Frame Buffer</TableRowColumn>
-                <TableRowColumn style={{ textAlign: "right" }}>{this.frameBuffer.length}</TableRowColumn>
-              </TableRow>
-              <TableRow>
-                <TableRowColumn>Fetch Buffer</TableRowColumn>
-                <TableRowColumn style={{ textAlign: "right" }}>{this.fetchBuffer.length}</TableRowColumn>
-              </TableRow>
-              <TableRow>
-                <TableRowColumn>Decoded Frames</TableRowColumn>
-                <TableRowColumn style={{ textAlign: "right" }}>{this.frames.length}</TableRowColumn>
-              </TableRow>
-              {this.frameBuffer.length &&
+    return (
+      <div className="maxWidthAndHeight">
+        {this.props.labelPrefix && (
+          <div className="playerLabel">
+            {this.props.labelPrefix} {this.state.baseFrameOffset + 1 + this.state.frameOffset} {scaleLabel}
+          </div>
+        )}
+        <div className="playerCanvasContainer" ref={(self: any) => this.mountCanvasContainer(self)}>
+          <canvas className="playerCanvas" ref={(self: any) => (this.canvas = self)} style={canvasStyle} />
+        </div>
+        <LinearProgress
+          style={{ borderRadius: '0px' }}
+          color={red800}
+          mode="determinate"
+          value={this.frameBuffer.length}
+          min={0}
+          max={this.state.decoder.totalFrames}
+        />
+        {this.props.areDetailsVisible && this.state.decoder && (
+          <div className="playerTableContainer">
+            <Table>
+              <TableBody displayRowCheckbox={false}>
                 <TableRow>
-                  <TableRowColumn>Frame Decode Time (ms)</TableRowColumn>
-                  <TableRowColumn style={{ textAlign: "right" }}>{this.frameBuffer[this.state.frameOffset].decodeTime.toFixed(2)}</TableRowColumn>
-                </TableRow>
-              }
-              <TableRow>
-                <TableRowColumn>All Frame Decode Time</TableRowColumn>
-                <TableRowColumn style={{ textAlign: "right" }}>{allStats.avg.toFixed(2)} avg, {allStats.std.toFixed(2)} std, {allStats.min.toFixed(2)} min, {allStats.max.toFixed(2)} max</TableRowColumn>
-              </TableRow>
-              <TableRow>
-                <TableRowColumn>Last {this.state.decoder.frameRate} Frame Decode Time</TableRowColumn>
-                <TableRowColumn style={{ textAlign: "right" }}>{lastStats.avg.toFixed(2)} avg, {lastStats.std.toFixed(2)} std, {lastStats.min.toFixed(2)} min, {lastStats.max.toFixed(2)} max</TableRowColumn>
-              </TableRow>
-              {this.canvas &&
-                <TableRow>
-                  <TableRowColumn>Frame Info</TableRowColumn>
-                  <TableRowColumn style={{ textAlign: "right" }}>
-                    {this.canvas.width} x {this.canvas.height}{' '}
-                    {this.state.decoder.frameRate} fps
+                  <TableRowColumn>Frame # (Base + Offset)</TableRowColumn>
+                  <TableRowColumn style={{ textAlign: 'right' }}>
+                    {this.state.baseFrameOffset + 1} + {this.state.frameOffset} ={' '}
+                    {this.state.baseFrameOffset + 1 + this.state.frameOffset}
                   </TableRowColumn>
                 </TableRow>
-              }
-              {this.props.bench &&
                 <TableRow>
-                  <TableRowColumn>Benchmark (Worker Frame Decode Time Only)</TableRowColumn>
-                  {benchStats ?
-                    <TableRowColumn style={{ textAlign: "right", color: deepOrange500 }}>{benchStats.avg.toFixed(2)} avg, {benchStats.std.toFixed(2)} std, {benchStats.min.toFixed(2)} min, {benchStats.max.toFixed(2)} max</TableRowColumn> :
-                    <TableRowColumn style={{ textAlign: "right", color: deepOrange500 }}>Benchmarking {this.frames.length} of {this.props.bench} Frames <CircularProgress color={deepOrange500} size={14} thickness={3} /></TableRowColumn>
-                  }
+                  <TableRowColumn>Frame Buffer</TableRowColumn>
+                  <TableRowColumn style={{ textAlign: 'right' }}>{this.frameBuffer.length}</TableRowColumn>
                 </TableRow>
-              }
-            </TableBody>
-          </Table>
-        </div>
-      }
-    </div>;
+                <TableRow>
+                  <TableRowColumn>Fetch Buffer</TableRowColumn>
+                  <TableRowColumn style={{ textAlign: 'right' }}>{this.fetchBuffer.length}</TableRowColumn>
+                </TableRow>
+                <TableRow>
+                  <TableRowColumn>Decoded Frames</TableRowColumn>
+                  <TableRowColumn style={{ textAlign: 'right' }}>{this.frames.length}</TableRowColumn>
+                </TableRow>
+                {this.frameBuffer.length && (
+                  <TableRow>
+                    <TableRowColumn>Frame Decode Time (ms)</TableRowColumn>
+                    <TableRowColumn style={{ textAlign: 'right' }}>
+                      {this.frameBuffer[this.state.frameOffset].decodeTime.toFixed(2)}
+                    </TableRowColumn>
+                  </TableRow>
+                )}
+                <TableRow>
+                  <TableRowColumn>All Frame Decode Time</TableRowColumn>
+                  <TableRowColumn style={{ textAlign: 'right' }}>
+                    {allStats.avg.toFixed(2)} avg, {allStats.std.toFixed(2)} std, {allStats.min.toFixed(2)} min,{' '}
+                    {allStats.max.toFixed(2)} max
+                  </TableRowColumn>
+                </TableRow>
+                <TableRow>
+                  <TableRowColumn>Last {this.state.decoder.frameRate} Frame Decode Time</TableRowColumn>
+                  <TableRowColumn style={{ textAlign: 'right' }}>
+                    {lastStats.avg.toFixed(2)} avg, {lastStats.std.toFixed(2)} std, {lastStats.min.toFixed(2)} min,{' '}
+                    {lastStats.max.toFixed(2)} max
+                  </TableRowColumn>
+                </TableRow>
+                {this.canvas && (
+                  <TableRow>
+                    <TableRowColumn>Frame Info</TableRowColumn>
+                    <TableRowColumn style={{ textAlign: 'right' }}>
+                      {this.canvas.width} x {this.canvas.height} {this.state.decoder.frameRate} fps
+                    </TableRowColumn>
+                  </TableRow>
+                )}
+                {this.props.bench && (
+                  <TableRow>
+                    <TableRowColumn>Benchmark (Worker Frame Decode Time Only)</TableRowColumn>
+                    {benchStats ? (
+                      <TableRowColumn style={{ textAlign: 'right', color: deepOrange500 }}>
+                        {benchStats.avg.toFixed(2)} avg, {benchStats.std.toFixed(2)} std, {benchStats.min.toFixed(2)}{' '}
+                        min, {benchStats.max.toFixed(2)} max
+                      </TableRowColumn>
+                    ) : (
+                      <TableRowColumn style={{ textAlign: 'right', color: deepOrange500 }}>
+                        Benchmarking {this.frames.length} of {this.props.bench} Frames{' '}
+                        <CircularProgress color={deepOrange500} size={14} thickness={3} />
+                      </TableRowColumn>
+                    )}
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
+    );
   }
 
   getAllFrameDecodeStats() {
@@ -468,14 +518,14 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
     let max = Number.MIN_VALUE;
     let min = Number.MAX_VALUE;
     const frames = this.frames.slice(start, end);
-    frames.forEach(frame => {
+    frames.forEach((frame) => {
       sum += frame.decodeTime;
       max = Math.max(max, frame.decodeTime);
       min = Math.min(min, frame.decodeTime);
     });
     const avg = sum / frames.length;
     let std = 0;
-    frames.forEach(frame => {
+    frames.forEach((frame) => {
       const diff = frame.decodeTime - avg;
       std += diff * diff;
     });
@@ -485,7 +535,7 @@ export class PlayerComponent extends React.Component<PlayerComponentProps, {
       min,
       max,
       std,
-      count: frames.length
+      count: frames.length,
     };
   }
 }

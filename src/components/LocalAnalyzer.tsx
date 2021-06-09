@@ -1,6 +1,6 @@
-import * as React from "react";
-import { localFiles, localFileProtocol } from "./analyzerTools";
-import { LoaderComponent } from "./Loader"
+import * as React from 'react';
+import { localFiles, localFileProtocol } from './analyzerTools';
+import { LoaderComponent } from './Loader';
 import Dialog from 'material-ui/Dialog';
 import FlatButton from 'material-ui/FlatButton';
 import RaisedButton from 'material-ui/RaisedButton';
@@ -13,7 +13,7 @@ import Paper from 'material-ui/Paper';
 import IconButton from 'material-ui/IconButton';
 import FontIcon from 'material-ui/FontIcon';
 import { Toolbar, ToolbarGroup, ToolbarSeparator, ToolbarTitle } from 'material-ui/Toolbar';
-import {grey900, grey800, grey100, grey200} from 'material-ui/styles/colors';
+import { grey900, grey800, grey100, grey200 } from 'material-ui/styles/colors';
 import Checkbox from 'material-ui/Checkbox';
 import Toggle from 'material-ui/Toggle';
 import TextField from 'material-ui/TextField';
@@ -60,15 +60,15 @@ export function timeSince(date: Date) {
   const minutes = Math.round(Math.abs(diff % oneHour) / oneMinute);
   const s = [];
   if (days > 0) {
-    s.push(`${days} day${days === 1 ? "" : "s"}`);
+    s.push(`${days} day${days === 1 ? '' : 's'}`);
   }
   if (hours > 0) {
-    s.push(`${hours} hour${hours === 1 ? "" : "s"}`);
+    s.push(`${hours} hour${hours === 1 ? '' : 's'}`);
   }
   if (minutes > 0) {
-    s.push(`${minutes} minute${minutes === 1 ? "" : "s"}`);
+    s.push(`${minutes} minute${minutes === 1 ? '' : 's'}`);
   }
-  return s.join(", ") + " ago";
+  return s.join(', ') + ' ago';
 }
 
 function unique<T>(array: Array<T>): Array<T> {
@@ -81,38 +81,43 @@ function unique<T>(array: Array<T>): Array<T> {
   return result;
 }
 
-const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 declare let process;
 let masterUrl = window.location.origin + '/';
 if (window.location.origin.startsWith('file://') || window.location.origin.startsWith('http://localhost')) {
   masterUrl = 'https://arewecompressedyet.com/';
 }
 
-export class RunDetails extends React.Component<{
-  json: any;
-}, {
-
-  }> {
+export class RunDetails extends React.Component<
+  {
+    json: any;
+  },
+  {}
+> {
   render() {
     const json = this.props.json;
     const info = json.info;
-    return <div className="runDetail">
-      <div>Commit: {info.commit}</div>
-      <div>Nick: {info.nick}</div>
-      <div>Task: {info.task}</div>
-      <div>Build Options: {info.build_options}</div>
-      <div>Extra Options: {info.extra_options}</div>
-      <div>Date: {new Date(json.date).toString()}: ({timeSince(new Date(json.date))})</div>
-    </div>
+    return (
+      <div className="runDetail">
+        <div>Commit: {info.commit}</div>
+        <div>Nick: {info.nick}</div>
+        <div>Task: {info.task}</div>
+        <div>Build Options: {info.build_options}</div>
+        <div>Extra Options: {info.extra_options}</div>
+        <div>
+          Date: {new Date(json.date).toString()}: ({timeSince(new Date(json.date))})
+        </div>
+      </div>
+    );
   }
 }
 
-export class LocalAnalyzerComponent extends React.Component<{
-
-}, {
+export class LocalAnalyzerComponent extends React.Component<
+  {},
+  {
     listJson: any;
     setsJson: any;
-    slots: { runId: string, video: string, quality: number }[];
+    slots: { runId: string; video: string; quality: number }[];
     pairs: any;
     vote: string;
     votingEnabled: boolean;
@@ -123,49 +128,53 @@ export class LocalAnalyzerComponent extends React.Component<{
     shortURL: string;
     taskFilter: string;
     nickFilter: string;
-    configFilter: Option [];
-    statusFilter: Option [];
-    commandLineFilter: Option [];
-  }> {
+    configFilter: Option[];
+    statusFilter: Option[];
+    commandLineFilter: Option[];
+  }
+> {
   constructor() {
     super();
     this.state = {
       listJson: null,
       setsJson: null,
-      slots: [{ runId: "", video: "", quality: 0 }],
-      vote: "",
+      slots: [{ runId: '', video: '', quality: 0 }],
+      vote: '',
       votingEnabled: false,
       showVoteResult: false,
       blind: true,
-      voteMessage: "",
-      shortURL: "",
+      voteMessage: '',
+      shortURL: '',
       taskFilter: undefined,
       nickFilter: undefined,
       configFilter: [],
-      statusFilter: [{
-        label: "completed", value: "completed"
-      }],
+      statusFilter: [
+        {
+          label: 'completed',
+          value: 'completed',
+        },
+      ],
       commandLineFilter: [],
-      filtersEnabled: true
+      filtersEnabled: true,
     } as any;
   }
-  loadXHR<T>(path: string, type = "json"): Promise<T> {
+  loadXHR<T>(path: string, type = 'json'): Promise<T> {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       const self = this;
-      xhr.open("GET", path, true);
-      xhr.responseType = "text";
+      xhr.open('GET', path, true);
+      xhr.responseType = 'text';
       xhr.send();
-      xhr.addEventListener("load", function () {
+      xhr.addEventListener('load', function () {
         if (xhr.status != 200) {
-          console.error("Failed to load XHR: " + path);
+          console.error('Failed to load XHR: ' + path);
           reject();
           return;
         }
-        console.info("Loaded XHR: " + path);
+        console.info('Loaded XHR: ' + path);
         let response = this.responseText;
-        if (type === "json") {
-          response = response.replace(/NaN/g, "null");
+        if (type === 'json') {
+          response = response.replace(/NaN/g, 'null');
           try {
             response = response ? JSON.parse(response) : null;
           } catch (x) {
@@ -186,7 +195,7 @@ export class LocalAnalyzerComponent extends React.Component<{
     // this.setState({ listJson } as any);
     // return;
 
-    this.loadXHR(masterUrl + "list.json").then((listJson: any) => {
+    this.loadXHR(masterUrl + 'list.json').then((listJson: any) => {
       listJson.sort(function (a, b) {
         return (new Date(b.date) as any) - (new Date(a.date) as any);
       });
@@ -197,21 +206,21 @@ export class LocalAnalyzerComponent extends React.Component<{
       listJson = listJson.slice(0, 5000);
 
       // Say no to long names.
-      listJson = listJson.filter(job => {
+      listJson = listJson.filter((job) => {
         return job.run_id.length < 128;
       });
       this.setState({ listJson } as any);
     });
 
-    this.loadXHR(masterUrl + "sets.json").then((setsJson: any) => {
+    this.loadXHR(masterUrl + 'sets.json').then((setsJson: any) => {
       this.setState({ setsJson } as any);
     });
   }
-  handleAction(value) { /* tslint:disable:no-empty */
-
+  handleAction(value) {
+    /* tslint:disable:no-empty */
   }
   resetURL() {
-    this.setState({shortURL: ""} as any);
+    this.setState({ shortURL: '' } as any);
   }
   onChangeTaskFilter(option) {
     const taskFilter = option ? option.value : undefined;
@@ -252,7 +261,7 @@ export class LocalAnalyzerComponent extends React.Component<{
     this.resetURL();
   }
   onChangeVote(option, value: string) {
-    this.setState({vote: value} as any);
+    this.setState({ vote: value } as any);
     this.resetURL();
   }
   onDeleteRun(slot) {
@@ -281,44 +290,44 @@ export class LocalAnalyzerComponent extends React.Component<{
   }
   onAddRun() {
     const slots = this.state.slots;
-    slots.push({ runId: "", video: "", quality: 0 });
+    slots.push({ runId: '', video: '', quality: 0 });
     this.setState({ slots } as any);
     this.resetURL();
   }
   onVoteMessageChange(event, value: string) {
-    this.setState({voteMessage: value} as any);
+    this.setState({ voteMessage: value } as any);
     this.resetURL();
   }
   makePairs(): any {
-    return this.state.slots.map(slot => {
+    return this.state.slots.map((slot) => {
       const run = this.getRunById(slot.runId);
       const videoUrl = masterUrl + `runs/${run.run_id}/${run.info.task}/${slot.video}-${slot.quality}.ivf`;
       const decoderUrl = masterUrl + `runs/${run.run_id}/js/decoder.js`;
-      return {decoderUrl, videoUrl};
+      return { decoderUrl, videoUrl };
     });
   }
-  findLongestPrefix(pairs: {decoderUrl: string, videoUrl: string} []): string {
+  findLongestPrefix(pairs: { decoderUrl: string; videoUrl: string }[]): string {
     const list = [];
-    pairs.forEach(pair => {
+    pairs.forEach((pair) => {
       list.push(pair.decoderUrl);
       list.push(pair.videoUrl);
     });
     if (list.length == 0) {
-      return "";
+      return '';
     }
     const first = list[0];
-    let prefix = "";
+    let prefix = '';
     // Find longest prefix.
     for (let i = 0; i < first.length; i++) {
       const tmp = first.slice(0, i);
-      const isCommon = list.every(s => s.indexOf(tmp) == 0);
+      const isCommon = list.every((s) => s.indexOf(tmp) == 0);
       if (!isCommon) {
         break;
       }
       prefix = tmp;
     }
     // Remove prefix.
-    pairs.forEach(pair => {
+    pairs.forEach((pair) => {
       pair.decoderUrl = pair.decoderUrl.slice(prefix.length);
       pair.videoUrl = pair.videoUrl.slice(prefix.length);
     });
@@ -326,10 +335,10 @@ export class LocalAnalyzerComponent extends React.Component<{
     return prefix;
   }
   onSend() {
-    window.open(this.createURL(), "_blank");
+    window.open(this.createURL(), '_blank');
   }
   getRunById(runId) {
-    return this.state.listJson.find(run => run.run_id === runId);
+    return this.state.listJson.find((run) => run.run_id === runId);
   }
   getOptionsForTask(task: string) {
     if (!this.state.setsJson || !(task in this.state.setsJson)) {
@@ -339,14 +348,18 @@ export class LocalAnalyzerComponent extends React.Component<{
     if (!array) {
       return [];
     }
-    return array.map(video => { return { value: video, label: video }; });
+    return array.map((video) => {
+      return { value: video, label: video };
+    });
   }
   getOptionsForQuality(quality: string) {
     let array = [20, 32, 43, 55, 63];
     if (quality) {
-      array = quality.split(" ").map(q => parseInt(q));
+      array = quality.split(' ').map((q) => parseInt(q));
     }
-    return array.map(q => { return { value: q, label: q }; })
+    return array.map((q) => {
+      return { value: q, label: q };
+    });
   }
   cannotAnalyze() {
     const slots = this.state.slots;
@@ -365,11 +378,19 @@ export class LocalAnalyzerComponent extends React.Component<{
     try {
       const pairs = this.makePairs();
       const prefix = this.findLongestPrefix(pairs);
-      let url = window.location.origin + window.location.pathname + "?";
+      let url = window.location.origin + window.location.pathname + '?';
       if (this.state.votingEnabled) {
         let vote = this.state.vote;
         if (vote) {
-          vote = this.state.vote.split(",").map(x => x.split(":").map((y: any) => y|0).join(":")).join(",");
+          vote = this.state.vote
+            .split(',')
+            .map((x) =>
+              x
+                .split(':')
+                .map((y: any) => y | 0)
+                .join(':'),
+            )
+            .join(',');
           url += `vote=${vote}&`;
         }
         if (this.state.voteMessage) {
@@ -388,28 +409,28 @@ export class LocalAnalyzerComponent extends React.Component<{
       if (prefix) {
         url += `p=${prefix}&`;
       }
-      return url + pairs.map(pair => `d=${pair.decoderUrl}&f=${pair.videoUrl}`).join("&");
-    } catch(e) {
-      return "";
+      return url + pairs.map((pair) => `d=${pair.decoderUrl}&f=${pair.videoUrl}`).join('&');
+    } catch (e) {
+      return '';
     }
   }
   onShortenURL() {
     shortenUrl(this.createURL(), (shortURL) => {
-      this.setState({shortURL} as any);
+      this.setState({ shortURL } as any);
     });
   }
   getVoteErrorText() {
     if (!this.state.vote) {
-      return "Required";
+      return 'Required';
     }
     let vote = [];
     try {
-      vote = this.state.vote.split(",").map(x => {
-        return x.split(":").map((y: any) => {
-          if (y != (y|0)) {
+      vote = this.state.vote.split(',').map((x) => {
+        return x.split(':').map((y: any) => {
+          if (y != (y | 0)) {
             throw `Cannot parse ${y}.`;
           }
-          return parseInt(y)
+          return parseInt(y);
         });
       });
     } catch (e) {
@@ -427,300 +448,332 @@ export class LocalAnalyzerComponent extends React.Component<{
   }
   render() {
     function logChange(val) {
-      console.log("Selected: " + val);
+      console.log('Selected: ' + val);
     }
     const listJson = this.state.listJson;
     if (!listJson) {
-      return <Dialog title="Downloading AWCY Runs" modal={true} open={true}>
-        <CircularProgress size={40} thickness={7} />
-      </Dialog>;
+      return (
+        <Dialog title="Downloading AWCY Runs" modal={true} open={true}>
+          <CircularProgress size={40} thickness={7} />
+        </Dialog>
+      );
     } else {
       const filtersEnabled = this.state.filtersEnabled;
-      const runOptions = listJson.filter(run => {
-        if (!this.state.filtersEnabled) {
-          return true;
-        }
-        let pass = true;
-        if (pass && this.state.statusFilter.length) {
-          // Unlike other filters, this is an OR filter.
-          pass = this.state.statusFilter.some(option => {
-            return run.status == option.value;
-          });
-        }
-        if (pass && this.state.taskFilter && run.info.task !== this.state.taskFilter) {
-          pass = false;
-        }
-        if (pass && this.state.nickFilter && run.info.nick !== this.state.nickFilter) {
-          pass = false;
-        }
-        if (pass && this.state.configFilter.length) {
-          const buildOptions = run.info.build_options.split(" ").filter(x => !!x);
-          pass = this.state.configFilter.every(option => {
-            return buildOptions.indexOf(option.value) >= 0;
-          });
-        }
-        if (pass && this.state.commandLineFilter.length) {
-          const commandLineOptions = run.info.extra_options.split(" ").filter(x => !!x);
-          pass = this.state.commandLineFilter.every(option => {
-            return commandLineOptions.indexOf(option.value) >= 0;
-          });
-        }
-        return pass;
-      }).map(run => {
-        return { value: run.run_id, label: run.run_id }
-      }).slice(0, 1000);
-
-      const taskFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.task)).map(task => {
-        return { value: task, label: task }
-      });
-
-      const nickFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.nick)).map(nick => {
-        return { value: nick, label: nick }
-      });
-
-      const configFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.build_options.split(" ").filter(x => !!x)).reduce((a, b) => a.concat(b))).map(option => {
-        return {value: option, label: option}
-      });
-
-      const commandLineFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.info.extra_options.split(" ").filter(x => !!x)).reduce((a, b) => a.concat(b))).map(option => {
-        return {value: option, label: option}
-      });
-
-      const statusFilterOptions = !filtersEnabled ? [] : unique(listJson.map(run => run.status)).map(status => {
-        return { value: status, label: status }
-      });
-
-      return <div>
-        <div className="builderSection">
-          <div>
-            <Toggle
-              style={{width: "300px"}}
-              label="Filter Runs"
-              labelPosition="right"
-              toggled={this.state.filtersEnabled}
-              onToggle={(event, value) => {
-                this.setState({ filtersEnabled: value } as any);
-                this.resetURL();
-              }}
-            />
-          </div>
-        </div>
-        { this.state.filtersEnabled &&
-          <div>
-            <div className="builderContainer">
-              <div style={{width: "200px"}}>
-                <Select
-                  placeholder="Task Filter"
-                  value={this.state.taskFilter}
-                  options={taskFilterOptions}
-                  onChange={this.onChangeTaskFilter.bind(this)}
-                />
-              </div>
-              <div style={{width: "200px"}}>
-                <Select
-                  placeholder="Nick Filter"
-                  value={this.state.nickFilter}
-                  options={nickFilterOptions}
-                  onChange={this.onChangeNickFilter.bind(this)}
-                />
-              </div>
-              <div style={{width: "300px"}}>
-                <Select multi
-                  placeholder="State Filter"
-                  value={this.state.statusFilter}
-                  options={statusFilterOptions}
-                  onChange={this.onChangeStatusFilter.bind(this)}
-                />
-              </div>
-            </div>
-            <div className="builderContainer">
-              <div style={{width: "50%"}}>
-                <Select multi
-                  placeholder="Config Filter"
-                  value={this.state.configFilter}
-                  options={configFilterOptions}
-                  onChange={this.onChangeConfigFilter.bind(this)}
-                />
-              </div>
-              <div style={{width: "50%"}}>
-                <Select multi
-                  placeholder="Command Line Filter"
-                  value={this.state.commandLineFilter}
-                  options={commandLineFilterOptions}
-                  onChange={this.onChangeCommandLineFilter.bind(this)}
-                />
-              </div>
-            </div>
-          </div>
-        }
-        <div className="builderSection">
-          Runs ({runOptions.length})
-        </div>
-        {this.state.slots.map((_, i) => {
-          const slot = this.state.slots[i];
-          const run = this.getRunById(slot.runId);
-
-          return <div key={i} className="builderVideoContainer">
-            <div className="builderContainer">
-              <div style={{width: "32px"}} className="videoSelectionLabel">
-                {i}
-              </div>
-              <div style={{width: "360px"}}>
-                <Select
-                  placeholder="Run"
-                  value={slot.runId}
-                  options={runOptions}
-                  onChange={this.onChangeRun.bind(this, i)}
-                />
-              </div>
-              <div style={{width: "360px"}}>
-                <Select
-                disabled={!run}
-                  placeholder="Video"
-                  value={slot.video}
-                  options={run ? this.getOptionsForTask(run.info.task) : []}
-                  onChange={this.onChangeVideo.bind(this, i)}
-                />
-              </div>
-              <div style={{width: "60px"}}>
-                <Select
-                  disabled={!run}
-                  placeholder="QP"
-                  value={slot.quality}
-                  options={run ? this.getOptionsForQuality(run.info.qualities) : []}
-                  onChange={this.onChangeQuality.bind(this, i)}
-                />
-              </div>
-              <div>
-                <RaisedButton
-                  label="Remove"
-                  disableTouchRipple={true}
-                  disableFocusRipple={true}
-                  onTouchTap={this.onDeleteRun.bind(this, i)}
-                  style={{marginRight: 8}}
-                />
-                <RaisedButton
-                  label="Duplicate"
-                  disableTouchRipple={true}
-                  disableFocusRipple={true}
-                  onTouchTap={this.onDuplicateRun.bind(this, i)}
-                  style={{marginRight: 8}}
-                />
-                <RaisedButton
-                  label="Up"
-                  disabled={i - 1 < 0}
-                  disableTouchRipple={true}
-                  disableFocusRipple={true}
-                  onTouchTap={this.onMoveRun.bind(this, i, -1)}
-                  style={{marginRight: 8}}
-                />
-                <RaisedButton
-                  label="Down"
-                  disabled={i + 1 >= this.state.slots.length}
-                  disableTouchRipple={true}
-                  disableFocusRipple={true}
-                  onTouchTap={this.onMoveRun.bind(this, i, 1)}
-                />
-              </div>
-            </div>
-            <div className="builderContainer" style={{paddingLeft: "40px"}}>
-              {run && <RunDetails json={run} />}
-            </div>
-          </div>
+      const runOptions = listJson
+        .filter((run) => {
+          if (!this.state.filtersEnabled) {
+            return true;
+          }
+          let pass = true;
+          if (pass && this.state.statusFilter.length) {
+            // Unlike other filters, this is an OR filter.
+            pass = this.state.statusFilter.some((option) => {
+              return run.status == option.value;
+            });
+          }
+          if (pass && this.state.taskFilter && run.info.task !== this.state.taskFilter) {
+            pass = false;
+          }
+          if (pass && this.state.nickFilter && run.info.nick !== this.state.nickFilter) {
+            pass = false;
+          }
+          if (pass && this.state.configFilter.length) {
+            const buildOptions = run.info.build_options.split(' ').filter((x) => !!x);
+            pass = this.state.configFilter.every((option) => {
+              return buildOptions.indexOf(option.value) >= 0;
+            });
+          }
+          if (pass && this.state.commandLineFilter.length) {
+            const commandLineOptions = run.info.extra_options.split(' ').filter((x) => !!x);
+            pass = this.state.commandLineFilter.every((option) => {
+              return commandLineOptions.indexOf(option.value) >= 0;
+            });
+          }
+          return pass;
         })
-        }
-        <div className="builderSection">
-          <div>
-            <Toggle
-              style={{width: "300px"}}
-              label="Enable Voting"
-              labelPosition="right"
-              toggled={this.state.votingEnabled}
-              onToggle={(event, value) => {
-                this.setState({ votingEnabled: value } as any);
-                this.resetURL();
-              }}
-            />
-          </div>
-        </div>
-        {this.state.votingEnabled &&
-          <div>
-            <div className="builderContainer">
-              <div style={{width: "1000px"}}>
-                <TextField errorText={this.getVoteErrorText()} multiLine={false} floatingLabelText="Vote Configuration: 0:1,2:3:4, ..." floatingLabelFixed={true} name="message" value={this.state.vote} style={{width: "1000px"}} onChange={this.onChangeVote.bind(this)}/>
-              </div>
-            </div>
-            <div className="builderContainer">
-              <div>
-              <Checkbox
-                style={{width: "300px"}}
-                label="Show Vote Results"
-                checked={this.state.showVoteResult}
-                onCheck={(event, value) => {
-                  this.setState({ showVoteResult: value } as any);
+        .map((run) => {
+          return { value: run.run_id, label: run.run_id };
+        })
+        .slice(0, 1000);
+
+      const taskFilterOptions = !filtersEnabled
+        ? []
+        : unique(listJson.map((run) => run.info.task)).map((task) => {
+            return { value: task, label: task };
+          });
+
+      const nickFilterOptions = !filtersEnabled
+        ? []
+        : unique(listJson.map((run) => run.info.nick)).map((nick) => {
+            return { value: nick, label: nick };
+          });
+
+      const configFilterOptions = !filtersEnabled
+        ? []
+        : unique(
+            listJson.map((run) => run.info.build_options.split(' ').filter((x) => !!x)).reduce((a, b) => a.concat(b)),
+          ).map((option) => {
+            return { value: option, label: option };
+          });
+
+      const commandLineFilterOptions = !filtersEnabled
+        ? []
+        : unique(
+            listJson.map((run) => run.info.extra_options.split(' ').filter((x) => !!x)).reduce((a, b) => a.concat(b)),
+          ).map((option) => {
+            return { value: option, label: option };
+          });
+
+      const statusFilterOptions = !filtersEnabled
+        ? []
+        : unique(listJson.map((run) => run.status)).map((status) => {
+            return { value: status, label: status };
+          });
+
+      return (
+        <div>
+          <div className="builderSection">
+            <div>
+              <Toggle
+                style={{ width: '300px' }}
+                label="Filter Runs"
+                labelPosition="right"
+                toggled={this.state.filtersEnabled}
+                onToggle={(event, value) => {
+                  this.setState({ filtersEnabled: value } as any);
                   this.resetURL();
                 }}
               />
+            </div>
+          </div>
+          {this.state.filtersEnabled && (
+            <div>
+              <div className="builderContainer">
+                <div style={{ width: '200px' }}>
+                  <Select
+                    placeholder="Task Filter"
+                    value={this.state.taskFilter}
+                    options={taskFilterOptions}
+                    onChange={this.onChangeTaskFilter.bind(this)}
+                  />
+                </div>
+                <div style={{ width: '200px' }}>
+                  <Select
+                    placeholder="Nick Filter"
+                    value={this.state.nickFilter}
+                    options={nickFilterOptions}
+                    onChange={this.onChangeNickFilter.bind(this)}
+                  />
+                </div>
+                <div style={{ width: '300px' }}>
+                  <Select
+                    multi
+                    placeholder="State Filter"
+                    value={this.state.statusFilter}
+                    options={statusFilterOptions}
+                    onChange={this.onChangeStatusFilter.bind(this)}
+                  />
+                </div>
               </div>
-              <div className="builderCaption">
-                Show vote results at the end of the voting session.
+              <div className="builderContainer">
+                <div style={{ width: '50%' }}>
+                  <Select
+                    multi
+                    placeholder="Config Filter"
+                    value={this.state.configFilter}
+                    options={configFilterOptions}
+                    onChange={this.onChangeConfigFilter.bind(this)}
+                  />
+                </div>
+                <div style={{ width: '50%' }}>
+                  <Select
+                    multi
+                    placeholder="Command Line Filter"
+                    value={this.state.commandLineFilter}
+                    options={commandLineFilterOptions}
+                    onChange={this.onChangeCommandLineFilter.bind(this)}
+                  />
+                </div>
               </div>
             </div>
-            <div className="builderContainer">
-              <div>
-              <Checkbox
-                style={{width: "300px"}}
-                label="Blind"
-                checked={this.state.blind}
-                onCheck={(event, value) => {
-                  this.setState({ blind: value } as any);
+          )}
+          <div className="builderSection">Runs ({runOptions.length})</div>
+          {this.state.slots.map((_, i) => {
+            const slot = this.state.slots[i];
+            const run = this.getRunById(slot.runId);
+
+            return (
+              <div key={i} className="builderVideoContainer">
+                <div className="builderContainer">
+                  <div style={{ width: '32px' }} className="videoSelectionLabel">
+                    {i}
+                  </div>
+                  <div style={{ width: '360px' }}>
+                    <Select
+                      placeholder="Run"
+                      value={slot.runId}
+                      options={runOptions}
+                      onChange={this.onChangeRun.bind(this, i)}
+                    />
+                  </div>
+                  <div style={{ width: '360px' }}>
+                    <Select
+                      disabled={!run}
+                      placeholder="Video"
+                      value={slot.video}
+                      options={run ? this.getOptionsForTask(run.info.task) : []}
+                      onChange={this.onChangeVideo.bind(this, i)}
+                    />
+                  </div>
+                  <div style={{ width: '60px' }}>
+                    <Select
+                      disabled={!run}
+                      placeholder="QP"
+                      value={slot.quality}
+                      options={run ? this.getOptionsForQuality(run.info.qualities) : []}
+                      onChange={this.onChangeQuality.bind(this, i)}
+                    />
+                  </div>
+                  <div>
+                    <RaisedButton
+                      label="Remove"
+                      disableTouchRipple={true}
+                      disableFocusRipple={true}
+                      onTouchTap={this.onDeleteRun.bind(this, i)}
+                      style={{ marginRight: 8 }}
+                    />
+                    <RaisedButton
+                      label="Duplicate"
+                      disableTouchRipple={true}
+                      disableFocusRipple={true}
+                      onTouchTap={this.onDuplicateRun.bind(this, i)}
+                      style={{ marginRight: 8 }}
+                    />
+                    <RaisedButton
+                      label="Up"
+                      disabled={i - 1 < 0}
+                      disableTouchRipple={true}
+                      disableFocusRipple={true}
+                      onTouchTap={this.onMoveRun.bind(this, i, -1)}
+                      style={{ marginRight: 8 }}
+                    />
+                    <RaisedButton
+                      label="Down"
+                      disabled={i + 1 >= this.state.slots.length}
+                      disableTouchRipple={true}
+                      disableFocusRipple={true}
+                      onTouchTap={this.onMoveRun.bind(this, i, 1)}
+                    />
+                  </div>
+                </div>
+                <div className="builderContainer" style={{ paddingLeft: '40px' }}>
+                  {run && <RunDetails json={run} />}
+                </div>
+              </div>
+            );
+          })}
+          <div className="builderSection">
+            <div>
+              <Toggle
+                style={{ width: '300px' }}
+                label="Enable Voting"
+                labelPosition="right"
+                toggled={this.state.votingEnabled}
+                onToggle={(event, value) => {
+                  this.setState({ votingEnabled: value } as any);
                   this.resetURL();
                 }}
               />
-              </div>
-              <div className="builderCaption">
-                Randomize runs when comparing them.
-              </div>
-            </div>
-            <div className="builderContainer">
-              <TextField multiLine={false} floatingLabelText="Vote Intro Message" floatingLabelFixed={true} name="message" value={this.state.voteMessage} style={{width: "1000px"}} onChange={this.onVoteMessageChange.bind(this)}/>
             </div>
           </div>
-        }
-        <div className="builderContainer">
-          <div>
-            <RaisedButton
-              label="Add Run"
-              disableTouchRipple={true}
-              disableFocusRipple={true}
-              onTouchTap={this.onAddRun.bind(this)}
-              style={{marginRight: 8}}
-            />
-            <RaisedButton
-              label="Shorten URL"
-              disableTouchRipple={true}
-              disableFocusRipple={true}
-              onTouchTap={this.onShortenURL.bind(this)}
-              style={{marginRight: 8}}
-            />
-            <RaisedButton
-              label="Open"
-              disabled={this.cannotAnalyze()}
-              disableTouchRipple={true}
-              disableFocusRipple={true}
-              onTouchTap={this.onSend.bind(this)}
-            />
+          {this.state.votingEnabled && (
+            <div>
+              <div className="builderContainer">
+                <div style={{ width: '1000px' }}>
+                  <TextField
+                    errorText={this.getVoteErrorText()}
+                    multiLine={false}
+                    floatingLabelText="Vote Configuration: 0:1,2:3:4, ..."
+                    floatingLabelFixed={true}
+                    name="message"
+                    value={this.state.vote}
+                    style={{ width: '1000px' }}
+                    onChange={this.onChangeVote.bind(this)}
+                  />
+                </div>
+              </div>
+              <div className="builderContainer">
+                <div>
+                  <Checkbox
+                    style={{ width: '300px' }}
+                    label="Show Vote Results"
+                    checked={this.state.showVoteResult}
+                    onCheck={(event, value) => {
+                      this.setState({ showVoteResult: value } as any);
+                      this.resetURL();
+                    }}
+                  />
+                </div>
+                <div className="builderCaption">Show vote results at the end of the voting session.</div>
+              </div>
+              <div className="builderContainer">
+                <div>
+                  <Checkbox
+                    style={{ width: '300px' }}
+                    label="Blind"
+                    checked={this.state.blind}
+                    onCheck={(event, value) => {
+                      this.setState({ blind: value } as any);
+                      this.resetURL();
+                    }}
+                  />
+                </div>
+                <div className="builderCaption">Randomize runs when comparing them.</div>
+              </div>
+              <div className="builderContainer">
+                <TextField
+                  multiLine={false}
+                  floatingLabelText="Vote Intro Message"
+                  floatingLabelFixed={true}
+                  name="message"
+                  value={this.state.voteMessage}
+                  style={{ width: '1000px' }}
+                  onChange={this.onVoteMessageChange.bind(this)}
+                />
+              </div>
+            </div>
+          )}
+          <div className="builderContainer">
+            <div>
+              <RaisedButton
+                label="Add Run"
+                disableTouchRipple={true}
+                disableFocusRipple={true}
+                onTouchTap={this.onAddRun.bind(this)}
+                style={{ marginRight: 8 }}
+              />
+              <RaisedButton
+                label="Shorten URL"
+                disableTouchRipple={true}
+                disableFocusRipple={true}
+                onTouchTap={this.onShortenURL.bind(this)}
+                style={{ marginRight: 8 }}
+              />
+              <RaisedButton
+                label="Open"
+                disabled={this.cannotAnalyze()}
+                disableTouchRipple={true}
+                disableFocusRipple={true}
+                onTouchTap={this.onSend.bind(this)}
+              />
+            </div>
+          </div>
+          <div className="builderSection">Analyzer Link</div>
+          <div className="builderContainer">
+            <div className="builderURL">{this.state.shortURL || this.createURL()}</div>
           </div>
         </div>
-        <div className="builderSection">
-          Analyzer Link
-        </div>
-        <div className="builderContainer">
-          <div className="builderURL">
-            {this.state.shortURL || this.createURL()}
-          </div>
-        </div>
-      </div>
+      );
     }
   }
 }

@@ -1,5 +1,5 @@
 const trace = false;
-function assert(c: any, message = "") {
+function assert(c: any, message = '') {
   if (!c) {
     throw new Error(message);
   }
@@ -58,11 +58,11 @@ export class YUVCanvas {
     };
     this.gl = canvas.getContext('webgl2', creationAttribs);
     if (!this.gl) {
-      console.log("WebGL2 is not available, falling back on WebGL1.")
+      console.log('WebGL2 is not available, falling back on WebGL1.');
       this.gl = canvas.getContext('webgl', creationAttribs);
       this.useWebGL2 = false;
     }
-    assert(this.gl, "WebGL 2 is Unavailable");
+    assert(this.gl, 'WebGL 2 is Unavailable');
     const gl = this.gl;
 
     const vertSource = `
@@ -112,7 +112,7 @@ void main() {
     this.checkError();
 
     for (let i = 0; i < 3; i++) {
-      assert(program.uTexture[i], "missing program.uTexture[" + i + "]");
+      assert(program.uTexture[i], 'missing program.uTexture[' + i + ']');
       gl.uniform1i(program.uTexture[i], i);
       gl.activeTexture(gl.TEXTURE0 + i);
       gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
@@ -123,12 +123,7 @@ void main() {
     }
     this.checkError();
 
-    const vertData = [
-      0, 0,
-      1, 0,
-      0, 1,
-      1, 1,
-    ];
+    const vertData = [0, 0, 1, 0, 0, 1, 1, 1];
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertData), gl.STATIC_DRAW);
     gl.vertexAttribPointer(program.aPosition, 2, gl.FLOAT, false, 0, 0);
@@ -138,7 +133,7 @@ void main() {
   checkError() {
     const err = this.gl.getError();
     if (err != 0) {
-      console.error("WebGL Error " + err);
+      console.error('WebGL Error ' + err);
     }
   }
   drawFrame(yCbCrBuffer: YCbCrBuffer) {
@@ -151,30 +146,24 @@ void main() {
     const hdec = yCbCrBuffer.hdec;
     const vdec = yCbCrBuffer.vdec;
 
-    if (this.firstRun ||
-        gl.drawingBufferWidth != yCbCrBuffer.width ||
-        gl.drawingBufferHeight != yCbCrBuffer.height)
-    {
+    if (this.firstRun || gl.drawingBufferWidth != yCbCrBuffer.width || gl.drawingBufferHeight != yCbCrBuffer.height) {
       this.firstRun = false;
       trace && console.log('Resizing to:', yCbCrBuffer.width, yCbCrBuffer.height);
 
       gl.canvas.width = width;
       gl.canvas.height = height;
-      assert(gl.drawingBufferWidth == yCbCrBuffer.width, "bad drawingbufferWidth");
-      assert(gl.drawingBufferHeight == yCbCrBuffer.height, "bad drawingbufferHeight");
+      assert(gl.drawingBufferWidth == yCbCrBuffer.width, 'bad drawingbufferWidth');
+      assert(gl.drawingBufferHeight == yCbCrBuffer.height, 'bad drawingbufferHeight');
       gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
       gl.activeTexture(gl.TEXTURE0);
-      gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
-                    width, height, 0, format, gl.UNSIGNED_BYTE, null);
+      gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format, gl.UNSIGNED_BYTE, null);
 
       gl.activeTexture(gl.TEXTURE1);
-      gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
-                    width >> hdec, height >> vdec, 0, format, gl.UNSIGNED_BYTE, null);
+      gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, width >> hdec, height >> vdec, 0, format, gl.UNSIGNED_BYTE, null);
 
       gl.activeTexture(gl.TEXTURE2);
-      gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
-                    width >> hdec, height >> vdec, 0, format, gl.UNSIGNED_BYTE, null);
+      gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, width >> hdec, height >> vdec, 0, format, gl.UNSIGNED_BYTE, null);
     }
 
     const start = performance.now();
@@ -183,7 +172,7 @@ void main() {
       const now = performance.now();
       const diff = now - lastLapTime;
       lastLapTime = now;
-      trace && console.log(diff.toFixed(2) + " ms");
+      trace && console.log(diff.toFixed(2) + ' ms');
     }
 
     // Update
@@ -194,30 +183,47 @@ void main() {
       // We can't specify a stride with WebGL1, so make sure it's tightly packed.
       assert(yCbCrBuffer.strideY === width);
     }
-    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height,
-                     format, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesY);
-    lap("Upload Y");
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, format, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesY);
+    lap('Upload Y');
     gl.activeTexture(gl.TEXTURE1);
     if (this.useWebGL2) {
       gl.pixelStorei(gl.UNPACK_ROW_LENGTH, yCbCrBuffer.strideCb);
     } else {
       assert(yCbCrBuffer.strideCb === width >> hdec);
     }
-    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width >> hdec, height >> vdec,
-                     format, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesCb);
-    lap("Upload Cb");
+    gl.texSubImage2D(
+      gl.TEXTURE_2D,
+      0,
+      0,
+      0,
+      width >> hdec,
+      height >> vdec,
+      format,
+      gl.UNSIGNED_BYTE,
+      yCbCrBuffer.bytesCb,
+    );
+    lap('Upload Cb');
     gl.activeTexture(gl.TEXTURE2);
     if (this.useWebGL2) {
       gl.pixelStorei(gl.UNPACK_ROW_LENGTH, yCbCrBuffer.strideCr);
     } else {
       assert(yCbCrBuffer.strideCr === width >> hdec);
     }
-    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width >> hdec, height >> vdec,
-                     format, gl.UNSIGNED_BYTE, yCbCrBuffer.bytesCr);
-    lap("Upload Cr");
+    gl.texSubImage2D(
+      gl.TEXTURE_2D,
+      0,
+      0,
+      0,
+      width >> hdec,
+      height >> vdec,
+      format,
+      gl.UNSIGNED_BYTE,
+      yCbCrBuffer.bytesCr,
+    );
+    lap('Upload Cr');
     // Draw
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    lap("Draw");
+    lap('Draw');
     trace && console.log('total:', (performance.now() - start).toFixed(2));
     this.checkError();
   }
