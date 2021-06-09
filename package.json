@@ -11,8 +11,8 @@
     "package-darwin": "electron-packager . --platform=darwin --arch=x64 --electron-version=2.0.8 --overwrite --icon=vomit.icns --out=release_builds --tmpdir=/tmp",
     "package-linux": "electron-packager . --platform=linux --arch=x64 --electron-version=2.0.8 --overwrite  --out=release_builds --tmpdir=/tmp",
     "package-win32": "electron-packager . --platform=win32 --arch=x64 --electron-version=2.0.8 --overwrite  --out=release_builds --tmpdir=/tmp",
-    "check-lint": "eslint 'src/**/*.{js,ts,tsx}'",
-    "lint": "eslint 'src/**/*.{js,ts,tsx}' --quiet --fix"
+    "check-lint": "eslint \"src/**/*.{js,ts,tsx}\"",
+    "lint": "eslint \"src/**/*.{js,ts,tsx}\" --quiet --fix"
   },
   "author": "Michael Bebenita",
   "license": "ISC",
