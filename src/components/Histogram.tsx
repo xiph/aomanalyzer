@@ -110,22 +110,28 @@ export class HistogramComponent extends React.Component<{
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     let w = this.w * this.ratio;
     let h = this.h * this.ratio;
-    let bw = Math.min(16 * this.ratio, w / data.length | 0);
-    let bh = Math.min(16 * this.ratio, h / data.length | 0);
+    //let bw = Math.min(16 * this.ratio, w / data.length | 0);
+    let bw = Math.min(16 * this.ratio, w / 32 | 0);
+    //let bh = Math.min(16 * this.ratio, h / data.length | 0);
+    let bh = Math.min(16 * this.ratio, h / 32 | 0);
     let selectedName = null;
     let selectedValue = undefined;
     let selectedFrame = -1;
-    for (let i = 0; i < data.length; i++) {
+    let histStart = Math.max(this.props.highlight - 16, 0)
+    let histEnd = Math.min(this.props.highlight + 16, data.length)
+    // for (let i = 0; i < data.length; i++) {
+    for (let i = histStart; i < histEnd; i++) {
       let t = 0;
       let r = new Rectangle(0, 0, 0, 0);
+      let ii = i - histStart;
       names.forEach(k => {
         let v = data[i][k];
         ctx.fillStyle = this.props.color(k);
         if (this.props.horizontal) {
           let y = (h - ((t + v) * h));
-          r.set(i * bw, y | 0, bw - 1, (v * h + (y - (y | 0))) | 0);
+          r.set(ii * bw, y | 0, bw - 1, (v * h + (y - (y | 0))) | 0);
         } else {
-          r.set((t * w | 0), bh * i, (v * w) | 0, bh - 1);
+          r.set((t * w | 0), bh * ii, (v * w) | 0, bh - 1);
         }
         if (r.containsPoint(this.position)) {
           ctx.globalAlpha = 1;
@@ -142,9 +148,9 @@ export class HistogramComponent extends React.Component<{
       if (this.props.highlight == i) {
         ctx.fillStyle = "white";
         if (this.props.horizontal) {
-          ctx.fillRect(i * bw, 0, bw - 1, this.ratio * 4);
+          ctx.fillRect(ii * bw, 0, bw - 1, this.ratio * 4);
         } else {
-          ctx.fillRect(0, i * bh, this.ratio * 4, bh - 1);
+          ctx.fillRect(0, ii * bh, this.ratio * 4, bh - 1);
         }
       }
     }
