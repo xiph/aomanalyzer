@@ -462,6 +462,7 @@ export class AnalyzerView extends React.Component<
     showSkip: boolean;
     showFilters: boolean;
     showCDEF: boolean;
+    showMotionMode: boolean;
     showMode: boolean;
     showUVMode: boolean;
     showSegment: boolean;
@@ -622,6 +623,14 @@ export class AnalyzerView extends React.Component<
       value: undefined,
       icon: 'icon-l',
     },
+    showMotionMode: {
+      key: 'a',
+      description: 'Show Motion Mode',
+      detail: 'Display and show the different motion modes for each block (SIMPLE, OBMC_WARPED, OBMC_CASUAL)',
+      updatesImages: false,
+      default: false,
+      value: undefined,
+    },
     showUVMode: {
       key: 'p',
       description: 'UV Mode',
@@ -691,6 +700,7 @@ export class AnalyzerView extends React.Component<
       showTransformGrid: false,
       showSkip: false,
       showCDEF: false,
+      showMotionMode: false,
       showMode: false,
       showUVMode: false,
       showSegment: false,
@@ -824,6 +834,7 @@ export class AnalyzerView extends React.Component<
     this.state.showSegment && this.drawSegment(frame, ctx, src, dst);
     this.state.showBits && this.drawBits(frame, ctx, src, dst);
     this.state.showCDEF && this.drawCDEF(frame, ctx, src, dst);
+    this.state.showMotionMode && this.drawMotionMode(frame, ctx, src, dst);
     this.state.showTransformType && this.drawTransformType(frame, ctx, src, dst);
     this.state.showMotionVectors && this.drawMotionVectors(frame, ctx, src, dst);
     this.state.showReferenceFrames && this.drawReferenceFrames(frame, ctx, src, dst);
@@ -1742,6 +1753,33 @@ export class AnalyzerView extends React.Component<
         return false;
       }
       ctx.fillStyle = palette.skip.SKIP;
+      return true;
+    });
+  }
+
+  drawMotionMode(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
+    const motionModeMap = frame.json['motion_modeMap'];
+    const motionMode = frame.json['motion_mode'];
+
+    const SIMPLE_TRANSLATION = motionModeMap.SIMPLE_TRANSLATION; // {"SIMPLE_TRANSLATION":0,"OBMC_CAUSAL":1,"WARPED_CAUSAL":2}
+    const OBMC_CAUSAL = motionModeMap.OBMC_CAUSAL;
+    const WARPED_CAUSAL = motionModeMap.WARPED_CAUSAL;
+
+    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
+      const v = motionMode[r][c];
+      switch (v) {
+        case SIMPLE_TRANSLATION:
+          ctx.fillStyle = palette.motionMode.SIMPLE_TRANSLATION;
+          break;
+        case OBMC_CAUSAL:
+          ctx.fillStyle = palette.motionMode.OBMC_CAUSAL;
+          break;
+        case WARPED_CAUSAL:
+          ctx.fillStyle = palette.motionMode.WARPED_CAUSAL;
+          break;
+        default:
+          break;
+      }
       return true;
     });
   }

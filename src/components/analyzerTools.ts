@@ -431,6 +431,7 @@ function readFrameFromJson(json): AnalyzerFrame {
   uncompress(json['dualFilterType']);
   uncompress(json['delta_q']);
   uncompress(json['seg_id']);
+  uncompress(json['motion_mode']);
 
   const frame = new AnalyzerFrame();
   frame.json = json;
@@ -1012,6 +1013,11 @@ export const palette = {
   skip: {
     SKIP: '#6c0039',
     NO_SKIP: '#00d041',
+  },
+  motionMode: {
+    SIMPLE_TRANSLATION: '#00d041',
+    OBMC_CAUSAL: '#6f7dcb',
+    WARPED_CAUSAL: '#b459c0',
   },
   predictionMode: {
     DC_PRED: '#6c0039',
