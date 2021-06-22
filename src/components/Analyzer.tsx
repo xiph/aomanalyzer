@@ -410,6 +410,10 @@ export class ModeInfoComponent extends React.Component<
               <TableRowColumn style={valueStyle}>{getProperty('skip')}</TableRowColumn>
             </TableRow>
             <TableRow>
+              <TableRowColumn>Motion Mode</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{getProperty('motion_mode')}</TableRowColumn>
+            </TableRow>
+            <TableRow>
               <TableRowColumn>CDEF</TableRowColumn>
               <TableRowColumn style={valueStyle}>
                 {getSuperBlockProperty('cdef_level')} / {getSuperBlockProperty('cdef_strength')}
@@ -1760,27 +1764,17 @@ export class AnalyzerView extends React.Component<
   drawMotionMode(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
     const motionModeMap = frame.json['motion_modeMap'];
     const motionMode = frame.json['motion_mode'];
-
-    const SIMPLE_TRANSLATION = motionModeMap.SIMPLE_TRANSLATION; // {"SIMPLE_TRANSLATION":0,"OBMC_CAUSAL":1,"WARPED_CAUSAL":2}
-    const OBMC_CAUSAL = motionModeMap.OBMC_CAUSAL;
-    const WARPED_CAUSAL = motionModeMap.WARPED_CAUSAL;
+    const motionModeMapValue = reverseMap(motionModeMap);
 
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       const v = motionMode[r][c];
-      switch (v) {
-        case SIMPLE_TRANSLATION:
-          ctx.fillStyle = palette.motionMode.SIMPLE_TRANSLATION;
-          break;
-        case OBMC_CAUSAL:
-          ctx.fillStyle = palette.motionMode.OBMC_CAUSAL;
-          break;
-        case WARPED_CAUSAL:
-          ctx.fillStyle = palette.motionMode.WARPED_CAUSAL;
-          break;
-        default:
-          break;
+      if (v in motionModeMapValue) {
+        const value = motionModeMapValue[v];
+        ctx.fillStyle = palette.motionMode[value];
+        return true;
+      } else {
+        return false;
       }
-      return true;
     });
   }
 
