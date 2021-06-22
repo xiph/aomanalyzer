@@ -335,7 +335,7 @@ export class ModeInfoComponent extends React.Component<
       const motionVectors = json['motionVectors'];
       if (!motionVectors) return 'N/A';
       const v = motionVectors[r][c];
-      return `${v[0]},${v[1]} ${v[2]},${v[3]}`;
+      return `<${v[0]},${v[1]} ${v[2]},${v[3]}>`;
     }
     function getReferenceFrame() {
       const referenceFrame = json['referenceFrame'];
@@ -406,6 +406,14 @@ export class ModeInfoComponent extends React.Component<
               <TableRowColumn style={valueStyle}>{getProperty('uv_mode')}</TableRowColumn>
             </TableRow>
             <TableRow>
+              <TableRowColumn>Motion Mode</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{getProperty('motion_mode')}</TableRowColumn>
+            </TableRow>
+            <TableRow>
+              <TableRowColumn>Compound Type</TableRowColumn>
+              <TableRowColumn style={valueStyle}>{getProperty('compound_type')}</TableRowColumn>
+            </TableRow>
+            <TableRow>
               <TableRowColumn>Skip</TableRowColumn>
               <TableRowColumn style={valueStyle}>{getProperty('skip')}</TableRowColumn>
             </TableRow>
@@ -469,6 +477,7 @@ export class AnalyzerView extends React.Component<
     showMotionMode: boolean;
     showMode: boolean;
     showUVMode: boolean;
+    showCompoundTypes: boolean;
     showSegment: boolean;
     showBits: boolean;
     showBitsScale: 'frame' | 'video' | 'videos';
@@ -629,8 +638,17 @@ export class AnalyzerView extends React.Component<
     },
     showMotionMode: {
       key: 'a',
-      description: 'Show Motion Mode',
+      description: 'Motion Mode',
       detail: 'Display and show the different motion modes for each block (SIMPLE, OBMC_WARPED, OBMC_CASUAL)',
+      updatesImages: false,
+      default: false,
+      value: undefined,
+    },
+    showCompoundTypes: {
+      key: 'c',
+      description: 'Compound Types',
+      detail:
+        'Display and show the different compound types for each block (COMPOUND_AVERAGE, COMPOUND_DIFFWTD, COMPOUND_WEDGE)',
       updatesImages: false,
       default: false,
       value: undefined,
@@ -707,6 +725,7 @@ export class AnalyzerView extends React.Component<
       showMotionMode: false,
       showMode: false,
       showUVMode: false,
+      showCompoundType: false,
       showSegment: false,
       showBits: false,
       showBitsScale: 'frame',
@@ -842,6 +861,7 @@ export class AnalyzerView extends React.Component<
     this.state.showTransformType && this.drawTransformType(frame, ctx, src, dst);
     this.state.showMotionVectors && this.drawMotionVectors(frame, ctx, src, dst);
     this.state.showReferenceFrames && this.drawReferenceFrames(frame, ctx, src, dst);
+    this.state.showCompoundTypes && this.drawCompoundTypes(frame, ctx, src, dst);
     ctx.globalAlpha = 1;
     this.state.showSuperBlockGrid && this.drawGrid(frame, VisitMode.SuperBlock, '#87CEEB', ctx, src, dst, 2);
     this.state.showTransformGrid && this.drawGrid(frame, VisitMode.TransformBlock, 'yellow', ctx, src, dst);
@@ -1775,6 +1795,23 @@ export class AnalyzerView extends React.Component<
       } else {
         return false;
       }
+    });
+  }
+
+  drawCompoundTypes(frame: AnalyzerFrame, ctx: CanvasRenderingContext2D, src: Rectangle, dst: Rectangle) {
+    const compoundTypes = frame.json['compound_type'];
+    const compoundTypeMap = frame.json['compound_typeMap'];
+    const compountTypeMapValue = reverseMap(compoundTypeMap);
+    if (!compoundTypes) return;
+
+    this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
+      const v = compoundTypes[r][c];
+      if (v in compountTypeMapValue && v < 3) {
+        const value = compountTypeMapValue[v];
+        ctx.fillStyle = palette.compoundType[value];
+        return true;
+      }
+      return false;
     });
   }
 
