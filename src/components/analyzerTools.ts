@@ -1022,6 +1022,7 @@ export const palette = {
   },
   compoundType: {
     COMPOUND_AVERAGE: '#00d041',
+    COMPOUND_DISTWTD: '#127384',
     COMPOUND_DIFFWTD: '#6f7dcb',
     COMPOUND_WEDGE: '#b459c0',
   },

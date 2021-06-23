@@ -1806,7 +1806,7 @@ export class AnalyzerView extends React.Component<
 
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       const v = compoundTypes[r][c];
-      if (v in compountTypeMapValue && v < 3) {
+      if (v in compountTypeMapValue && v < 4) {
         const value = compountTypeMapValue[v];
         ctx.fillStyle = palette.compoundType[value];
         return true;
