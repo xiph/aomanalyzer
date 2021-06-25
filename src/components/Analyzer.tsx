@@ -1788,7 +1788,7 @@ export class AnalyzerView extends React.Component<
 
     this.fillBlock(frame, ctx, src, dst, (blockSize, c, r, sc, sr) => {
       const v = motionMode[r][c];
-      if (v in motionModeMapValue) {
+      if (v in motionModeMapValue && v < 3) {
         const value = motionModeMapValue[v];
         ctx.fillStyle = palette.motionMode[value];
         return true;
