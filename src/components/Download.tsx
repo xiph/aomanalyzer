@@ -1,8 +1,8 @@
 import * as React from 'react';
 
 import { Decoder, AnalyzerFrame, downloadFile, FrameImage } from './analyzerTools';
-import CircularProgress from 'material-ui/CircularProgress';
 import { saveAs } from 'file-saver';
+import { CircularProgress } from '@material-ui/core';
 
 interface DownloadComponentProps {
   video: { decoderUrl: string; videoUrl: string; decoderName: string };
@@ -24,8 +24,8 @@ export class DownloadComponent extends React.Component<
   y4m: Blob;
   wroteHeader = false;
 
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       decoder: null,
       status: '',

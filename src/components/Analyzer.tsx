@@ -24,26 +24,46 @@ import {
 } from './analyzerTools';
 import { HistogramComponent } from './Histogram';
 import { TRACE_RENDERING, padLeft, log2, assert, unreachable } from './analyzerTools';
-
-import RaisedButton from 'material-ui/RaisedButton';
-import Popover from 'material-ui/Popover';
-import { Tabs, Tab } from 'material-ui/Tabs';
-import SelectField from 'material-ui/SelectField';
-import IconMenu from 'material-ui/IconMenu';
-import MenuItem from 'material-ui/MenuItem';
-import Divider from 'material-ui/Divider';
-import Menu from 'material-ui/Menu';
-import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from 'material-ui/Table';
-import DropDownMenu from 'material-ui/DropDownMenu';
-import { Toolbar, ToolbarGroup, ToolbarSeparator, ToolbarTitle } from 'material-ui/Toolbar';
-import IconButton from 'material-ui/IconButton';
-import FontIcon from 'material-ui/FontIcon';
-import { red500, yellow500, blue500 } from 'material-ui/styles/colors';
-import Dialog from 'material-ui/Dialog';
-import FlatButton from 'material-ui/FlatButton';
-import Checkbox from 'material-ui/Checkbox';
-import TextField from 'material-ui/TextField';
-import Slider from 'material-ui/Slider';
+import {
+  Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControlLabel,
+  FormGroup,
+  IconButton,
+  Menu,
+  MenuItem,
+  Select,
+  Slider,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Tabs,
+  TextField,
+  Toolbar,
+  Tooltip,
+  Typography,
+} from '@material-ui/core';
+import Button from '@material-ui/core/Button';
+import { TextAlignProperty } from 'csstype';
+import LayersIcon from '@material-ui/icons/Layers';
+import Replay30Icon from '@material-ui/icons/Replay30';
+import ZoomInIcon from '@material-ui/icons/ZoomIn';
+import ZoomOutIcon from '@material-ui/icons/ZoomOut';
+import StopIcon from '@material-ui/icons/Stop';
+import SkipNextIcon from '@material-ui/icons/SkipNext';
+import PlayArrowIcon from '@material-ui/icons/PlayArrow';
+import SkipPreviousIcon from '@material-ui/icons/SkipPrevious';
+import ImageIcon from '@material-ui/icons/Image';
+import ClearIcon from '@material-ui/icons/Clear';
+import ShareIcon from '@material-ui/icons/Share';
+import { red, grey } from '@material-ui/core/colors';
 
 declare const Mousetrap;
 declare let shortenUrl;
@@ -181,7 +201,7 @@ interface AlertProps {
 }
 export class Alert extends React.Component<AlertProps, {}> {
   constructor(props: AlertProps) {
-    super();
+    super(props);
   }
   handleAction(value) {
     this.props.onClose(value);
@@ -189,16 +209,15 @@ export class Alert extends React.Component<AlertProps, {}> {
   render() {
     return (
       <div>
-        <Dialog
-          title={this.props.title}
-          actions={[
-            <FlatButton label="Cancel" primary={true} onTouchTap={this.handleAction.bind(this, false)} />,
-            <FlatButton label="OK" primary={true} onTouchTap={this.handleAction.bind(this, true)} />,
-          ]}
-          modal={true}
-          open={this.props.open}
-        >
-          {this.props.description}
+        <Dialog open={this.props.open}>
+          <DialogTitle>{this.props.title}</DialogTitle>
+          <DialogContent>{this.props.description}</DialogContent>
+          <DialogActions>
+            <Button onClick={this.handleAction.bind(this, false)}>Cancel</Button>
+            <Button color="primary" onClick={this.handleAction.bind(this, true)}>
+              OK
+            </Button>
+          </DialogActions>
         </Dialog>
       </div>
     );
@@ -219,31 +238,36 @@ export class AccountingComponent extends React.Component<
     });
 
     const rows = [];
-    const valueStyle = { textAlign: 'right', fontSize: '12px' };
     for (const name in symbols) {
       const symbol = symbols[name];
       rows.push(
         <TableRow key={name}>
-          <TableRowColumn>{name}</TableRowColumn>
-          <TableRowColumn style={valueStyle}>{fractionalBitsToString(symbol.bits)}</TableRowColumn>
-          <TableRowColumn style={valueStyle}>{toPercent(symbol.bits / total)}</TableRowColumn>
-          <TableRowColumn style={valueStyle}>{withCommas(symbol.samples)}</TableRowColumn>
+          <TableCell>{name}</TableCell>
+          <TableCell align="right">{fractionalBitsToString(symbol.bits)}</TableCell>
+          <TableCell align="right">{toPercent(symbol.bits / total)}</TableCell>
+          <TableCell align="right">{withCommas(symbol.samples)}</TableCell>
         </TableRow>,
       );
     }
 
     return (
       <div>
-        <Table>
-          <TableHeader adjustForCheckbox={false} displaySelectAll={false}>
+        <Table size="small">
+          <TableHead>
             <TableRow>
-              <TableHeaderColumn style={{ textAlign: 'left' }}>Symbol</TableHeaderColumn>
-              <TableHeaderColumn style={{ textAlign: 'right' }}>Bits {fractionalBitsToString(total)}</TableHeaderColumn>
-              <TableHeaderColumn style={{ textAlign: 'right' }}>%</TableHeaderColumn>
-              <TableHeaderColumn style={{ textAlign: 'right' }}>Samples</TableHeaderColumn>
+              <TableCell style={{ color: red[200] }}>Symbol</TableCell>
+              <TableCell style={{ color: red[200] }} align="right">
+                Bits {fractionalBitsToString(total)}
+              </TableCell>
+              <TableCell style={{ color: red[200] }} align="right">
+                %
+              </TableCell>
+              <TableCell style={{ color: red[200] }} align="right">
+                Samples
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody displayRowCheckbox={false}>{rows}</TableBody>
+          </TableHead>
+          <TableBody>{rows}</TableBody>
         </Table>
       </div>
     );
@@ -260,46 +284,46 @@ export class FrameInfoComponent extends React.Component<
 > {
   render() {
     const frame = this.props.frame;
-    const valueStyle = { textAlign: 'right', fontSize: '12px' };
+    const valueStyle = { textAlign: 'right' as TextAlignProperty, fontSize: '12px' };
     return (
       <div>
-        <Table>
-          <TableBody displayRowCheckbox={false}>
+        <Table size="small">
+          <TableBody>
             <TableRow>
-              <TableRowColumn>Video</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{this.props.activeGroup}</TableRowColumn>
+              <TableCell>Video</TableCell>
+              <TableCell style={valueStyle}>{this.props.activeGroup}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Frame</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{this.props.activeFrame + 1}</TableRowColumn>
+              <TableCell>Frame</TableCell>
+              <TableCell style={valueStyle}>{this.props.activeFrame + 1}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Frame Type</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{frame.json.frameType}</TableRowColumn>
+              <TableCell>Frame Type</TableCell>
+              <TableCell style={valueStyle}>{frame.json.frameType}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Show Frame</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{frame.json.showFrame}</TableRowColumn>
+              <TableCell>Show Frame</TableCell>
+              <TableCell style={valueStyle}>{frame.json.showFrame}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>BaseQIndex</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{frame.json.baseQIndex}</TableRowColumn>
+              <TableCell>BaseQIndex</TableCell>
+              <TableCell style={valueStyle}>{frame.json.baseQIndex}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Frame Size</TableRowColumn>
-              <TableRowColumn style={valueStyle}>
+              <TableCell>Frame Size</TableCell>
+              <TableCell style={valueStyle}>
                 {frame.image.width} x {frame.image.height}
-              </TableRowColumn>
+              </TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>MI Size</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{1 << frame.miSizeLog2}</TableRowColumn>
+              <TableCell>MI Size</TableCell>
+              <TableCell style={valueStyle}>{1 << frame.miSizeLog2}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>DeltaQ Res / Present Flag</TableRowColumn>
-              <TableRowColumn style={valueStyle}>
+              <TableCell>DeltaQ Res / Present Flag</TableCell>
+              <TableCell style={valueStyle}>
                 {frame.json.deltaQRes} / {frame.json.deltaQPresentFlag}
-              </TableRowColumn>
+              </TableCell>
             </TableRow>
           </TableBody>
         </Table>
@@ -374,82 +398,82 @@ export class ModeInfoComponent extends React.Component<
       }
       return json['seg_id'][r][c];
     }
-    const valueStyle = { textAlign: 'right', fontSize: '12px' };
+    const valueStyle = { textAlign: 'right' as TextAlignProperty, fontSize: '12px' };
     return (
       <div>
-        <Table>
-          <TableBody displayRowCheckbox={false}>
+        <Table size="small">
+          <TableBody>
             <TableRow>
-              <TableRowColumn>Block Position: MI (col, row)</TableRowColumn>
-              <TableRowColumn style={valueStyle}>
+              <TableCell>Block Position: MI (col, row)</TableCell>
+              <TableCell style={valueStyle}>
                 ({c}, {r})
-              </TableRowColumn>
+              </TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Block Size</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{getProperty('blockSize')}</TableRowColumn>
+              <TableCell>Block Size</TableCell>
+              <TableCell style={valueStyle}>{getProperty('blockSize')}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Transform Size</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{getProperty('transformSize')}</TableRowColumn>
+              <TableCell>Transform Size</TableCell>
+              <TableCell style={valueStyle}>{getProperty('transformSize')}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Transform Type</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{getProperty('transformType')}</TableRowColumn>
+              <TableCell>Transform Type</TableCell>
+              <TableCell style={valueStyle}>{getProperty('transformType')}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Mode</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{getProperty('mode')}</TableRowColumn>
+              <TableCell>Mode</TableCell>
+              <TableCell style={valueStyle}>{getProperty('mode')}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>UV Mode</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{getProperty('uv_mode')}</TableRowColumn>
+              <TableCell>UV Mode</TableCell>
+              <TableCell style={valueStyle}>{getProperty('uv_mode')}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Motion Mode</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{getProperty('motion_mode')}</TableRowColumn>
+              <TableCell>Motion Mode</TableCell>
+              <TableCell style={valueStyle}>{getProperty('motion_mode')}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Compound Type</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{getProperty('compound_type')}</TableRowColumn>
+              <TableCell>Compound Type</TableCell>
+              <TableCell style={valueStyle}>{getProperty('compound_type')}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Skip</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{getProperty('skip')}</TableRowColumn>
+              <TableCell>Skip</TableCell>
+              <TableCell style={valueStyle}>{getProperty('skip')}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Motion Mode</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{getProperty('motion_mode')}</TableRowColumn>
+              <TableCell>Motion Mode</TableCell>
+              <TableCell style={valueStyle}>{getProperty('motion_mode')}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>CDEF</TableRowColumn>
-              <TableRowColumn style={valueStyle}>
+              <TableCell>CDEF</TableCell>
+              <TableCell style={valueStyle}>
                 {getSuperBlockProperty('cdef_level')} / {getSuperBlockProperty('cdef_strength')}
-              </TableRowColumn>
+              </TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Motion Vectors</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{getMotionVector()}</TableRowColumn>
+              <TableCell>Motion Vectors</TableCell>
+              <TableCell style={valueStyle}>{getMotionVector()}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Reference Frame</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{getReferenceFrame()}</TableRowColumn>
+              <TableCell>Reference Frame</TableCell>
+              <TableCell style={valueStyle}>{getReferenceFrame()}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>CFL</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{getCFL()}</TableRowColumn>
+              <TableCell>CFL</TableCell>
+              <TableCell style={valueStyle}>{getCFL()}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Dual Filter Type</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{getDualFilterType()}</TableRowColumn>
+              <TableCell>Dual Filter Type</TableCell>
+              <TableCell style={valueStyle}>{getDualFilterType()}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>DeltaQ Index</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{getDeltaQIndex()}</TableRowColumn>
+              <TableCell>DeltaQ Index</TableCell>
+              <TableCell style={valueStyle}>{getDeltaQIndex()}</TableCell>
             </TableRow>
             <TableRow>
-              <TableRowColumn>Segment ID</TableRowColumn>
-              <TableRowColumn style={valueStyle}>{getSegId()}</TableRowColumn>
+              <TableCell>Segment ID</TableCell>
+              <TableCell style={valueStyle}>{getSegId()}</TableCell>
             </TableRow>
           </TableBody>
         </Table>
@@ -488,7 +512,6 @@ export class AnalyzerView extends React.Component<
     showFrameComment: boolean;
     activeHistogramTab: number;
     layerMenuIsOpen: boolean;
-    layerMenuAnchorEl: any;
 
     showDecodeDialog: boolean;
     decodeFrameCount: number;
@@ -528,6 +551,7 @@ export class AnalyzerView extends React.Component<
   mousePosition: Vector;
   mouseZoomPosition: Vector;
   downloadLink: HTMLAnchorElement = null;
+  layerMenuAnchorEl: React.RefObject<any>;
 
   options = {
     // showY: {
@@ -709,7 +733,7 @@ export class AnalyzerView extends React.Component<
     },
   };
   constructor(props: AnalyzerViewProps) {
-    super();
+    super(props);
     const ratio = window.devicePixelRatio || 1;
     const activeGroupScore = [];
     this.state = {
@@ -738,7 +762,6 @@ export class AnalyzerView extends React.Component<
       showFrameComment: false,
       activeHistogramTab: HistogramTab.Bits,
       layerMenuIsOpen: false,
-      layerMenuAnchorEl: null,
       showDecodeDialog: false,
       decodeFrameCount: 1,
       activeTab: 0,
@@ -756,6 +779,7 @@ export class AnalyzerView extends React.Component<
     this.mousePosition = new Vector(128, 128);
     this.mouseZoomPosition = new Vector(128, 128);
     this.activeGroupScore = activeGroupScore;
+    this.layerMenuAnchorEl = React.createRef();
   }
   resetCanvas(w: number, h: number) {
     const scale = this.state.scale;
@@ -1316,7 +1340,6 @@ export class AnalyzerView extends React.Component<
   showLayerMenu(event) {
     this.setState({
       layerMenuIsOpen: true,
-      layerMenuAnchorEl: event.currentTarget,
     } as any);
   }
 
@@ -1348,90 +1371,51 @@ export class AnalyzerView extends React.Component<
   }
 
   render() {
-    const groups = this.props.groups;
     let sidePanel = null;
     const frames = this.props.groups[this.state.activeGroup];
     const frame = this.getActiveFrame();
     if (this.state.showTools) {
       if (frame) {
-        const names = Accounting.getSortedSymbolNames(frames.map((frame) => frame.accounting));
         const accounting = this.getActiveFrame().accounting;
         const p = this.getParentMIPosition(frame, this.mousePosition);
-
-        const iconStyles = {
-          marginRight: 24,
-        };
-
-        const layerMenuItems = [];
-        for (const name in this.options) {
-          const option = this.options[name];
-          layerMenuItems.push(
-            <MenuItem
-              key={name}
-              onTouchTap={this.toggleLayer.bind(this, name)}
-              insetChildren={true}
-              checked={!!this.state[name]}
-              primaryText={option.description}
-              secondaryText={option.key.toUpperCase()}
-            />,
-          );
-        }
-
-        const layerMenu = (
-          <IconMenu
-            multiple={true}
-            iconButtonElement={
-              <IconButton tooltip="Save Image">
-                <FontIcon className="material-icons md-24" style={iconStyles}>
-                  layers
-                </FontIcon>
-              </IconButton>
-            }
-            anchorOrigin={{ horizontal: 'left', vertical: 'top' }}
-            targetOrigin={{ horizontal: 'left', vertical: 'top' }}
-          >
-            {layerMenuItems}
-          </IconMenu>
-        );
 
         let bitLayerToolbar = null;
         if (this.state.showBits) {
           const names = Accounting.getSortedSymbolNames(frames.map((frame) => frame.accounting));
           bitLayerToolbar = (
             <Toolbar>
-              <ToolbarGroup firstChild={true}>
-                <DropDownMenu
-                  style={{ width: 150 }}
-                  autoWidth={false}
+              <div>
+                <Select
+                  style={{ width: '150px' }}
                   value={this.state.showBitsScale}
-                  onChange={(event, index, value) => this.setState({ showBitsScale: value } as any)}
+                  onChange={(event) => this.setState({ showBitsScale: event.target.value } as any)}
                 >
-                  <MenuItem value="frame" primaryText="Frame Relative" />
-                  <MenuItem value="video" primaryText="Video Relative" />
-                  <MenuItem value="videos" primaryText="Video Relative (all)" />
-                </DropDownMenu>
-                <DropDownMenu
-                  style={{ width: 150 }}
-                  autoWidth={false}
+                  <MenuItem value="frame">Frame Relative</MenuItem>
+                  <MenuItem value="video">Video Relative</MenuItem>
+                  <MenuItem value="videos">Video Relative (all)</MenuItem>
+                </Select>
+                <Select
+                  style={{ width: '150px' }}
                   value={this.state.showBitsMode}
-                  onChange={(event, index, value) => this.setState({ showBitsMode: value } as any)}
+                  onChange={(event) => this.setState({ showBitsMode: event.target.value } as any)}
                 >
-                  <MenuItem value="linear" primaryText="Single Color" />
-                  <MenuItem value="heat" primaryText="Heat Map" />
-                  <MenuItem value="heat-opaque" primaryText="Heat Map (Opaque)" />
-                </DropDownMenu>
-                <DropDownMenu
-                  style={{ width: 150 }}
-                  autoWidth={false}
+                  <MenuItem value="linear">Single Color</MenuItem>
+                  <MenuItem value="heat">Heat Map</MenuItem>
+                  <MenuItem value="heat-opaque">Heat Map (Opaque)</MenuItem>
+                </Select>
+                <Select
+                  style={{ width: '150px' }}
                   value={this.state.showBitsFilter}
-                  onChange={(event, index, value) => this.setState({ showBitsFilter: value } as any)}
+                  onChange={(event) => this.setState({ showBitsFilter: event.target.value } as any)}
                 >
-                  <MenuItem value="" primaryText="None" />
+                  <MenuItem value="">None</MenuItem>
                   {names.map((name) => (
-                    <MenuItem key={name} value={name} primaryText={name} />
+                    <MenuItem key={name} value={name}>
+                      {name}
+                    </MenuItem>
                   ))}
-                </DropDownMenu>
-              </ToolbarGroup>
+                </Select>
+              </div>
             </Toolbar>
           );
         }
@@ -1458,23 +1442,42 @@ export class AnalyzerView extends React.Component<
           );
         }
 
+        const layerMenuItems = [];
+        for (const name in this.options) {
+          const option = this.options[name];
+          layerMenuItems.push(
+            <MenuItem
+              key={name}
+              onClick={this.toggleLayer.bind(this, name)}
+              style={{
+                justifyContent: 'space-between',
+                width: '240px',
+                backgroundColor: this.state[name] ? grey[500] : undefined,
+              }}
+            >
+              <Typography>{option.description}</Typography>
+              <Typography>{option.key.toUpperCase()}</Typography>
+            </MenuItem>,
+          );
+        }
+
         sidePanel = (
           <div id="sidePanel">
-            <Dialog
-              modal={false}
-              title="Share URL"
-              open={this.state.showShareUrlDialog}
-              actions={[
-                <FlatButton
-                  label="Ok"
-                  primary={true}
-                  onTouchTap={() => {
+            <Dialog open={this.state.showShareUrlDialog}>
+              <DialogTitle>Share URL</DialogTitle>
+              <DialogContent>
+                <TextField defaultValue={this.state.shareUrl} />
+              </DialogContent>
+              <DialogActions>
+                <Button
+                  color="primary"
+                  onClick={() => {
                     this.setState({ showShareUrlDialog: false } as any);
                   }}
-                />,
-              ]}
-            >
-              <TextField defaultValue={this.state.shareUrl} />
+                >
+                  Ok
+                </Button>
+              </DialogActions>
             </Dialog>
             <Alert
               open={this.state.showDecodeDialog}
@@ -1487,219 +1490,202 @@ export class AnalyzerView extends React.Component<
               Frame: {padLeft(this.state.activeFrame + 1, 2)}, Group: {this.getGroupName(this.state.activeGroup)}{' '}
               {this.getActiveFrameConfig()}
             </div>
-            <Toolbar>
-              <ToolbarGroup firstChild={true}>
-                <IconButton onClick={this.showLayerMenu.bind(this)} tooltip="Layers">
-                  <FontIcon className="material-icons md-24" style={iconStyles}>
-                    layers
-                  </FontIcon>
-                </IconButton>
-                <Popover
+            <Toolbar disableGutters={true} variant="dense">
+              <div>
+                <Tooltip title="Layers">
+                  <IconButton ref={this.layerMenuAnchorEl} onClick={this.showLayerMenu.bind(this)}>
+                    <LayersIcon />
+                  </IconButton>
+                </Tooltip>
+                <Menu
                   open={this.state.layerMenuIsOpen}
-                  animated={false}
-                  anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
-                  targetOrigin={{ horizontal: 'left', vertical: 'top' }}
-                  anchorEl={this.state.layerMenuAnchorEl}
-                  onRequestClose={this.hideLayerMenu.bind(this)}
+                  onClose={this.hideLayerMenu.bind(this)}
+                  anchorEl={this.layerMenuAnchorEl.current}
+                  style={{ width: '320px', marginTop: '48px' }}
                 >
-                  <Menu desktop={true} width={250}>
-                    {layerMenuItems}
-                    <Divider />
-                    <MenuItem onTouchTap={this.resetLayers.bind(this, name)} primaryText="Reset Layers" />
-                  </Menu>
-                </Popover>
-                {/*<IconButton onClick={this.toggleTools.bind(this)} iconClassName="icon-h" tooltip="Toggle Tools: tab"/>*/}
-                <IconButton onClick={this.downloadImage.bind(this)} tooltip="Save Image">
-                  <FontIcon className="material-icons md-24" style={iconStyles}>
-                    image
-                  </FontIcon>
-                </IconButton>
-                <IconButton onClick={this.resetLayersAndActiveFrame.bind(this)} tooltip="Reset: r">
-                  <FontIcon className="material-icons md-24" style={iconStyles}>
-                    clear
-                  </FontIcon>
-                </IconButton>
-                <IconButton onClick={this.advanceFrame.bind(this, -1)} tooltip="Previous: ,">
-                  <FontIcon className="material-icons md-24" style={iconStyles}>
-                    skip_previous
-                  </FontIcon>
-                </IconButton>
-                <IconButton onClick={this.playPause.bind(this)} tooltip="Pause / Play: space">
-                  <FontIcon className="material-icons md-24" style={iconStyles}>
-                    {!this.state.playInterval ? 'play_arrow' : 'stop'}
-                  </FontIcon>
-                </IconButton>
-                <IconButton onClick={this.advanceFrame.bind(this, 1)} tooltip="Next: .">
-                  <FontIcon className="material-icons md-24" style={iconStyles}>
-                    skip_next
-                  </FontIcon>
-                </IconButton>
-                <IconButton onClick={this.zoom.bind(this, 1 / 2)} tooltip="Zoom Out: [">
-                  <FontIcon className="material-icons md-24" style={iconStyles}>
-                    zoom_out
-                  </FontIcon>
-                </IconButton>
-                <IconButton onClick={this.zoom.bind(this, 2)} tooltip="Zoom In: ]">
-                  <FontIcon className="material-icons md-24" style={iconStyles}>
-                    zoom_in
-                  </FontIcon>
-                </IconButton>
-                <IconButton
-                  onClick={this.alertDecodeAdditionalFrames.bind(this, 30)}
-                  tooltip="Decode 30 Additional Frames"
-                >
-                  <FontIcon className="material-icons md-24" style={iconStyles}>
-                    replay_30
-                  </FontIcon>
-                </IconButton>
-                <IconButton onClick={this.shareLink.bind(this)} tooltip="Share Link">
-                  <FontIcon className="material-icons md-24" style={iconStyles}>
-                    share
-                  </FontIcon>
-                </IconButton>
-                {/*<IconButton onClick={this.analyze.bind(this)} tooltip="Analyze Other AWCY Videos">
-                <FontIcon className="material-icons md-24" style={iconStyles}>send</FontIcon>
-              </IconButton>*/}
-              </ToolbarGroup>
+                  {layerMenuItems}
+                  <Divider />
+                  <MenuItem onClick={this.resetLayers.bind(this, name)}>Reset Layers</MenuItem>
+                </Menu>
+                <Tooltip title="Save Image">
+                  <IconButton onClick={this.downloadImage.bind(this)}>
+                    <ImageIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Reset: r">
+                  <IconButton onClick={this.resetLayersAndActiveFrame.bind(this)}>
+                    <ClearIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Previous: ,">
+                  <IconButton onClick={this.advanceFrame.bind(this, -1)}>
+                    <SkipPreviousIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Pause / Play: space">
+                  <IconButton onClick={this.playPause.bind(this)}>
+                    {!this.state.playInterval ? <PlayArrowIcon /> : <StopIcon />}
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Next: .">
+                  <IconButton onClick={this.advanceFrame.bind(this, 1)}>
+                    <SkipNextIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Zoom Out: [">
+                  <IconButton onClick={this.zoom.bind(this, 1 / 2)}>
+                    <ZoomOutIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Zoom In: ]">
+                  <IconButton onClick={this.zoom.bind(this, 2)}>
+                    <ZoomInIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Decode 30 Additional Frames">
+                  <IconButton onClick={this.alertDecodeAdditionalFrames.bind(this, 30)}>
+                    <Replay30Icon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Share Link">
+                  <IconButton onClick={this.shareLink.bind(this)}>
+                    <ShareIcon />
+                  </IconButton>
+                </Tooltip>
+              </div>
             </Toolbar>
             {bitLayerToolbar}
             <Tabs
               value={this.state.activeTab}
-              onChange={(value) => {
+              onChange={(event, newValue) => {
                 this.setState({
-                  activeTab: value,
-                } as any);
+                  activeTab: newValue,
+                });
               }}
+              variant="fullWidth"
             >
-              <Tab value={0} label="Zoom">
-                {this.state.activeTab == 0 && (
-                  <div>
-                    <canvas ref={(self: any) => this.resetZoomCanvas(self)} width="256" height="256"></canvas>
-                    <div className="tabContent">
-                      <Checkbox
-                        label="Show Layers in Zoom: Z"
-                        checked={this.state.showLayersInZoom}
-                        onCheck={(event, value) => this.setState({ showLayersInZoom: value } as any)}
-                      />
-                      <Checkbox
-                        label="Lock Selection: X"
-                        checked={this.state.lockSelection}
-                        onCheck={(event, value) => this.setState({ lockSelection: value } as any)}
-                      />
-                      <div className="componentHeader">Layer Alpha</div>
-                      <Slider
-                        min={0}
-                        max={1}
-                        step={0.1}
-                        defaultValue={1}
-                        value={this.state.layerAlpha}
-                        onChange={(event, value) => {
-                          this.setState({ layerAlpha: value } as any);
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </Tab>
-              <Tab value={1} label="Histograms">
-                {this.state.activeTab == 1 && (
-                  <div>
-                    <Toolbar>
-                      <ToolbarGroup firstChild={true}>
-                        <DropDownMenu
-                          value={this.state.activeHistogramTab}
-                          onChange={(event, index, value) => this.setState({ activeHistogramTab: value } as any)}
-                        >
-                          <MenuItem value={HistogramTab.Bits} label="Bits" primaryText="Bits" />
-                          <MenuItem value={HistogramTab.Symbols} label="Symbols" primaryText="Symbols" />
-                          <MenuItem value={HistogramTab.BlockSize} label="Block Size" primaryText="Block Size" />
-                          <MenuItem
-                            value={HistogramTab.TransformSize}
-                            label="Transform Size"
-                            primaryText="Transform Size"
-                          />
-                          <MenuItem
-                            value={HistogramTab.TransformType}
-                            label="Transform Type"
-                            primaryText="Transform Type"
-                          />
-                          <MenuItem
-                            value={HistogramTab.PredictionMode}
-                            label="Prediction Mode"
-                            primaryText="Prediction Mode"
-                          />
-                          <MenuItem
-                            value={HistogramTab.UVPredictionMode}
-                            label="UV Prediction Mode"
-                            primaryText="UV Prediction Mode"
-                          />
-                          <MenuItem value={HistogramTab.Skip} label="Skip" primaryText="Skip" />
-                          <MenuItem
-                            value={HistogramTab.DualFilterType}
-                            label="Dual Filter Type"
-                            primaryText="Dual Filter Type"
-                          />
-                        </DropDownMenu>
-                      </ToolbarGroup>
-                    </Toolbar>
-                    <HistogramComponent
-                      histograms={this.getHistogram(this.state.activeHistogramTab, frames)}
-                      color={this.getHistogramColor.bind(this, this.state.activeHistogramTab)}
-                      highlight={this.state.activeFrame}
-                      height={512}
-                      width={500}
-                      scale={this.state.activeHistogramTab == 0 ? 'max' : undefined}
-                    ></HistogramComponent>
-                  </div>
-                )}
-              </Tab>
-              <Tab value={2} label="Block Info">
-                {p && this.state.activeTab == 2 && (
-                  <div>
-                    <ModeInfoComponent frame={frame} position={p}></ModeInfoComponent>
-                    <AccountingComponent
-                      symbols={this.getActiveFrame().accounting.createBlockSymbols(p.x, p.y)}
-                    ></AccountingComponent>
-                  </div>
-                )}
-              </Tab>
-              <Tab value={3} label="Frame Info">
-                {this.state.activeTab == 3 && (
-                  <div>
-                    <FrameInfoComponent
-                      frame={frame}
-                      activeFrame={this.state.activeFrame}
-                      activeGroup={this.state.activeGroup}
-                    ></FrameInfoComponent>
-                    <AccountingComponent symbols={accounting.frameSymbols}></AccountingComponent>
-                  </div>
-                )}
-              </Tab>
-              <Tab value={4} label="More">
-                <div className="tabContent">
-                  <RaisedButton
-                    primary={true}
-                    label="Feature Request"
-                    onTouchTap={this.fileIssue.bind(this, 'enhancement')}
-                  />{' '}
-                  <RaisedButton secondary={true} label="File a Bug" onTouchTap={this.fileIssue.bind(this, 'bug')} />
-                  <p>
-                    <RaisedButton label="Download this video (ivf)" onTouchTap={this.downloadIvf.bind(this)} />
-                  </p>
-                  <p>
-                    <RaisedButton label="Download this video (y4m)" onTouchTap={this.downloadY4m.bind(this)} />
-                  </p>
-                  <h3>Configuration</h3>
-                  <p>{frame.config}</p>
-                  <h3>Tips</h3>
-                  <ul>
-                    <li>Click anywhere on the image to lock focus and get mode info details.</li>
-                    <li>All analyzer features have keyboard shortcuts, use them.</li>
-                    <li>Toggle between video sequences by using the number keys: 1, 2, 3, etc.</li>
-                  </ul>
-                </div>
-              </Tab>
+              <Tab style={{ minWidth: 'auto', padding: '0' }} value={0} label="Zoom" />
+              <Tab style={{ minWidth: 'auto', padding: '0' }} value={1} label="Histograms" />
+              <Tab style={{ minWidth: 'auto', padding: '0' }} value={2} label="Block Info" />
+              <Tab style={{ minWidth: 'auto', padding: '0' }} value={3} label="Frame Info" />
+              <Tab style={{ minWidth: 'auto', padding: '0' }} value={4} label="More" />
             </Tabs>
+            {this.state.activeTab === 0 && (
+              <div>
+                <canvas ref={(self: any) => this.resetZoomCanvas(self)} width="256" height="256" />
+                <div className="tabContent">
+                  <FormGroup row>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={this.state.showLayersInZoom}
+                          onChange={(event) => this.setState({ showLayersInZoom: event.target.checked })}
+                        />
+                      }
+                      label="Show Layers in Zoom: Z"
+                    />
+                  </FormGroup>
+                  <FormGroup row>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={this.state.lockSelection}
+                          onChange={(event) => this.setState({ lockSelection: event.target.checked })}
+                        />
+                      }
+                      label="Lock Selection: X"
+                    />
+                  </FormGroup>
+                  <div className="componentHeader">Layer Alpha</div>
+                  <Slider
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    defaultValue={1}
+                    value={this.state.layerAlpha}
+                    onChange={(event, value) => {
+                      this.setState({ layerAlpha: value } as any);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+            {this.state.activeTab === 1 && (
+              <div>
+                <Toolbar>
+                  <div>
+                    <Select
+                      value={this.state.activeHistogramTab}
+                      onChange={(event) => this.setState({ activeHistogramTab: event.target.value } as any)}
+                    >
+                      <MenuItem value={HistogramTab.Bits}>Bits</MenuItem>
+                      <MenuItem value={HistogramTab.Symbols}>Symbols</MenuItem>
+                      <MenuItem value={HistogramTab.BlockSize}>Block Size</MenuItem>
+                      <MenuItem value={HistogramTab.TransformSize}>Transform Size</MenuItem>
+                      <MenuItem value={HistogramTab.TransformType}>Transform Type</MenuItem>
+                      <MenuItem value={HistogramTab.PredictionMode}>Prediction Mode</MenuItem>
+                      <MenuItem value={HistogramTab.UVPredictionMode}>UV Prediction Mode</MenuItem>
+                      <MenuItem value={HistogramTab.Skip}>Skip</MenuItem>
+                      <MenuItem value={HistogramTab.DualFilterType}>Dual Filter Type</MenuItem>
+                    </Select>
+                  </div>
+                </Toolbar>
+                <HistogramComponent
+                  histograms={this.getHistogram(this.state.activeHistogramTab, frames)}
+                  color={this.getHistogramColor.bind(this, this.state.activeHistogramTab)}
+                  highlight={this.state.activeFrame}
+                  height={512}
+                  width={500}
+                  scale={this.state.activeHistogramTab == 0 ? 'max' : undefined}
+                ></HistogramComponent>
+              </div>
+            )}
+            {p && this.state.activeTab === 2 && (
+              <div>
+                <ModeInfoComponent frame={frame} position={p}></ModeInfoComponent>
+                <AccountingComponent
+                  symbols={this.getActiveFrame().accounting.createBlockSymbols(p.x, p.y)}
+                ></AccountingComponent>
+              </div>
+            )}
+            {this.state.activeTab === 3 && (
+              <div>
+                <FrameInfoComponent
+                  frame={frame}
+                  activeFrame={this.state.activeFrame}
+                  activeGroup={this.state.activeGroup}
+                ></FrameInfoComponent>
+                <AccountingComponent symbols={accounting.frameSymbols}></AccountingComponent>
+              </div>
+            )}
+            {this.state.activeTab === 4 && (
+              <div className="tabContent">
+                <Button variant="contained" color="primary" onClick={this.fileIssue.bind(this, 'enhancement')}>
+                  Feature Request
+                </Button>{' '}
+                <Button variant="contained" color="secondary" onClick={this.fileIssue.bind(this, 'bug')}>
+                  File a Bug
+                </Button>
+                <p>
+                  <Button variant="contained" onClick={this.downloadIvf.bind(this)}>
+                    Download this video (ivf)
+                  </Button>
+                </p>
+                <p>
+                  <Button variant="contained" onClick={this.downloadY4m.bind(this)}>
+                    Download this video (y4m)
+                  </Button>
+                </p>
+                <h3>Configuration</h3>
+                <p>{frame.config}</p>
+                <h3>Tips</h3>
+                <ul>
+                  <li>Click anywhere on the image to lock focus and get mode info details.</li>
+                  <li>All analyzer features have keyboard shortcuts, use them.</li>
+                  <li>Toggle between video sequences by using the number keys: 1, 2, 3, etc.</li>
+                </ul>
+              </div>
+            )}
           </div>
         );
       }
@@ -1736,14 +1722,7 @@ export class AnalyzerView extends React.Component<
                 ref={(self: any) => (this.displayCanvas = self)}
                 width="256"
                 height="256"
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  zIndex: 0,
-                  imageRendering: 'pixelated',
-                  backgroundCcolor: '#F5F5F5',
-                }}
+                style={{ position: 'absolute', left: 0, top: 0, zIndex: 0, imageRendering: 'pixelated' }}
               ></canvas>
               <canvas
                 ref={(self: any) => (this.overlayCanvas = self)}
@@ -1761,7 +1740,7 @@ export class AnalyzerView extends React.Component<
               ></canvas>
             </div>
           </div>
-          {this.state.showTools && sidePanel}
+          {sidePanel}
         </div>
       </div>
     );

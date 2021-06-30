@@ -1,18 +1,27 @@
 import * as React from 'react';
 
 import { AnalyzerFrame } from './analyzerTools';
-import { Toolbar, ToolbarGroup, ToolbarSeparator, ToolbarTitle } from 'material-ui/Toolbar';
-import IconButton from 'material-ui/IconButton';
-import FontIcon from 'material-ui/FontIcon';
-import FlatButton from 'material-ui/FlatButton';
-import RaisedButton from 'material-ui/RaisedButton';
-import Checkbox from 'material-ui/Checkbox';
-import Drawer from 'material-ui/Drawer';
-import SelectField from 'material-ui/SelectField';
-import Paper from 'material-ui/Paper';
-import { grey900, grey800, grey100, grey200 } from 'material-ui/styles/colors';
 import { unreachable } from './analyzerTools';
-import Dialog from 'material-ui/Dialog';
+import {
+  Checkbox,
+  Dialog,
+  DialogContent,
+  Drawer,
+  FormControlLabel,
+  FormGroup,
+  IconButton,
+  Paper,
+  Toolbar,
+  Tooltip,
+} from '@material-ui/core';
+import { grey } from '@material-ui/core/colors';
+import DashboardIcon from '@material-ui/icons/Dashboard';
+import ListIcon from '@material-ui/icons/List';
+import SkipPreviousIcon from '@material-ui/icons/SkipPrevious';
+import StopIcon from '@material-ui/icons/Stop';
+import PlayArrowIcon from '@material-ui/icons/PlayArrow';
+import SkipNextIcon from '@material-ui/icons/SkipNext';
+import Replay30Icon from '@material-ui/icons/Replay30';
 
 declare const Mousetrap;
 
@@ -57,7 +66,7 @@ export class SplitView extends React.Component<
   };
 
   constructor(props: SplitViewProps) {
-    super();
+    super(props);
     this.state = {
       activeFrame: 0,
       playInterval: null,
@@ -154,7 +163,11 @@ export class SplitView extends React.Component<
   }
   render() {
     if (this.props.groups.length < 2) {
-      return <Dialog open>Provide at least two videos to compare.</Dialog>;
+      return (
+        <Dialog open={true}>
+          <DialogContent>Provide at least two videos to compare.</DialogContent>
+        </Dialog>
+      );
     }
     let content = null;
     switch (this.state.mode) {
@@ -186,16 +199,13 @@ export class SplitView extends React.Component<
         break;
     }
 
-    const iconStyles = {
-      marginRight: 24,
-    };
     let details = null;
 
     const paperStyle = {
       padding: 10,
       marginTop: 10,
       marginBottom: 10,
-      backgroundColor: grey900,
+      backgroundColor: grey[900],
     };
 
     const self = this;
@@ -234,63 +244,60 @@ export class SplitView extends React.Component<
     return (
       <div className="maxWidthAndHeight">
         <Drawer
-          docked={false}
-          width={512}
+          style={{ width: '512px' }}
           open={this.state.showDetails}
-          onRequestChange={(showDetails) => this.setState({ showDetails } as any)}
+          onClose={() => this.setState((state) => ({ showDetails: !state.showDetails }))}
         >
           {details}
         </Drawer>
         {content}
         <Toolbar>
-          <ToolbarGroup firstChild={true}>
-            <IconButton onClick={this.toggleDetails.bind(this)} tooltip="Toggle Details: `" tooltipPosition="top-right">
-              <FontIcon className="material-icons md-24" style={iconStyles}>
-                list
-              </FontIcon>
-            </IconButton>
-            <IconButton
-              onClick={this.advanceView.bind(this)}
-              tooltip="Toggle View Mode: tab"
-              tooltipPosition="top-center"
-            >
-              <FontIcon className="material-icons md-24" style={iconStyles}>
-                dashboard
-              </FontIcon>
-            </IconButton>
-            <IconButton onClick={this.advanceFrame.bind(this, -1)} tooltip="Previous: ," tooltipPosition="top-center">
-              <FontIcon className="material-icons md-24" style={iconStyles}>
-                skip_previous
-              </FontIcon>
-            </IconButton>
-            <IconButton onClick={this.playPause.bind(this)} tooltip="Pause / Play: space" tooltipPosition="top-center">
-              <FontIcon className="material-icons md-24" style={iconStyles}>
-                {!this.state.playInterval ? 'play_arrow' : 'stop'}
-              </FontIcon>
-            </IconButton>
-            <IconButton onClick={this.advanceFrame.bind(this, 1)} tooltip="Next: ." tooltipPosition="top-center">
-              <FontIcon className="material-icons md-24" style={iconStyles}>
-                skip_next
-              </FontIcon>
-            </IconButton>
-            <IconButton
-              onClick={this.alertDecodeAdditionalFrames.bind(this, 30)}
-              tooltip="Decode 30 Additional Frames"
-              tooltipPosition="top-center"
-            >
-              <FontIcon className="material-icons md-24" style={iconStyles}>
-                replay_30
-              </FontIcon>
-            </IconButton>
+          <div>
+            <Tooltip title="Toggle Details: `" placement="top-end">
+              <IconButton onClick={this.toggleDetails.bind(this)}>
+                <ListIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Toggle View Mode: tab" placement="top">
+              <IconButton onClick={this.advanceView.bind(this)}>
+                <DashboardIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Previous: ," placement="top">
+              <IconButton onClick={this.advanceFrame.bind(this, -1)}>
+                <SkipPreviousIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Pause / Play: space" placement="top">
+              <IconButton onClick={this.playPause.bind(this)}>
+                {!this.state.playInterval ? <PlayArrowIcon /> : <StopIcon />}
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Next: ." placement="top">
+              <IconButton onClick={this.advanceFrame.bind(this, 1)}>
+                <SkipNextIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Decode 30 Additional Frames" placement="top">
+              <IconButton onClick={this.alertDecodeAdditionalFrames.bind(this, 30)}>
+                <Replay30Icon />
+              </IconButton>
+            </Tooltip>
             <span className="splitTextContent" style={{ width: '256px' }}>
               Frame: {this.state.activeFrame + 1} of {this.props.groups[0].length}
             </span>
-            <Checkbox
-              label="Lock Scroll"
-              checked={this.state.lockScroll}
-              onCheck={(event, value) => this.setState({ lockScroll: value } as any)}
-            />
-          </ToolbarGroup>
+            <FormGroup row>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={this.state.lockScroll}
+                    onChange={(event) => this.setState({ lockScroll: event.target.checked })}
+                  />
+                }
+                label="Lock Scroll"
+              />
+            </FormGroup>
+          </div>
         </Toolbar>
       </div>
     );

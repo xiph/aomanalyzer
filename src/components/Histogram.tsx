@@ -28,8 +28,8 @@ export class HistogramComponent extends React.Component<
   w: number;
   h: number;
   position: Vector;
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.ratio = window.devicePixelRatio || 1;
     this.position = new Vector(-1, -1);
   }

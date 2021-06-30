@@ -7,23 +7,8 @@ import { VotingSessionComponent } from './components/VotingSession';
 import { DownloadComponent } from './components/Download';
 import { LocalAnalyzerComponent } from './components/LocalAnalyzer';
 
-// since the export is a function, this is the only actual correct way:
-import injectTapEventPluginRequire = require('react-tap-event-plugin');
-
-// Needed for onTouchTap
-// http://stackoverflow.com/a/34015469/988941
-injectTapEventPluginRequire();
-
-import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
-import getMuiTheme from 'material-ui/styles/getMuiTheme';
-import darkBaseTheme from 'material-ui/styles/baseThemes/darkBaseTheme';
-import lightBaseTheme from 'material-ui/styles/baseThemes/lightBaseTheme';
-
-import RaisedButton from 'material-ui/RaisedButton';
-import { Tabs, Tab } from 'material-ui/Tabs';
-import SelectField from 'material-ui/SelectField';
-import MenuItem from 'material-ui/MenuItem';
-import { grey900, grey800, grey100, grey200 } from 'material-ui/styles/colors';
+import { grey } from '@material-ui/core/colors';
+import { createMuiTheme, CssBaseline, PaletteType, ThemeProvider } from '@material-ui/core';
 
 export function forEachUrlParameter(callback: (key: string, value: string) => void) {
   let url = window.location.search.substring(1);
@@ -90,6 +75,7 @@ const pairs = getDecoderVideoUrls();
 
 const overrideTheme = {
   palette: {
+    type: 'dark' as PaletteType,
     accent1Color: 'red',
   },
   tableRow: {
@@ -104,52 +90,56 @@ const overrideTheme = {
     spacing: 4,
   },
   toolbar: {
-    backgroundColor: grey900,
+    backgroundColor: grey[900],
   },
   tabs: {
-    backgroundColor: grey800,
-    textColor: grey100,
-    selectedTextColor: grey200,
+    backgroundColor: grey[800],
+    textColor: grey[100],
+    selectedTextColor: grey[200],
   },
   table: {
-    backgroundColor: grey900,
+    backgroundColor: grey[900],
   },
 };
 
-const theme = getMuiTheme(darkBaseTheme, overrideTheme);
+const theme = createMuiTheme(overrideTheme);
 
 if (player || vote) {
-  const videos = vote.split(',').map((x) => {
+  const videos = (vote || '').split(',').map((x) => {
     return x.split(':').map((y) => pairs[y | 0]);
   });
   ReactDOM.render(
-    <MuiThemeProvider muiTheme={theme}>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
       <VotingSessionComponent
         videos={videos}
         description={voteDescription}
         isBlind={!!blind}
         showResult={!!showVoteResult}
       />
-    </MuiThemeProvider>,
+    </ThemeProvider>,
     document.getElementById('analyzer-app'),
   );
-} else if (local || pairs.length == 0) {
+} else if (local || pairs.length === 0) {
   ReactDOM.render(
-    <MuiThemeProvider muiTheme={theme}>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
       <LocalAnalyzerComponent />
-    </MuiThemeProvider>,
+    </ThemeProvider>,
     document.getElementById('analyzer-app'),
   );
 } else if (download) {
   ReactDOM.render(
-    <MuiThemeProvider muiTheme={theme}>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
       <DownloadComponent video={pairs[0]} />
-    </MuiThemeProvider>,
+    </ThemeProvider>,
     document.getElementById('analyzer-app'),
   );
 } else {
   ReactDOM.render(
-    <MuiThemeProvider muiTheme={theme}>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
       <LoaderComponent
         decoderVideoUrlPairs={pairs}
         playbackFrameRate={playbackFrameRate}
@@ -159,7 +149,7 @@ if (player || vote) {
         split={split}
         bench={bench}
       />
-    </MuiThemeProvider>,
+    </ThemeProvider>,
     document.getElementById('analyzer-app'),
   );
 }
