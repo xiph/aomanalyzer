@@ -1414,7 +1414,11 @@ export class AnalyzerView extends React.Component<
             <MenuItem
               key={name}
               onClick={this.toggleLayer.bind(this, name)}
-              style={{ justifyContent: 'space-between', backgroundColor: this.state[name] ? grey[500] : undefined }}
+              style={{
+                justifyContent: 'space-between',
+                width: '240px',
+                backgroundColor: this.state[name] ? grey[500] : undefined,
+              }}
             >
               <Typography>{option.description}</Typography>
               <Typography>{option.key.toUpperCase()}</Typography>
