@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Decoder, AnalyzerFrame, downloadFile, FrameImage } from './analyzerTools';
 import { saveAs } from 'file-saver';
-import {CircularProgress} from "@material-ui/core";
+import { CircularProgress } from '@material-ui/core';
 
 interface DownloadComponentProps {
   video: { decoderUrl: string; videoUrl: string; decoderName: string };
