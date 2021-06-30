@@ -6,3 +6,5 @@ dist
 \.*
 release_builds
 node_modules
+inspect.js
+inspect.wasm
