@@ -433,6 +433,7 @@ function readFrameFromJson(json): AnalyzerFrame {
   uncompress(json['seg_id']);
   uncompress(json['motion_mode']);
   uncompress(json['compound_type']);
+  uncompress(json['wedge']);
 
   const frame = new AnalyzerFrame();
   frame.json = json;
