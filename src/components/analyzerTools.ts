@@ -1027,6 +1027,10 @@ export const palette = {
     COMPOUND_DIFFWTD: '#CEBADE',
     COMPOUND_WEDGE: '#171123',
   },
+  wedgeType: {
+    SIGN: '#a4558f',
+    NO_SIGN: '#9c9c4d',
+  },
   predictionMode: {
     DC_PRED: '#6c0039',
     V_PRED: '#00d041',

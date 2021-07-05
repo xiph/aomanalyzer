@@ -1927,7 +1927,7 @@ export class AnalyzerView extends React.Component<
       const wedge = wedgeGrid[r][c];
       const wedgeParams = wedgeParamsLookup[blockSize];
       if (wedge[0] != -1 && wedgeParams['wedge_types'] > 0) {
-        ctx.fillStyle = '#00FF00';
+        ctx.fillStyle = wedge[1] === 0 ? palette.wedgeType.NO_SIGN : palette.wedgeType.SIGN;
         ctx.beginPath();
         const wedgeInfo = wedgeParams['codebook'][wedge[0]];
         const xOffset = wedgeInfo['x_offset'];
