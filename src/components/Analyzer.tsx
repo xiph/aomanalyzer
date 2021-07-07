@@ -33,6 +33,8 @@ import {
   Divider,
   FormControlLabel,
   FormGroup,
+  RadioGroup,
+  Radio,
   IconButton,
   Menu,
   MenuItem,
@@ -65,6 +67,9 @@ import ClearIcon from '@material-ui/icons/Clear';
 import ShareIcon from '@material-ui/icons/Share';
 import { red, grey } from '@material-ui/core/colors';
 
+import { theme } from '../theme';
+import { LineGraph } from './LineGraph';
+
 declare const Mousetrap;
 declare let shortenUrl;
 declare let document;
@@ -95,6 +100,10 @@ enum HistogramTab {
   UVPredictionMode,
   Skip,
   DualFilterType,
+}
+
+enum GraphTab {
+  FilmGrainScalingLUT,
 }
 
 function colorScale(v, colors) {
@@ -504,6 +513,9 @@ export class AnalyzerView extends React.Component<
     activeTab: number;
     playInterval: any;
 
+    graphType: string;
+    activeGraphTab: number;
+
     showLayersInZoom: boolean;
     lockSelection: boolean;
     layerAlpha: number;
@@ -728,6 +740,8 @@ export class AnalyzerView extends React.Component<
       showTools: !props.blind,
       showFrameComment: false,
       activeHistogramTab: HistogramTab.Bits,
+      activeGraphTab: GraphTab.FilmGrainScalingLUT,
+      graphType: 'histogram',
       layerMenuIsOpen: false,
       showDecodeDialog: false,
       decodeFrameCount: 1,
@@ -1335,10 +1349,44 @@ export class AnalyzerView extends React.Component<
     window.open('?download=1&decoder=' + encodeURIComponent(decoder) + '&file=' + encodeURIComponent(file), '_blank');
   }
 
+  getGraphData(graphTab: GraphTab, frame: AnalyzerFrame) {
+    const filmGrainParams = frame.json.filmGrainParams;
+    if (graphTab === GraphTab.FilmGrainScalingLUT) {
+      const data = [
+        {
+          id: 'scaling_lut_y',
+          data: filmGrainParams.scaling_lut_y.map((value, index) => ({
+            x: index,
+            y: value,
+          })),
+        },
+        {
+          id: 'scaling_lut_cb',
+          data: filmGrainParams.scaling_lut_cb.map((value, index) => ({
+            x: index,
+            y: value,
+          })),
+        },
+        {
+          id: 'scaling_lut_cr',
+          data: filmGrainParams.scaling_lut_cr.map((value, index) => ({
+            x: index,
+            y: value,
+          })),
+        },
+      ];
+      return data;
+    }
+
+    return [];
+  }
+
   render() {
     let sidePanel = null;
     const frames = this.props.groups[this.state.activeGroup];
     const frame = this.getActiveFrame();
+
+    const containsGraph = !!frame && frame.json.filmGrainParamsPresent;
     if (this.state.showTools) {
       if (frame) {
         const accounting = this.getActiveFrame().accounting;
@@ -1530,7 +1578,7 @@ export class AnalyzerView extends React.Component<
               variant="fullWidth"
             >
               <Tab style={{ minWidth: 'auto', padding: '0' }} value={0} label="Zoom" />
-              <Tab style={{ minWidth: 'auto', padding: '0' }} value={1} label="Histograms" />
+              <Tab style={{ minWidth: 'auto', padding: '0' }} value={1} label="Graphs" />
               <Tab style={{ minWidth: 'auto', padding: '0' }} value={2} label="Block Info" />
               <Tab style={{ minWidth: 'auto', padding: '0' }} value={3} label="Frame Info" />
               <Tab style={{ minWidth: 'auto', padding: '0' }} value={4} label="More" />
@@ -1577,32 +1625,67 @@ export class AnalyzerView extends React.Component<
             )}
             {this.state.activeTab === 1 && (
               <div>
-                <Toolbar>
-                  <div>
-                    <Select
-                      value={this.state.activeHistogramTab}
-                      onChange={(event) => this.setState({ activeHistogramTab: event.target.value } as any)}
-                    >
-                      <MenuItem value={HistogramTab.Bits}>Bits</MenuItem>
-                      <MenuItem value={HistogramTab.Symbols}>Symbols</MenuItem>
-                      <MenuItem value={HistogramTab.BlockSize}>Block Size</MenuItem>
-                      <MenuItem value={HistogramTab.TransformSize}>Transform Size</MenuItem>
-                      <MenuItem value={HistogramTab.TransformType}>Transform Type</MenuItem>
-                      <MenuItem value={HistogramTab.PredictionMode}>Prediction Mode</MenuItem>
-                      <MenuItem value={HistogramTab.UVPredictionMode}>UV Prediction Mode</MenuItem>
-                      <MenuItem value={HistogramTab.Skip}>Skip</MenuItem>
-                      <MenuItem value={HistogramTab.DualFilterType}>Dual Filter Type</MenuItem>
-                    </Select>
+                {containsGraph ? (
+                  <div style={{ display: 'flex', justifyContent: 'center', backgroundColor: theme.palette.grey[700] }}>
+                    <FormGroup>
+                      <RadioGroup
+                        row
+                        aria-label="graph-type"
+                        value={this.state.graphType}
+                        onChange={(e) => this.setState({ graphType: e.target.value })}
+                      >
+                        <FormControlLabel value="histogram" control={<Radio />} label="Histogram" />
+                        <FormControlLabel value="chart" control={<Radio />} label="Chart" />
+                      </RadioGroup>
+                    </FormGroup>
                   </div>
-                </Toolbar>
-                <HistogramComponent
-                  histograms={this.getHistogram(this.state.activeHistogramTab, frames)}
-                  color={this.getHistogramColor.bind(this, this.state.activeHistogramTab)}
-                  highlight={this.state.activeFrame}
-                  height={512}
-                  width={500}
-                  scale={this.state.activeHistogramTab == 0 ? 'max' : undefined}
-                ></HistogramComponent>
+                ) : undefined}
+                {this.state.graphType === 'histogram' ? (
+                  <div>
+                    <Toolbar style={{ backgroundColor: theme.palette.grey[800] }}>
+                      <div>
+                        <Select
+                          value={this.state.activeHistogramTab}
+                          onChange={(event) => this.setState({ activeHistogramTab: event.target.value } as any)}
+                        >
+                          <MenuItem value={HistogramTab.Bits}>Bits</MenuItem>
+                          <MenuItem value={HistogramTab.Symbols}>Symbols</MenuItem>
+                          <MenuItem value={HistogramTab.BlockSize}>Block Size</MenuItem>
+                          <MenuItem value={HistogramTab.TransformSize}>Transform Size</MenuItem>
+                          <MenuItem value={HistogramTab.TransformType}>Transform Type</MenuItem>
+                          <MenuItem value={HistogramTab.PredictionMode}>Prediction Mode</MenuItem>
+                          <MenuItem value={HistogramTab.UVPredictionMode}>UV Prediction Mode</MenuItem>
+                          <MenuItem value={HistogramTab.Skip}>Skip</MenuItem>
+                          <MenuItem value={HistogramTab.DualFilterType}>Dual Filter Type</MenuItem>
+                        </Select>
+                      </div>
+                    </Toolbar>
+                    <HistogramComponent
+                      histograms={this.getHistogram(this.state.activeHistogramTab, frames)}
+                      color={this.getHistogramColor.bind(this, this.state.activeHistogramTab)}
+                      highlight={this.state.activeFrame}
+                      height={470}
+                      width={480}
+                      scale={this.state.activeHistogramTab == 0 ? 'max' : undefined}
+                    ></HistogramComponent>
+                  </div>
+                ) : (
+                  <div>
+                    <Toolbar style={{ backgroundColor: theme.palette.grey[800] }}>
+                      <div>
+                        <Select
+                          value={this.state.activeGraphTab}
+                          onChange={(event) => this.setState({ activeGraphTab: event.target.value } as any)}
+                        >
+                          <MenuItem value={GraphTab.FilmGrainScalingLUT}>Film Grain Scaling LUT</MenuItem>
+                        </Select>
+                      </div>
+                    </Toolbar>
+                    {this.state.activeGraphTab === GraphTab.FilmGrainScalingLUT && (
+                      <LineGraph data={this.getGraphData(GraphTab.FilmGrainScalingLUT, frame)} />
+                    )}
+                  </div>
+                )}
               </div>
             )}
             {p && this.state.activeTab === 2 && (
