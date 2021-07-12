@@ -307,6 +307,12 @@ export class AnalyzerFrame {
     config: {
       MI_SIZE: number;
     };
+    filmGrainParamsPresent: boolean;
+    filmGrainParams?: {
+      scaling_lut_y: number[];
+      scaling_lut_cr: number[];
+      scaling_lut_cb: number[];
+    };
   };
   accounting: Accounting;
   blockSizeHist: Histogram;

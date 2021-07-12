@@ -7,6 +7,8 @@ import { VotingSessionComponent } from './components/VotingSession';
 import { DownloadComponent } from './components/Download';
 import { LocalAnalyzerComponent } from './components/LocalAnalyzer';
 
+import { theme } from './theme';
+
 import { grey } from '@material-ui/core/colors';
 import { createMuiTheme, CssBaseline, PaletteType, ThemeProvider } from '@material-ui/core';
 
@@ -72,37 +74,6 @@ function getDecoderVideoUrls(): { decoderUrl: string; videoUrl: string; decoderN
 }
 
 const pairs = getDecoderVideoUrls();
-
-const overrideTheme = {
-  palette: {
-    type: 'dark' as PaletteType,
-    accent1Color: 'red',
-  },
-  tableRow: {
-    height: 24,
-  },
-  tableRowColumn: {
-    height: 24,
-    spacing: 4,
-  },
-  tableHeaderColumn: {
-    height: 32,
-    spacing: 4,
-  },
-  toolbar: {
-    backgroundColor: grey[900],
-  },
-  tabs: {
-    backgroundColor: grey[800],
-    textColor: grey[100],
-    selectedTextColor: grey[200],
-  },
-  table: {
-    backgroundColor: grey[900],
-  },
-};
-
-const theme = createMuiTheme(overrideTheme);
 
 if (player || vote) {
   const videos = (vote || '').split(',').map((x) => {
