@@ -1022,10 +1022,10 @@ export const palette = {
     WARPED_CAUSAL: '#b459c0',
   },
   compoundType: {
-    COMPOUND_AVERAGE: '#F46036',
-    COMPOUND_DISTWTD: '#5B85AA',
-    COMPOUND_DIFFWTD: '#CEBADE',
-    COMPOUND_WEDGE: '#171123',
+    COMPOUND_AVERAGE: '#468400',
+    COMPOUND_DISTWTD: '#0164d9',
+    COMPOUND_DIFFWTD: '#fdb78c',
+    COMPOUND_WEDGE: '#c9004c',
   },
   wedgeType: {
     SIGN: '#a4558f',
