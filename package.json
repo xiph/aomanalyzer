@@ -31,6 +31,7 @@
     "@material-ui/icons": "^4.11.2",
     "@nivo/core": "^0.72.0",
     "@nivo/line": "^0.72.0",
+    "@nivo/pie": "^0.72.0",
     "@typescript-eslint/eslint-plugin": "^4.26.0",
     "@typescript-eslint/parser": "^4.26.0",
     "argparse": "^1.0.9",

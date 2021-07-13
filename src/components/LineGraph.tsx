@@ -24,8 +24,8 @@ export class LineGraph extends React.Component<
     return (
       <div>
         <LineCanvas
-          height={512}
-          width={500}
+          height={this.props.height}
+          width={this.props.width}
           margin={{
             top: 20,
             right: 150,

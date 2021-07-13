@@ -69,6 +69,7 @@ import { red, grey } from '@material-ui/core/colors';
 
 import { theme } from '../theme';
 import { LineGraph } from './LineGraph';
+import { PieGraph } from './PieGraph';
 
 declare const Mousetrap;
 declare let shortenUrl;
@@ -100,10 +101,23 @@ enum HistogramTab {
   UVPredictionMode,
   Skip,
   DualFilterType,
+  CompoundType,
+  MotionMode,
 }
 
 enum GraphTab {
   FilmGrainScalingLUT,
+  Bits,
+  Symbols,
+  BlockSize,
+  TransformSize,
+  TransformType,
+  PredictionMode,
+  UVPredictionMode,
+  Skip,
+  DualFilterType,
+  CompoundType,
+  MotionMode,
 }
 
 function colorScale(v, colors) {
@@ -783,7 +797,7 @@ export class AnalyzerView extends React.Component<
       showTools: !props.blind,
       showFrameComment: false,
       activeHistogramTab: HistogramTab.Bits,
-      activeGraphTab: GraphTab.FilmGrainScalingLUT,
+      activeGraphTab: GraphTab.BlockSize,
       graphType: 'histogram',
       layerMenuIsOpen: false,
       showDecodeDialog: false,
@@ -1395,36 +1409,94 @@ export class AnalyzerView extends React.Component<
     window.open('?download=1&decoder=' + encodeURIComponent(decoder) + '&file=' + encodeURIComponent(file), '_blank');
   }
 
-  getGraphData(graphTab: GraphTab, frame: AnalyzerFrame) {
+  getFilmGrainLUT(frame: AnalyzerFrame) {
     const filmGrainParams = frame.json.filmGrainParams;
-    if (graphTab === GraphTab.FilmGrainScalingLUT) {
-      const data = [
-        {
-          id: 'scaling_lut_y',
-          data: filmGrainParams.scaling_lut_y.map((value, index) => ({
-            x: index,
-            y: value,
-          })),
-        },
-        {
-          id: 'scaling_lut_cb',
-          data: filmGrainParams.scaling_lut_cb.map((value, index) => ({
-            x: index,
-            y: value,
-          })),
-        },
-        {
-          id: 'scaling_lut_cr',
-          data: filmGrainParams.scaling_lut_cr.map((value, index) => ({
-            x: index,
-            y: value,
-          })),
-        },
-      ];
-      return data;
+
+    const data = [
+      {
+        id: 'scaling_lut_y',
+        data: filmGrainParams.scaling_lut_y.map((value, index) => ({
+          x: index,
+          y: value,
+        })),
+      },
+      {
+        id: 'scaling_lut_cb',
+        data: filmGrainParams.scaling_lut_cb.map((value, index) => ({
+          x: index,
+          y: value,
+        })),
+      },
+      {
+        id: 'scaling_lut_cr',
+        data: filmGrainParams.scaling_lut_cr.map((value, index) => ({
+          x: index,
+          y: value,
+        })),
+      },
+    ];
+    return data;
+  }
+
+  getGraphData(graphTab: GraphTab, frame: AnalyzerFrame) {
+    let histData: Histogram;
+    let paletteName;
+    switch (graphTab) {
+      case GraphTab.BlockSize:
+        histData = frame.blockSizeHist;
+        paletteName = 'blockSize';
+        break;
+      case GraphTab.Skip:
+        histData = frame.skipHist;
+        paletteName = 'skip';
+        break;
+      case GraphTab.PredictionMode:
+        histData = frame.predictionModeHist;
+        paletteName = 'predictionMode';
+        break;
+      case GraphTab.TransformType:
+        histData = frame.transformTypeHist;
+        paletteName = 'transformType';
+        break;
+      case GraphTab.TransformSize:
+        histData = frame.transformSizeHist;
+        paletteName = 'transformSize';
+        break;
+      case GraphTab.UVPredictionMode:
+        histData = frame.uvPredictionModeHist;
+        paletteName = 'predictionMode';
+        break;
+      case GraphTab.DualFilterType:
+        histData = frame.dualFilterTypeHist;
+        paletteName = 'dualFilterType';
+        break;
+      case GraphTab.CompoundType:
+        histData = frame.compoundTypeHist;
+        paletteName = 'compoundType';
+        break;
+      case GraphTab.MotionMode:
+        histData = frame.motionModeHist;
+        paletteName = 'motionMode';
+        break;
+      default:
+        return [];
     }
 
-    return [];
+    const reverseNameMap = reverseMap(histData.names);
+
+    const data = Object.keys(histData.counts).map((k) => {
+      const name = k === '-1' ? 'NOT_APPLIED' : reverseNameMap[k];
+      const color = k === `-1` ? theme.palette.grey[100] : palette[paletteName][reverseNameMap[k]];
+      return {
+        id: name,
+        label: name,
+        value: histData.counts[k],
+        color: color,
+      };
+    });
+    return data;
+
+    // return [];
   }
 
   render() {
@@ -1432,7 +1504,7 @@ export class AnalyzerView extends React.Component<
     const frames = this.props.groups[this.state.activeGroup];
     const frame = this.getActiveFrame();
 
-    const containsGraph = !!frame && frame.json.filmGrainParamsPresent;
+    const containsFilm = !!frame && frame.json.filmGrainParamsPresent;
     if (this.state.showTools) {
       if (frame) {
         const accounting = this.getActiveFrame().accounting;
@@ -1671,21 +1743,19 @@ export class AnalyzerView extends React.Component<
             )}
             {this.state.activeTab === 1 && (
               <div>
-                {containsGraph ? (
-                  <div style={{ display: 'flex', justifyContent: 'center', backgroundColor: theme.palette.grey[700] }}>
-                    <FormGroup>
-                      <RadioGroup
-                        row
-                        aria-label="graph-type"
-                        value={this.state.graphType}
-                        onChange={(e) => this.setState({ graphType: e.target.value })}
-                      >
-                        <FormControlLabel value="histogram" control={<Radio />} label="Histogram" />
-                        <FormControlLabel value="chart" control={<Radio />} label="Chart" />
-                      </RadioGroup>
-                    </FormGroup>
-                  </div>
-                ) : undefined}
+                <div style={{ display: 'flex', justifyContent: 'center', backgroundColor: theme.palette.grey[700] }}>
+                  <FormGroup>
+                    <RadioGroup
+                      row
+                      aria-label="graph-type"
+                      value={this.state.graphType}
+                      onChange={(e) => this.setState({ graphType: e.target.value })}
+                    >
+                      <FormControlLabel value="histogram" control={<Radio />} label="Histogram" />
+                      <FormControlLabel value="chart" control={<Radio />} label="Chart" />
+                    </RadioGroup>
+                  </FormGroup>
+                </div>
                 {this.state.graphType === 'histogram' ? (
                   <div>
                     <Toolbar style={{ backgroundColor: theme.palette.grey[800] }}>
@@ -1723,12 +1793,50 @@ export class AnalyzerView extends React.Component<
                           value={this.state.activeGraphTab}
                           onChange={(event) => this.setState({ activeGraphTab: event.target.value } as any)}
                         >
-                          <MenuItem value={GraphTab.FilmGrainScalingLUT}>Film Grain Scaling LUT</MenuItem>
+                          {containsFilm && (
+                            <MenuItem value={GraphTab.FilmGrainScalingLUT}>Film Grain Scaling LUT</MenuItem>
+                          )}
+                          <MenuItem value={GraphTab.PredictionMode}>Prediction Mode</MenuItem>
+                          <MenuItem value={GraphTab.DualFilterType}>Dual Filter Type</MenuItem>
+                          <MenuItem value={GraphTab.BlockSize}>Block Size</MenuItem>
+                          <MenuItem value={GraphTab.TransformSize}>Transform Size</MenuItem>
+                          <MenuItem value={GraphTab.TransformType}>Transform Type</MenuItem>
+                          <MenuItem value={GraphTab.UVPredictionMode}>UV Prediction Mode</MenuItem>
+                          <MenuItem value={GraphTab.MotionMode}>Motion Mode</MenuItem>
+                          <MenuItem value={GraphTab.CompoundType}>Compound Type</MenuItem>
+                          <MenuItem value={GraphTab.Skip}>Skip</MenuItem>
                         </Select>
                       </div>
                     </Toolbar>
                     {this.state.activeGraphTab === GraphTab.FilmGrainScalingLUT && (
-                      <LineGraph data={this.getGraphData(GraphTab.FilmGrainScalingLUT, frame)} />
+                      <LineGraph data={this.getFilmGrainLUT(frame)} />
+                    )}
+                    {this.state.activeGraphTab === GraphTab.BlockSize && (
+                      <PieGraph data={this.getGraphData(GraphTab.BlockSize, frame)} />
+                    )}
+                    {this.state.activeGraphTab === GraphTab.TransformType && (
+                      <PieGraph data={this.getGraphData(GraphTab.TransformType, frame)} />
+                    )}
+                    {this.state.activeGraphTab === GraphTab.TransformSize && (
+                      <PieGraph data={this.getGraphData(GraphTab.TransformSize, frame)} />
+                    )}
+                    {this.state.activeGraphTab === GraphTab.Skip && (
+                      <PieGraph data={this.getGraphData(GraphTab.Skip, frame)} />
+                    )}
+                    {this.state.activeGraphTab === GraphTab.UVPredictionMode && (
+                      <PieGraph data={this.getGraphData(GraphTab.UVPredictionMode, frame)} />
+                    )}
+                    {this.state.activeGraphTab === GraphTab.PredictionMode && (
+                      <PieGraph data={this.getGraphData(GraphTab.PredictionMode, frame)} />
+                    )}
+                    {this.state.activeGraphTab === GraphTab.CompoundType && (
+                      <PieGraph data={this.getGraphData(GraphTab.CompoundType, frame)} />
+                    )}
+                    {this.state.activeGraphTab === GraphTab.MotionMode && (
+                      <PieGraph data={this.getGraphData(GraphTab.MotionMode, frame)} />
+                    )}
+                    {this.state.activeGraphTab === GraphTab.DualFilterType && (
+                      <PieGraph data={this.getGraphData(GraphTab.DualFilterType, frame)} />
                     )}
                   </div>
                 )}
