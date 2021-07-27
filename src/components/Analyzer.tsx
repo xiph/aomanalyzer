@@ -21,6 +21,7 @@ import {
   Vector,
   localFiles,
   localFileProtocol,
+  FilmGrainParams,
 } from './analyzerTools';
 import { HistogramComponent } from './Histogram';
 import { TRACE_RENDERING, padLeft, log2, assert, unreachable } from './analyzerTools';
@@ -51,6 +52,7 @@ import {
   Toolbar,
   Tooltip,
   Typography,
+  TableContainer,
 } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import { TextAlignProperty } from 'csstype';
@@ -106,7 +108,6 @@ enum HistogramTab {
 }
 
 enum GraphTab {
-  FilmGrainScalingLUT,
   Bits,
   Symbols,
   BlockSize,
@@ -500,6 +501,229 @@ export class ModeInfoComponent extends React.Component<
             </TableRow>
           </TableBody>
         </Table>
+      </div>
+    );
+  }
+}
+
+export class FilmInfoComponent extends React.Component<
+  {
+    filmGrainParams?: FilmGrainParams;
+    containsFilm: boolean;
+  },
+  {}
+> {
+  filmCanvas: HTMLCanvasElement[];
+  filmContext: CanvasRenderingContext2D[];
+  ratio: number;
+
+  constructor(props) {
+    super(props);
+
+    this.filmCanvas = [null, null, null];
+    this.filmContext = [null, null, null];
+    const ratio = window.devicePixelRatio || 1;
+    this.ratio = ratio;
+  }
+
+  resetFilmCanvas(canvas: HTMLCanvasElement, index: number) {
+    this.filmCanvas[index] = canvas;
+    if (!this.filmCanvas[index]) {
+      this.filmContext[index] = null;
+      return;
+    }
+
+    if (index == 0) {
+      this.filmCanvas[index].style.width = '64px';
+      this.filmCanvas[index].style.height = '64px';
+      this.filmCanvas[index].width = 64 * this.ratio; // * this.ratio;
+      this.filmCanvas[index].height = 64 * this.ratio; // * this.ratio;
+    } else {
+      this.filmCanvas[index].style.width = '32px';
+      this.filmCanvas[index].style.height = '32px';
+      this.filmCanvas[index].width = 32 * this.ratio; // * this.ratio;
+      this.filmCanvas[index].height = 32 * this.ratio; // * this.ratio;
+    }
+    this.filmContext[index] = this.filmCanvas[index].getContext('2d');
+  }
+
+  drawFilm(filmIndex: number) {
+    if (!this.filmCanvas[filmIndex]) {
+      return;
+    }
+    TRACE_RENDERING && console.log('drawFilm');
+
+    let normalizedGrain;
+    switch (filmIndex) {
+      case 0:
+        normalizedGrain = this.props.filmGrainParams.normalizedGrain_y;
+        break;
+      case 1:
+        normalizedGrain = this.props.filmGrainParams.normalizedGrain_cb;
+        break;
+      case 2:
+        normalizedGrain = this.props.filmGrainParams.normalizedGrain_cr;
+        break;
+    }
+
+    assert(normalizedGrain.length > 0);
+
+    const imageVal = new ImageData(normalizedGrain.length, normalizedGrain[0].length);
+    this.filmCanvas[filmIndex].width = imageVal.width;
+    this.filmCanvas[filmIndex].height = imageVal.height;
+    const I = imageVal.data;
+    for (let i = 0; i < normalizedGrain.length; i++) {
+      for (let j = 0; j < normalizedGrain[i].length; j++) {
+        const index = (Math.imul(i, normalizedGrain[i].length) + j) << 2;
+        // const index = i * normalizedGrain.length + j;
+        const y = normalizedGrain[i][j];
+        I[index + 0] = y;
+        I[index + 1] = y;
+        I[index + 2] = y;
+        I[index + 3] = 255;
+      }
+    }
+
+    this.filmContext[filmIndex].putImageData(imageVal, 0, 0);
+    this.filmContext[filmIndex].drawImage(this.filmCanvas[filmIndex], 0, 0, 100 * this.ratio, 100 * this.ratio);
+  }
+
+  componentDidUpdate() {
+    if (this.props.containsFilm) {
+      this.drawFilm(0);
+      this.drawFilm(1);
+      this.drawFilm(2);
+    }
+  }
+
+  componentDidMount() {
+    if (this.props.containsFilm) {
+      this.drawFilm(0);
+      this.drawFilm(1);
+      this.drawFilm(2);
+    }
+  }
+
+  getFilmGrainLUT(filmGrainParams: FilmGrainParams) {
+    const data = [
+      {
+        id: 'scaling_lut_y',
+        data: filmGrainParams.scaling_lut_y.map((value, index) => ({
+          x: index,
+          y: value,
+        })),
+      },
+      {
+        id: 'scaling_lut_cb',
+        data: filmGrainParams.scaling_lut_cb.map((value, index) => ({
+          x: index,
+          y: value,
+        })),
+      },
+      {
+        id: 'scaling_lut_cr',
+        data: filmGrainParams.scaling_lut_cr.map((value, index) => ({
+          x: index,
+          y: value,
+        })),
+      },
+    ];
+    return data;
+  }
+
+  renderTable() {
+    const filmGrainParams = this.props.filmGrainParams;
+    const tableData = [
+      {
+        name: 'AR Coeff Lag',
+        value: filmGrainParams.ar_coeff_lag,
+      },
+      {
+        name: 'AR Coeff Shift',
+        value: filmGrainParams.ar_coeff_shift,
+      },
+      {
+        name: 'Overlap Flag',
+        value: filmGrainParams.overlap_flag,
+      },
+      {
+        name: 'Random Seed',
+        value: filmGrainParams.random_seed,
+      },
+      {
+        name: 'Grain Scale Shift',
+        value: filmGrainParams.grain_scale_shift,
+      },
+      {
+        name: 'Chroma Scaling From Luma',
+        value: filmGrainParams.chroma_scaling_from_luma,
+      },
+      {
+        name: 'Cb Mult',
+        value: filmGrainParams.cb_mult,
+      },
+      {
+        name: 'Cb Luma Mult',
+        value: filmGrainParams.cb_luma_mult,
+      },
+      {
+        name: 'Bit Depth',
+        value: filmGrainParams.bit_depth,
+      },
+    ];
+
+    return (
+      <TableContainer style={{ maxHeight: 120 }}>
+        <Table size="small" stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell>Parameter Name</TableCell>
+              <TableCell>Value</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {tableData.map((dp) => (
+              <TableRow>
+                <TableCell style={{ fontSize: '0.675rem', padding: '3px 24px 3px 16px' }}>{dp.name}</TableCell>
+                <TableCell style={{ fontSize: '0.675rem', padding: '3px 24px 3px 16px' }}>{dp.value}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  }
+
+  render() {
+    return (
+      <div className="tabContent">
+        {!this.props.containsFilm ? (
+          <div> Film Grain not used for this frame</div>
+        ) : (
+          <div>
+            <div>
+              <h3> Film Grain Parameters </h3>
+              {this.renderTable()}
+            </div>
+            <h4>Scaling LUT for each Pixel</h4>
+            <LineGraph data={this.getFilmGrainLUT(this.props.filmGrainParams)} height={220} width={400} />
+            <h4>Grain Samples</h4>
+            <div className="grainGroup">
+              <div className="grainInfo">
+                <canvas ref={(self: any) => this.resetFilmCanvas(self, 0)} width="100" height="100" />
+                <div>Grain Sample Y</div>
+              </div>
+              <div className="grainInfo">
+                <canvas ref={(self: any) => this.resetFilmCanvas(self, 1)} width="100" height="100" />
+                <div>Grain Sample CB</div>
+              </div>
+              <div className="grainInfo">
+                <canvas ref={(self: any) => this.resetFilmCanvas(self, 2)} width="100" height="100" />
+                <div>Grain Sample CR</div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1697,13 +1921,14 @@ export class AnalyzerView extends React.Component<
             >
               <Tab style={{ minWidth: 'auto', padding: '0' }} value={0} label="Zoom" />
               <Tab style={{ minWidth: 'auto', padding: '0' }} value={1} label="Graphs" />
-              <Tab style={{ minWidth: 'auto', padding: '0' }} value={2} label="Block Info" />
-              <Tab style={{ minWidth: 'auto', padding: '0' }} value={3} label="Frame Info" />
+              <Tab style={{ minWidth: 'auto', padding: '0' }} value={2} label="Block" />
+              <Tab style={{ minWidth: 'auto', padding: '0' }} value={3} label="Frame" />
+              <Tab style={{ minWidth: 'auto', padding: '0' }} value={5} label="Film" />
               <Tab style={{ minWidth: 'auto', padding: '0' }} value={4} label="More" />
             </Tabs>
             {this.state.activeTab === 0 && (
               <div>
-                <canvas ref={(self: any) => this.resetZoomCanvas(self)} width="256" height="256" />
+                <canvas ref={(self: any) => this.resetZoomCanvas(self)} width="100" height="100" />
                 <div className="tabContent">
                   <FormGroup row>
                     <FormControlLabel
@@ -1793,9 +2018,6 @@ export class AnalyzerView extends React.Component<
                           value={this.state.activeGraphTab}
                           onChange={(event) => this.setState({ activeGraphTab: event.target.value } as any)}
                         >
-                          {containsFilm && (
-                            <MenuItem value={GraphTab.FilmGrainScalingLUT}>Film Grain Scaling LUT</MenuItem>
-                          )}
                           <MenuItem value={GraphTab.PredictionMode}>Prediction Mode</MenuItem>
                           <MenuItem value={GraphTab.DualFilterType}>Dual Filter Type</MenuItem>
                           <MenuItem value={GraphTab.BlockSize}>Block Size</MenuItem>
@@ -1858,6 +2080,9 @@ export class AnalyzerView extends React.Component<
                   <li>Toggle between video sequences by using the number keys: 1, 2, 3, etc.</li>
                 </ul>
               </div>
+            )}
+            {this.state.activeTab === 5 && (
+              <FilmInfoComponent containsFilm={containsFilm} filmGrainParams={frame.json.filmGrainParams} />
             )}
           </div>
         );

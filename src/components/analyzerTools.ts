@@ -288,6 +288,28 @@ export class Histogram {
   }
 }
 
+export interface FilmGrainParams {
+  scaling_lut_y: number[];
+  scaling_lut_cr: number[];
+  scaling_lut_cb: number[];
+  grain_sample_y: number[][];
+  grain_sample_cb: number[][];
+  grain_sample_cr: number[][];
+  normalizedGrain_y: number[][];
+  normalizedGrain_cb: number[][];
+  normalizedGrain_cr: number[][];
+  ar_coeff_lag: number;
+  ar_coeff_shift: number;
+  overlap_flag: number;
+  random_seed: number;
+  chroma_scaling_from_luma: number;
+  grain_scale_shift: number;
+  scaling_shift: number;
+  cb_mult: number;
+  cb_luma_mult: number;
+  bit_depth: number;
+}
+
 export class AnalyzerFrame {
   json: {
     frameType: number;
@@ -308,11 +330,7 @@ export class AnalyzerFrame {
       MI_SIZE: number;
     };
     filmGrainParamsPresent: boolean;
-    filmGrainParams?: {
-      scaling_lut_y: number[];
-      scaling_lut_cr: number[];
-      scaling_lut_cb: number[];
-    };
+    filmGrainParams?: FilmGrainParams;
   };
   accounting: Accounting;
   blockSizeHist: Histogram;
@@ -336,6 +354,42 @@ export class AnalyzerFrame {
     // Free frame image data, we don't need it anymore.
     this.frameImage = null;
     return this.canvasImage;
+  }
+
+  normalizeGrainSamples(index: number) {
+    let grain;
+
+    switch (index) {
+      case 0:
+        grain = this.json.filmGrainParams.grain_sample_y;
+        break;
+      case 1:
+        grain = this.json.filmGrainParams.grain_sample_cb;
+        break;
+      default:
+        grain = this.json.filmGrainParams.grain_sample_cr;
+    }
+
+    const minY = Math.min(...[].concat(...grain));
+    const maxY = Math.max(...[].concat(...grain));
+
+    let normalizedGrain = grain.map((val) =>
+      val.map((subVal) => {
+        const z = ((subVal - minY) / (maxY - minY)) * 255;
+        return Math.round(z);
+      }),
+    );
+
+    if (index == 0) {
+      normalizedGrain = normalizedGrain.slice(9).map((k) => k.slice(9, 82 - 9));
+      this.json.filmGrainParams.normalizedGrain_y = normalizedGrain;
+    } else if (index == 1) {
+      normalizedGrain = normalizedGrain.slice(6).map((k) => k.slice(6, 44 - 6));
+      this.json.filmGrainParams.normalizedGrain_cb = normalizedGrain;
+    } else {
+      normalizedGrain = normalizedGrain.slice(6).map((k) => k.slice(6, 44 - 6));
+      this.json.filmGrainParams.normalizedGrain_cr = normalizedGrain;
+    }
   }
   config: string;
   blockSizeLog2Map: [number, number][];
@@ -459,6 +513,12 @@ function readFrameFromJson(json): AnalyzerFrame {
   frame.miSuperSizeLog2 = log2(64); // TODO: Does this ever change?
   frame.blockSizeLog2Map = makeBlockSizeLog2MapByValue(json['blockSizeMap']);
   frame.transformSizeLog2Map = makeTransformSizeLog2MapByValue(json['transformSizeMap']);
+
+  if (frame.json.filmGrainParamsPresent) {
+    frame.normalizeGrainSamples(0);
+    frame.normalizeGrainSamples(1);
+    frame.normalizeGrainSamples(2);
+  }
   return frame;
 }
 

@@ -30,9 +30,9 @@ export class LineGraph extends React.Component<
             top: 20,
             right: 150,
             bottom: 60,
-            left: 80,
+            left: 50,
           }}
-          yScale={{ type: 'linear', min: 'auto', max: 'auto', stacked: true, reverse: false }}
+          yScale={{ type: 'linear', min: 'auto', max: 'auto', stacked: false, reverse: false }}
           axisBottom={{
             tickValues: [0, 55, 105, 155, 205, 255],
             tickSize: 5,
@@ -76,7 +76,7 @@ export class LineGraph extends React.Component<
           theme={{
             background: theme.palette.grey[900],
             textColor: theme.palette.text.secondary,
-            fontSize: 14,
+            fontSize: 10,
             tooltip: {
               container: {
                 background: theme.palette.grey[700],
