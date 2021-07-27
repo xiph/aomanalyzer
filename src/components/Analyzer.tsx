@@ -1808,36 +1808,7 @@ export class AnalyzerView extends React.Component<
                         </Select>
                       </div>
                     </Toolbar>
-                    {this.state.activeGraphTab === GraphTab.FilmGrainScalingLUT && (
-                      <LineGraph data={this.getFilmGrainLUT(frame)} />
-                    )}
-                    {this.state.activeGraphTab === GraphTab.BlockSize && (
-                      <PieGraph data={this.getGraphData(GraphTab.BlockSize, frame)} />
-                    )}
-                    {this.state.activeGraphTab === GraphTab.TransformType && (
-                      <PieGraph data={this.getGraphData(GraphTab.TransformType, frame)} />
-                    )}
-                    {this.state.activeGraphTab === GraphTab.TransformSize && (
-                      <PieGraph data={this.getGraphData(GraphTab.TransformSize, frame)} />
-                    )}
-                    {this.state.activeGraphTab === GraphTab.Skip && (
-                      <PieGraph data={this.getGraphData(GraphTab.Skip, frame)} />
-                    )}
-                    {this.state.activeGraphTab === GraphTab.UVPredictionMode && (
-                      <PieGraph data={this.getGraphData(GraphTab.UVPredictionMode, frame)} />
-                    )}
-                    {this.state.activeGraphTab === GraphTab.PredictionMode && (
-                      <PieGraph data={this.getGraphData(GraphTab.PredictionMode, frame)} />
-                    )}
-                    {this.state.activeGraphTab === GraphTab.CompoundType && (
-                      <PieGraph data={this.getGraphData(GraphTab.CompoundType, frame)} />
-                    )}
-                    {this.state.activeGraphTab === GraphTab.MotionMode && (
-                      <PieGraph data={this.getGraphData(GraphTab.MotionMode, frame)} />
-                    )}
-                    {this.state.activeGraphTab === GraphTab.DualFilterType && (
-                      <PieGraph data={this.getGraphData(GraphTab.DualFilterType, frame)} />
-                    )}
+                    <PieGraph data={this.getGraphData(this.state.activeGraphTab, frame)} />
                   </div>
                 )}
               </div>
