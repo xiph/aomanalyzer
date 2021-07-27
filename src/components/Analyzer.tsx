@@ -707,19 +707,19 @@ export class FilmInfoComponent extends React.Component<
             </div>
             <h4>Scaling LUT for each Pixel</h4>
             <LineGraph data={this.getFilmGrainLUT(this.props.filmGrainParams)} height={220} width={400} />
-            <h4>Grain Samples</h4>
+            <h4>Grain Blocks</h4>
             <div className="grainGroup">
               <div className="grainInfo">
                 <canvas ref={(self: any) => this.resetFilmCanvas(self, 0)} width="100" height="100" />
-                <div>Grain Sample Y</div>
+                <div>Grain Block Y</div>
               </div>
               <div className="grainInfo">
                 <canvas ref={(self: any) => this.resetFilmCanvas(self, 1)} width="100" height="100" />
-                <div>Grain Sample CB</div>
+                <div>Grain Block CB</div>
               </div>
               <div className="grainInfo">
                 <canvas ref={(self: any) => this.resetFilmCanvas(self, 2)} width="100" height="100" />
-                <div>Grain Sample CR</div>
+                <div>Grain Block CR</div>
               </div>
             </div>
           </div>
