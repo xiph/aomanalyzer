@@ -736,6 +736,7 @@ export class AnalyzerView extends React.Component<
     activeGroup: number;
     scale: number;
     showDecodedImage: boolean;
+    showGrains: boolean;
     showMotionVectors: boolean;
     showReferenceFrames: boolean;
     showBlockGrid: boolean;
@@ -754,6 +755,7 @@ export class AnalyzerView extends React.Component<
     showBits: boolean;
     showBitsScale: 'frame' | 'video' | 'videos';
     showBitsMode: 'linear' | 'heat' | 'heat-opaque';
+    showGrainMode: 0 | 1 | 2;
     showBitsFilter: '';
     showTransformType: boolean;
     showTools: boolean;
@@ -772,6 +774,7 @@ export class AnalyzerView extends React.Component<
     showLayersInZoom: boolean;
     lockSelection: boolean;
     layerAlpha: number;
+    grainAlpha: number;
     shareUrl: string;
     showShareUrlDialog: boolean;
   }
@@ -790,8 +793,12 @@ export class AnalyzerView extends React.Component<
   frameSize: Size;
   frameCanvas: HTMLCanvasElement;
   frameContext: CanvasRenderingContext2D;
+  grainFrameCanvas: HTMLCanvasElement;
+  grainFrameContext: CanvasRenderingContext2D;
   displayCanvas: HTMLCanvasElement;
   displayContext: CanvasRenderingContext2D;
+  grainCanvas: HTMLCanvasElement;
+  grainContext: CanvasRenderingContext2D;
   overlayCanvas: HTMLCanvasElement;
   overlayContext: CanvasRenderingContext2D;
   canvasContainer: HTMLDivElement;
@@ -846,6 +853,14 @@ export class AnalyzerView extends React.Component<
       default: true,
       value: undefined,
       icon: 'glyphicon glyphicon-picture', // glyphicon glyphicon-film
+    },
+    showGrains: {
+      key: 'u',
+      description: 'Show Grains',
+      detail: 'Display and show the different motion modes for each block (SIMPLE, OBMC_WARPED, OBMC_CASUAL)',
+      updatesImages: false,
+      default: false,
+      value: undefined,
     },
     // showPredictedImage: {
     //   key: "p",
@@ -1018,6 +1033,8 @@ export class AnalyzerView extends React.Component<
       showDecodedImage: true,
       showMotionVectors: false,
       showReferenceFrames: false,
+      showGrains: false,
+      showGrainMode: 0,
       showTools: !props.blind,
       showFrameComment: false,
       activeHistogramTab: HistogramTab.Bits,
@@ -1030,12 +1047,15 @@ export class AnalyzerView extends React.Component<
       showLayersInZoom: false,
       lockSelection: true,
       layerAlpha: 1,
+      grainAlpha: 0,
       shareUrl: '',
       showShareUrlDialog: false,
     } as any;
     this.ratio = ratio;
     this.frameCanvas = document.createElement('canvas') as any;
     this.frameContext = this.frameCanvas.getContext('2d');
+    this.grainFrameCanvas = document.createElement('canvas') as any;
+    this.grainFrameContext = this.grainFrameCanvas.getContext('2d');
     this.compositionCanvas = document.createElement('canvas') as any;
     this.compositionContext = this.compositionCanvas.getContext('2d');
     this.mousePosition = new Vector(128, 128);
@@ -1052,6 +1072,8 @@ export class AnalyzerView extends React.Component<
 
     this.frameCanvas.width = w;
     this.frameCanvas.height = h;
+    this.grainFrameCanvas.width = w;
+    this.grainFrameCanvas.height = h;
     this.compositionCanvas.width = w;
     this.compositionCanvas.height = h;
 
@@ -1061,6 +1083,12 @@ export class AnalyzerView extends React.Component<
     this.displayCanvas.width = w * scale * this.ratio;
     this.displayCanvas.height = h * scale * this.ratio;
     this.displayContext = this.displayCanvas.getContext('2d');
+
+    this.grainCanvas.style.width = w * scale + 'px';
+    this.grainCanvas.style.height = h * scale + 'px';
+    this.grainCanvas.width = w * scale * this.ratio;
+    this.grainCanvas.height = h * scale * this.ratio;
+    this.grainContext = this.grainCanvas.getContext('2d');
 
     this.overlayCanvas.style.width = w * scale + 'px';
     this.overlayCanvas.style.height = h * scale + 'px';
@@ -1096,6 +1124,13 @@ export class AnalyzerView extends React.Component<
     } else {
       this.displayContext.fillStyle = '#333333';
       this.displayContext.fillRect(0, 0, dw, dh);
+    }
+
+    if (frame.json.filmGrainParamsPresent) {
+      this.grainFrameContext.drawImage(frame.getGrainImage(this.state.showGrainMode), 0, 0);
+      if (this.state.showGrains) {
+        this.grainContext.drawImage(this.grainFrameCanvas, 0, 0, dw, dh);
+      }
     }
 
     if (this.props.blind) {
@@ -1373,6 +1408,7 @@ export class AnalyzerView extends React.Component<
       o[name] = false;
     }
     o.showDecodedImage = true;
+    o['grainAlpha'] = 0;
     this.setState(o as any);
   }
   resetLayersAndActiveFrame() {
@@ -1386,6 +1422,18 @@ export class AnalyzerView extends React.Component<
     const o = {};
     o[name] = !this.state[name];
     this.setState(o as any);
+
+    if (name === 'showGrains') {
+      if (o[name] === true) {
+        this.setState({
+          grainAlpha: this.state.layerAlpha,
+        });
+      } else {
+        this.setState({
+          grainAlpha: 0,
+        });
+      }
+    }
   }
   onMouseDown(event: MouseEvent) {
     this.handleMouseEvent(event, true);
@@ -1775,6 +1823,26 @@ export class AnalyzerView extends React.Component<
           );
         }
 
+        let grainLayerToolbar = null;
+
+        if (this.state.showGrains) {
+          grainLayerToolbar = (
+            <Toolbar>
+              <div>
+                <Select
+                  style={{ width: '150px' }}
+                  value={this.state.showGrainMode}
+                  onChange={(event) => this.setState({ showGrainMode: event.target.value } as any)}
+                >
+                  <MenuItem value={0}>Y</MenuItem>
+                  <MenuItem value={1}>U</MenuItem>
+                  <MenuItem value={2}>V</MenuItem>
+                </Select>
+              </div>
+            </Toolbar>
+          );
+        }
+
         let groupTabs = null;
         if (this.props.groups.length > 1) {
           const tabs = [];
@@ -1910,6 +1978,7 @@ export class AnalyzerView extends React.Component<
               </div>
             </Toolbar>
             {bitLayerToolbar}
+            {grainLayerToolbar}
             <Tabs
               value={this.state.activeTab}
               onChange={(event, newValue) => {
@@ -1961,6 +2030,9 @@ export class AnalyzerView extends React.Component<
                     value={this.state.layerAlpha}
                     onChange={(event, value) => {
                       this.setState({ layerAlpha: value } as any);
+                      if (this.state.showGrains) {
+                        this.setState({ grainAlpha: value } as any);
+                      }
                     }}
                   />
                 </div>
@@ -2126,7 +2198,20 @@ export class AnalyzerView extends React.Component<
                   top: 0,
                   zIndex: 0,
                   imageRendering: 'pixelated',
-                  backgroundColor: '#F5F5F5',
+                  backgroundColor: '#333333',
+                }}
+              ></canvas>
+              <canvas
+                ref={(self: any) => (this.grainCanvas = self)}
+                width="256"
+                height="256"
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  zIndex: 0,
+                  imageRendering: 'pixelated',
+                  opacity: this.state.grainAlpha,
                 }}
               ></canvas>
               <canvas

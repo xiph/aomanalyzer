@@ -82,8 +82,9 @@ const ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 declare let process;
 let masterUrl = window.location.origin + '/';
 if (window.location.origin.startsWith('file://') || window.location.origin.startsWith('http://localhost')) {
-  masterUrl = 'https://arewecompressedyet.com/';
+  masterUrl = 'https://beta.arewecompressedyet.com/';
 }
+masterUrl = 'https://beta.arewecompressedyet.com/';
 
 export class RunDetails extends React.Component<
   {

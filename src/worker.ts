@@ -90,6 +90,7 @@ interface Native {
   _set_compress(compress: number): number;
   _get_codec_build_config(): number;
   _get_aom_codec_build_config(): number; // Legacy for AV1
+  _get_grain_values(pli: number);
   FS: any;
   HEAPU8: Uint8Array;
   UTF8ToString(p: number): string;
@@ -173,6 +174,96 @@ function getImageFormat() {
   // TODO: Just call |native._get_image_format| directly. Older analyzer builds may not have
   // this function so need this for backwards compatibility.
   return native._get_image_format ? native._get_image_format() : AOM_IMG_FMT_PLANAR;
+}
+
+function readGrainPlane(plane) {
+  let p = native._get_grain_values(plane);
+
+  if (p == 0) {
+    return null;
+  }
+  const HEAPU8 = native.HEAPU8;
+  let stride = native._get_plane_stride(plane);
+  let depth = 8;
+  let width = native._get_frame_width();
+  let height = native._get_frame_height();
+  const fmt = getImageFormat();
+  const hbd = fmt & AOM_IMG_FMT_HIGHBITDEPTH;
+  if (hbd) {
+    stride >>= 1;
+  }
+  let xdec;
+  let ydec;
+  if (fmt == AOM_IMG_FMT_I444 || fmt == AOM_IMG_FMT_I44416) {
+    xdec = 0;
+    ydec = 0;
+  } else if (fmt == AOM_IMG_FMT_I422 || fmt == AOM_IMG_FMT_I42216) {
+    xdec = plane > 0 ? 1 : 0;
+    ydec = 0;
+  } else {
+    xdec = plane > 0 ? 1 : 0;
+    ydec = plane > 0 ? 1 : 0;
+  }
+  width >>= xdec;
+  height >>= ydec;
+
+  const byteLength = height * width;
+  let buffer = getReleasedBuffer(byteLength);
+
+  if (buffer && !hbd) {
+    // Copy into released buffer.
+    const tmp = new Uint8Array(buffer);
+    if (stride === width) {
+      tmp.set(HEAPU8.subarray(p, p + byteLength));
+    } else {
+      for (let i = 0; i < height; i++) {
+        tmp.set(HEAPU8.subarray(p, p + width), i * width);
+        p += stride;
+      }
+    }
+  } else if (hbd) {
+    const tmpBuffer = buffer ? new Uint8Array(buffer) : new Uint8Array(byteLength);
+    if (depth == 10) {
+      // Convert to 8 bit depth.
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const offset = y * (stride << 1) + (x << 1);
+          tmpBuffer[y * width + x] = (HEAPU8[p + offset] + (HEAPU8[p + offset + 1] << 8)) >> 2;
+        }
+      }
+    } else {
+      // Unpack to 8 bit depth.
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const offset = y * (stride << 1) + (x << 1);
+          tmpBuffer[y * width + x] = HEAPU8[p + offset];
+        }
+      }
+    }
+    buffer = tmpBuffer.buffer;
+    depth = 8;
+  } else {
+    if (stride === width) {
+      buffer = HEAPU8.slice(p, p + byteLength).buffer;
+    } else {
+      const tmp = new Uint8Array(byteLength);
+      for (let i = 0; i < height; i++) {
+        tmp.set(HEAPU8.subarray(p, p + width), i * width);
+        p += stride;
+      }
+      buffer = tmp.buffer;
+    }
+  }
+
+  return {
+    buffer,
+    stride: width,
+    depth,
+    width,
+    height,
+    xdec,
+    ydec,
+  };
 }
 
 function readPlane(plane) {
@@ -259,6 +350,15 @@ function readPlane(plane) {
   };
 }
 
+function readGrainImage() {
+  return {
+    hashCode: (Math.random() * 10000000) | 0,
+    Y: readGrainPlane(0),
+    U: readGrainPlane(1),
+    V: readGrainPlane(2),
+  };
+}
+
 function readImage() {
   return {
     hashCode: (Math.random() * 1000000) | 0,
@@ -266,6 +366,10 @@ function readImage() {
     U: readPlane(1),
     V: readPlane(2),
   };
+}
+
+function readGrains(e) {
+  const s = performance.now();
 }
 
 function readFrame(e) {
@@ -282,13 +386,15 @@ function readFrame(e) {
     return null;
   }
   let image = null;
+  let grainImage = null;
   if (e.data.shouldReadImageData) {
     image = readImage();
+    grainImage = readGrainImage();
   }
   self.postMessage(
     {
       command: 'readFrameResult',
-      payload: { json, image, decodeTime: performance.now() - s },
+      payload: { json, image, decodeTime: performance.now() - s, grainImage },
       id: e.data.id,
     },
     image ? [image.Y.buffer, image.U.buffer, image.V.buffer] : (undefined as any),

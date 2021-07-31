@@ -49,7 +49,7 @@ export interface FrameImage {
   V: FrameImagePlane;
 }
 
-function createImageData(image: FrameImage) {
+function createImageData(image: FrameImage, plane = -1) {
   const w = image.Y.width;
   const h = image.Y.height;
   const depth = image.Y.depth;
@@ -81,9 +81,24 @@ function createImageData(image: FrameImage) {
       const U = UH[yUs + (x >> uxdec)];
       const V = VH[yVs + (x >> vxdec)];
       bgr = YUV2RGB(Y, U, V);
-      const r = (bgr >> 0) & 0xff;
-      const g = (bgr >> 8) & 0xff;
-      const b = (bgr >> 16) & 0xff;
+      let r, g, b;
+      if (plane === 0) {
+        r = Y;
+        g = Y;
+        b = Y;
+      } else if (plane == 1) {
+        r = U;
+        g = U;
+        b = U;
+      } else if (plane == 2) {
+        r = V;
+        g = V;
+        b = V;
+      } else {
+        r = (bgr >> 0) & 0xff;
+        g = (bgr >> 8) & 0xff;
+        b = (bgr >> 16) & 0xff;
+      }
       const index = (Math.imul(y, w) + x) << 2;
       I[index + 0] = r;
       I[index + 1] = g;
@@ -94,9 +109,9 @@ function createImageData(image: FrameImage) {
   return imageData;
 }
 
-function makeCanvas(image: FrameImage): HTMLCanvasElement {
+function makeCanvas(image: FrameImage, plane = -1): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
-  const imageData = createImageData(image);
+  const imageData = createImageData(image, plane);
   canvas.width = imageData.width;
   canvas.height = imageData.height;
   const ctx = canvas.getContext('2d');
@@ -343,8 +358,10 @@ export class AnalyzerFrame {
   compoundTypeHist: Histogram;
   motionModeHist: Histogram;
   frameImage: FrameImage;
+  grainFrameImage: FrameImage;
   decodeTime: number;
   canvasImage: HTMLCanvasElement;
+  canvasGrainImage: HTMLCanvasElement;
   get image(): HTMLCanvasElement {
     if (this.canvasImage) {
       return this.canvasImage;
@@ -354,6 +371,10 @@ export class AnalyzerFrame {
     // Free frame image data, we don't need it anymore.
     this.frameImage = null;
     return this.canvasImage;
+  }
+
+  getGrainImage(plane: number): HTMLCanvasElement {
+    return makeCanvas(this.grainFrameImage, plane);
   }
 
   normalizeGrainSamples(index: number) {
@@ -877,6 +898,7 @@ export class Decoder {
         }
         if (self.shouldReadImageData) {
           frames[frames.length - 1].frameImage = e.data.payload.image;
+          frames[frames.length - 1].grainFrameImage = e.data.payload.grainImage;
         }
         frames[frames.length - 1].decodeTime = e.data.payload.decodeTime;
         resolve(frames);
