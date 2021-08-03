@@ -755,7 +755,7 @@ export class AnalyzerView extends React.Component<
     showBits: boolean;
     showBitsScale: 'frame' | 'video' | 'videos';
     showBitsMode: 'linear' | 'heat' | 'heat-opaque';
-    showGrainMode: 0 | 1 | 2;
+    showGrainMode: -1 | 0 | 1 | 2;
     showBitsFilter: '';
     showTransformType: boolean;
     showTools: boolean;
@@ -774,7 +774,6 @@ export class AnalyzerView extends React.Component<
     showLayersInZoom: boolean;
     lockSelection: boolean;
     layerAlpha: number;
-    grainAlpha: number;
     shareUrl: string;
     showShareUrlDialog: boolean;
   }
@@ -1047,7 +1046,6 @@ export class AnalyzerView extends React.Component<
       showLayersInZoom: false,
       lockSelection: true,
       layerAlpha: 1,
-      grainAlpha: 0,
       shareUrl: '',
       showShareUrlDialog: false,
     } as any;
@@ -1126,11 +1124,13 @@ export class AnalyzerView extends React.Component<
       this.displayContext.fillRect(0, 0, dw, dh);
     }
 
-    if (frame.json.filmGrainParamsPresent) {
+    if (frame.json.filmGrainParamsPresent && this.state.showGrains) {
       this.grainFrameContext.drawImage(frame.getGrainImage(this.state.showGrainMode), 0, 0);
       if (this.state.showGrains) {
         this.grainContext.drawImage(this.grainFrameCanvas, 0, 0, dw, dh);
       }
+    } else {
+      this.grainContext.clearRect(0, 0, this.frameSize.w, this.frameSize.h);
     }
 
     if (this.props.blind) {
@@ -1165,6 +1165,9 @@ export class AnalyzerView extends React.Component<
       this.zoomContext.drawImage(this.frameCanvas, src.x, src.y, src.w, src.h, dst.x, dst.y, dst.w, dst.h);
     }
     if (this.state.showLayersInZoom) {
+      if (this.state.showGrains) {
+        this.zoomContext.drawImage(this.grainFrameCanvas, src.x, src.y, src.w, src.h, dst.x, dst.y, dst.w, dst.h);
+      }
       this.drawLayers(frame, this.zoomContext, src, dst);
     }
   }
@@ -1408,7 +1411,6 @@ export class AnalyzerView extends React.Component<
       o[name] = false;
     }
     o.showDecodedImage = true;
-    o['grainAlpha'] = 0;
     this.setState(o as any);
   }
   resetLayersAndActiveFrame() {
@@ -1422,18 +1424,6 @@ export class AnalyzerView extends React.Component<
     const o = {};
     o[name] = !this.state[name];
     this.setState(o as any);
-
-    if (name === 'showGrains') {
-      if (o[name] === true) {
-        this.setState({
-          grainAlpha: this.state.layerAlpha,
-        });
-      } else {
-        this.setState({
-          grainAlpha: 0,
-        });
-      }
-    }
   }
   onMouseDown(event: MouseEvent) {
     this.handleMouseEvent(event, true);
@@ -1834,9 +1824,10 @@ export class AnalyzerView extends React.Component<
                   value={this.state.showGrainMode}
                   onChange={(event) => this.setState({ showGrainMode: event.target.value } as any)}
                 >
-                  <MenuItem value={0}>Y</MenuItem>
-                  <MenuItem value={1}>U</MenuItem>
-                  <MenuItem value={2}>V</MenuItem>
+                  <MenuItem value={0}>Luma</MenuItem>
+                  <MenuItem value={1}>Cb</MenuItem>
+                  <MenuItem value={2}>Cr</MenuItem>
+                  <MenuItem value={-1}>Combined</MenuItem>
                 </Select>
               </div>
             </Toolbar>
@@ -2030,9 +2021,6 @@ export class AnalyzerView extends React.Component<
                     value={this.state.layerAlpha}
                     onChange={(event, value) => {
                       this.setState({ layerAlpha: value } as any);
-                      if (this.state.showGrains) {
-                        this.setState({ grainAlpha: value } as any);
-                      }
                     }}
                   />
                 </div>
@@ -2211,7 +2199,7 @@ export class AnalyzerView extends React.Component<
                   top: 0,
                   zIndex: 0,
                   imageRendering: 'pixelated',
-                  opacity: this.state.grainAlpha,
+                  opacity: this.state.layerAlpha,
                 }}
               ></canvas>
               <canvas
