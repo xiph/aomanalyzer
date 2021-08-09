@@ -359,9 +359,17 @@ export class AnalyzerFrame {
   motionModeHist: Histogram;
   frameImage: FrameImage;
   grainFrameImage: FrameImage;
+  scaledGrainImage: FrameImage;
   decodeTime: number;
   canvasImage: HTMLCanvasElement;
-  canvasGrainImage: HTMLCanvasElement;
+  canvasGrainImage: HTMLCanvasElement[];
+  scaledGrainCanvas: HTMLCanvasElement[];
+
+  constructor() {
+    this.canvasGrainImage = [null, null, null, null];
+    this.scaledGrainCanvas = [null, null, null, null];
+  }
+
   get image(): HTMLCanvasElement {
     if (this.canvasImage) {
       return this.canvasImage;
@@ -374,7 +382,33 @@ export class AnalyzerFrame {
   }
 
   getGrainImage(plane: number): HTMLCanvasElement {
-    return makeCanvas(this.grainFrameImage, plane);
+    const index = plane < 3 && plane >= 0 ? plane : 4;
+
+    if (this.canvasGrainImage[index]) {
+      return this.canvasGrainImage[index];
+    }
+
+    this.canvasGrainImage[index] = makeCanvas(this.grainFrameImage, plane);
+    if (!this.canvasGrainImage.includes(null)) {
+      this.grainFrameImage = null;
+    }
+
+    return this.canvasGrainImage[index];
+  }
+
+  getScaledGrainImage(plane: number): HTMLCanvasElement {
+    const index = plane < 3 && plane >= 0 ? plane : 4;
+
+    if (this.scaledGrainCanvas[index]) {
+      return this.scaledGrainCanvas[index];
+    }
+
+    this.scaledGrainCanvas[index] = makeCanvas(this.scaledGrainImage, plane);
+    if (!this.scaledGrainCanvas.includes(null)) {
+      this.scaledGrainImage = null;
+    }
+
+    return this.scaledGrainCanvas[index];
   }
 
   normalizeGrainSamples(index: number) {
@@ -899,6 +933,7 @@ export class Decoder {
         if (self.shouldReadImageData) {
           frames[frames.length - 1].frameImage = e.data.payload.image;
           frames[frames.length - 1].grainFrameImage = e.data.payload.grainImage;
+          frames[frames.length - 1].scaledGrainImage = e.data.payload.scaledGrainImage;
         }
         frames[frames.length - 1].decodeTime = e.data.payload.decodeTime;
         resolve(frames);

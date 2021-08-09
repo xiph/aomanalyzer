@@ -756,6 +756,7 @@ export class AnalyzerView extends React.Component<
     showBitsScale: 'frame' | 'video' | 'videos';
     showBitsMode: 'linear' | 'heat' | 'heat-opaque';
     showGrainMode: -1 | 0 | 1 | 2;
+    showGrainType: 0 | 1;
     showBitsFilter: '';
     showTransformType: boolean;
     showTools: boolean;
@@ -1034,6 +1035,7 @@ export class AnalyzerView extends React.Component<
       showReferenceFrames: false,
       showGrains: false,
       showGrainMode: 0,
+      showGrainType: 0,
       showTools: !props.blind,
       showFrameComment: false,
       activeHistogramTab: HistogramTab.Bits,
@@ -1124,13 +1126,17 @@ export class AnalyzerView extends React.Component<
       this.displayContext.fillRect(0, 0, dw, dh);
     }
 
+    this.grainContext.clearRect(0, 0, dw, dh);
+
     if (frame.json.filmGrainParamsPresent && this.state.showGrains) {
-      this.grainFrameContext.drawImage(frame.getGrainImage(this.state.showGrainMode), 0, 0);
+      if (this.state.showGrainType === 0) {
+        this.grainFrameContext.drawImage(frame.getGrainImage(this.state.showGrainMode), 0, 0);
+      } else {
+        this.grainFrameContext.drawImage(frame.getScaledGrainImage(this.state.showGrainMode), 0, 0);
+      }
       if (this.state.showGrains) {
         this.grainContext.drawImage(this.grainFrameCanvas, 0, 0, dw, dh);
       }
-    } else {
-      this.grainContext.clearRect(0, 0, this.frameSize.w, this.frameSize.h);
     }
 
     if (this.props.blind) {
@@ -1819,6 +1825,15 @@ export class AnalyzerView extends React.Component<
           grainLayerToolbar = (
             <Toolbar>
               <div>
+                <Select
+                  style={{ width: '150px' }}
+                  value={this.state.showGrainType}
+                  onChange={(event) => this.setState({ showGrainType: event.target.value } as any)}
+                >
+                  <MenuItem value={0}>Grain Only</MenuItem>
+                  <MenuItem value={1}>Scaled Grain</MenuItem>
+                </Select>
+
                 <Select
                   style={{ width: '150px' }}
                   value={this.state.showGrainMode}

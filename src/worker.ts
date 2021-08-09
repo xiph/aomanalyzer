@@ -176,8 +176,8 @@ function getImageFormat() {
   return native._get_image_format ? native._get_image_format() : AOM_IMG_FMT_PLANAR;
 }
 
-function readGrainPlane(plane) {
-  let p = native._get_grain_values(plane);
+function readGrainPlane(plane, scaled) {
+  let p = native._get_grain_values(scaled === 1 ? plane + 3 : plane);
 
   if (p == 0) {
     return null;
@@ -353,9 +353,18 @@ function readPlane(plane) {
 function readGrainImage() {
   return {
     hashCode: (Math.random() * 10000000) | 0,
-    Y: readGrainPlane(0),
-    U: readGrainPlane(1),
-    V: readGrainPlane(2),
+    Y: readGrainPlane(0, 0),
+    U: readGrainPlane(1, 0),
+    V: readGrainPlane(2, 0),
+  };
+}
+
+function readScaledGrainImage() {
+  return {
+    hashCode: (Math.random() * 10000000) | 0,
+    Y: readGrainPlane(0, 1),
+    U: readGrainPlane(1, 1),
+    V: readGrainPlane(2, 1),
   };
 }
 
@@ -387,14 +396,16 @@ function readFrame(e) {
   }
   let image = null;
   let grainImage = null;
+  let scaledGrainImage = null;
   if (e.data.shouldReadImageData) {
     image = readImage();
     grainImage = readGrainImage();
+    scaledGrainImage = readScaledGrainImage();
   }
   self.postMessage(
     {
       command: 'readFrameResult',
-      payload: { json, image, decodeTime: performance.now() - s, grainImage },
+      payload: { json, image, decodeTime: performance.now() - s, grainImage, scaledGrainImage },
       id: e.data.id,
     },
     image ? [image.Y.buffer, image.U.buffer, image.V.buffer] : (undefined as any),
