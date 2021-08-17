@@ -3,7 +3,6 @@ AOMAnalyzer-linux-x64
 AOMAnalyzer-win32-x64
 *.zip
 dist
-\.*
 release_builds
 node_modules
 inspect.js
