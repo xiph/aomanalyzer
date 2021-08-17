@@ -7,6 +7,13 @@ function assert(c: boolean, message = '') {
   }
 }
 
+enum ImageType {
+  Image,
+  ScaleGrain,
+  Grain,
+  OldImage,
+}
+
 let decoderPathPrefix = '';
 
 onmessage = function (e) {
@@ -91,6 +98,7 @@ interface Native {
   _get_codec_build_config(): number;
   _get_aom_codec_build_config(): number; // Legacy for AV1
   _get_grain_values(pli: number);
+  _get_old_plane(pli: number);
   FS: any;
   HEAPU8: Uint8Array;
   UTF8ToString(p: number): string;
@@ -176,98 +184,23 @@ function getImageFormat() {
   return native._get_image_format ? native._get_image_format() : AOM_IMG_FMT_PLANAR;
 }
 
-function readGrainPlane(plane, scaled) {
-  let p = native._get_grain_values(scaled === 1 ? plane + 3 : plane);
+function readPlane(plane, type: ImageType = ImageType.Image) {
+  let p = 0;
 
-  if (p == 0) {
-    return null;
+  switch (type) {
+    case ImageType.Image:
+      p = native._get_plane(plane);
+      break;
+    case ImageType.Grain:
+      p = native._get_grain_values(plane);
+      break;
+    case ImageType.ScaleGrain:
+      p = native._get_grain_values(plane + 3);
+      break;
+    case ImageType.OldImage:
+      p = native._get_old_plane(plane);
+      break;
   }
-  const HEAPU8 = native.HEAPU8;
-  let stride = native._get_plane_stride(plane);
-  let depth = 8;
-  let width = native._get_frame_width();
-  let height = native._get_frame_height();
-  const fmt = getImageFormat();
-  const hbd = fmt & AOM_IMG_FMT_HIGHBITDEPTH;
-  if (hbd) {
-    stride >>= 1;
-  }
-  let xdec;
-  let ydec;
-  if (fmt == AOM_IMG_FMT_I444 || fmt == AOM_IMG_FMT_I44416) {
-    xdec = 0;
-    ydec = 0;
-  } else if (fmt == AOM_IMG_FMT_I422 || fmt == AOM_IMG_FMT_I42216) {
-    xdec = plane > 0 ? 1 : 0;
-    ydec = 0;
-  } else {
-    xdec = plane > 0 ? 1 : 0;
-    ydec = plane > 0 ? 1 : 0;
-  }
-  width >>= xdec;
-  height >>= ydec;
-
-  const byteLength = height * width;
-  let buffer = getReleasedBuffer(byteLength);
-
-  if (buffer && !hbd) {
-    // Copy into released buffer.
-    const tmp = new Uint8Array(buffer);
-    if (stride === width) {
-      tmp.set(HEAPU8.subarray(p, p + byteLength));
-    } else {
-      for (let i = 0; i < height; i++) {
-        tmp.set(HEAPU8.subarray(p, p + width), i * width);
-        p += stride;
-      }
-    }
-  } else if (hbd) {
-    const tmpBuffer = buffer ? new Uint8Array(buffer) : new Uint8Array(byteLength);
-    if (depth == 10) {
-      // Convert to 8 bit depth.
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const offset = y * (stride << 1) + (x << 1);
-          tmpBuffer[y * width + x] = (HEAPU8[p + offset] + (HEAPU8[p + offset + 1] << 8)) >> 2;
-        }
-      }
-    } else {
-      // Unpack to 8 bit depth.
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const offset = y * (stride << 1) + (x << 1);
-          tmpBuffer[y * width + x] = HEAPU8[p + offset];
-        }
-      }
-    }
-    buffer = tmpBuffer.buffer;
-    depth = 8;
-  } else {
-    if (stride === width) {
-      buffer = HEAPU8.slice(p, p + byteLength).buffer;
-    } else {
-      const tmp = new Uint8Array(byteLength);
-      for (let i = 0; i < height; i++) {
-        tmp.set(HEAPU8.subarray(p, p + width), i * width);
-        p += stride;
-      }
-      buffer = tmp.buffer;
-    }
-  }
-
-  return {
-    buffer,
-    stride: width,
-    depth,
-    width,
-    height,
-    xdec,
-    ydec,
-  };
-}
-
-function readPlane(plane) {
-  let p = native._get_plane(plane);
   const HEAPU8 = native.HEAPU8;
   let stride = native._get_plane_stride(plane);
   let depth = native._get_bit_depth();
@@ -353,32 +286,37 @@ function readPlane(plane) {
 function readGrainImage() {
   return {
     hashCode: (Math.random() * 10000000) | 0,
-    Y: readGrainPlane(0, 0),
-    U: readGrainPlane(1, 0),
-    V: readGrainPlane(2, 0),
+    Y: readPlane(0, ImageType.Grain),
+    U: readPlane(1, ImageType.Grain),
+    V: readPlane(2, ImageType.Grain),
+  };
+}
+
+function readOldPlaneImage() {
+  return {
+    hashCode: (Math.random() * 10000000) | 0,
+    Y: readPlane(0, ImageType.OldImage),
+    U: readPlane(1, ImageType.OldImage),
+    V: readPlane(2, ImageType.OldImage),
   };
 }
 
 function readScaledGrainImage() {
   return {
     hashCode: (Math.random() * 10000000) | 0,
-    Y: readGrainPlane(0, 1),
-    U: readGrainPlane(1, 1),
-    V: readGrainPlane(2, 1),
+    Y: readPlane(0, ImageType.ScaleGrain),
+    U: readPlane(1, ImageType.ScaleGrain),
+    V: readPlane(2, ImageType.ScaleGrain),
   };
 }
 
 function readImage() {
   return {
     hashCode: (Math.random() * 1000000) | 0,
-    Y: readPlane(0),
-    U: readPlane(1),
-    V: readPlane(2),
+    Y: readPlane(0, ImageType.Image),
+    U: readPlane(1, ImageType.Image),
+    V: readPlane(2, ImageType.Image),
   };
-}
-
-function readGrains(e) {
-  const s = performance.now();
 }
 
 function readFrame(e) {
@@ -397,15 +335,17 @@ function readFrame(e) {
   let image = null;
   let grainImage = null;
   let scaledGrainImage = null;
+  let oldImage = null;
   if (e.data.shouldReadImageData) {
     image = readImage();
     grainImage = readGrainImage();
+    oldImage = readOldPlaneImage();
     scaledGrainImage = readScaledGrainImage();
   }
   self.postMessage(
     {
       command: 'readFrameResult',
-      payload: { json, image, decodeTime: performance.now() - s, grainImage, scaledGrainImage },
+      payload: { json, image, decodeTime: performance.now() - s, grainImage, scaledGrainImage, oldImage },
       id: e.data.id,
     },
     image ? [image.Y.buffer, image.U.buffer, image.V.buffer] : (undefined as any),

@@ -1131,8 +1131,12 @@ export class AnalyzerView extends React.Component<
     if (frame.json.filmGrainParamsPresent && this.state.showGrains) {
       if (this.state.showGrainType === 0) {
         this.grainFrameContext.drawImage(frame.getGrainImage(this.state.showGrainMode), 0, 0);
-      } else {
+      } else if (this.state.showGrainType === 1) {
         this.grainFrameContext.drawImage(frame.getScaledGrainImage(this.state.showGrainMode), 0, 0);
+      } else if (this.state.showGrainType === 2) {
+        this.grainFrameContext.drawImage(frame.getOldImage(this.state.showGrainMode), 0, 0);
+      } else {
+        this.grainFrameContext.drawImage(frame.getImage(this.state.showGrainMode), 0, 0);
       }
       if (this.state.showGrains) {
         this.grainContext.drawImage(this.grainFrameCanvas, 0, 0, dw, dh);
@@ -1832,6 +1836,8 @@ export class AnalyzerView extends React.Component<
                 >
                   <MenuItem value={0}>Grain Only</MenuItem>
                   <MenuItem value={1}>Scaled Grain</MenuItem>
+                  <MenuItem value={2}>Image without Grain</MenuItem>
+                  <MenuItem value={3}>Image with Grain</MenuItem>
                 </Select>
 
                 <Select

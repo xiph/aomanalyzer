@@ -360,25 +360,53 @@ export class AnalyzerFrame {
   frameImage: FrameImage;
   grainFrameImage: FrameImage;
   scaledGrainImage: FrameImage;
+  oldImage: FrameImage;
   decodeTime: number;
   canvasImage: HTMLCanvasElement;
   canvasGrainImage: HTMLCanvasElement[];
   scaledGrainCanvas: HTMLCanvasElement[];
+  oldImageCanvas: HTMLCanvasElement[];
+  imageCanvas: HTMLCanvasElement[];
 
   constructor() {
     this.canvasGrainImage = [null, null, null, null];
     this.scaledGrainCanvas = [null, null, null, null];
+    this.oldImageCanvas = [null, null, null, null];
+    this.imageCanvas = [null, null, null, null];
   }
 
   get image(): HTMLCanvasElement {
-    if (this.canvasImage) {
-      return this.canvasImage;
+    return this.getImage(-1);
+  }
+
+  getImage(plane: number): HTMLCanvasElement {
+    const index = plane < 3 && plane >= 0 ? plane : 4;
+
+    if (this.imageCanvas[index]) {
+      return this.imageCanvas[index];
     }
-    // Make canvas elements lazily, this speeds up loading.
-    this.canvasImage = makeCanvas(this.frameImage);
-    // Free frame image data, we don't need it anymore.
-    this.frameImage = null;
-    return this.canvasImage;
+
+    this.imageCanvas[index] = makeCanvas(this.frameImage, plane);
+    if (!this.imageCanvas.includes(null)) {
+      this.frameImage = null;
+    }
+
+    return this.imageCanvas[index];
+  }
+
+  getOldImage(plane: number): HTMLCanvasElement {
+    const index = plane < 3 && plane >= 0 ? plane : 4;
+
+    if (this.oldImageCanvas[index]) {
+      return this.oldImageCanvas[index];
+    }
+
+    this.oldImageCanvas[index] = makeCanvas(this.oldImage, plane);
+    if (!this.oldImageCanvas.includes(null)) {
+      this.oldImage = null;
+    }
+
+    return this.oldImageCanvas[index];
   }
 
   getGrainImage(plane: number): HTMLCanvasElement {
@@ -934,6 +962,7 @@ export class Decoder {
           frames[frames.length - 1].frameImage = e.data.payload.image;
           frames[frames.length - 1].grainFrameImage = e.data.payload.grainImage;
           frames[frames.length - 1].scaledGrainImage = e.data.payload.scaledGrainImage;
+          frames[frames.length - 1].oldImage = e.data.payload.oldImage;
         }
         frames[frames.length - 1].decodeTime = e.data.payload.decodeTime;
         resolve(frames);
