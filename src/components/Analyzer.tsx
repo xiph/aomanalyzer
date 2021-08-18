@@ -1421,7 +1421,6 @@ export class AnalyzerView extends React.Component<
             </MenuItem>,
           );
         }
-
         sidePanel = (
           <div id="sidePanel">
             <Dialog open={this.state.showShareUrlDialog}>
