@@ -1286,7 +1286,7 @@ export class AnalyzerView extends React.Component<AnalyzerViewProps, {
           for (let i = 0; i < this.props.groups.length; i++) {
             tabs.push(<Tab key={i} label={i + 1} value={i} />);
           }
-          groupTabs = <div><Tabs value={this.state.activeGroup} onChange={(value) => {
+          groupTabs = <div><Tabs value={this.state.activeGroup} onChange={(_e, value) => {
             this.setState({
               activeGroup: value,
             } as any);
