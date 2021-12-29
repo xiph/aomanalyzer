@@ -1395,7 +1395,7 @@ export class AnalyzerView extends React.Component<
             <div>
               <Tabs
                 value={this.state.activeGroup}
-                onChange={(value) => {
+                onChange={(_e, value) => {
                   this.setState({
                     activeGroup: value,
                   } as any);
