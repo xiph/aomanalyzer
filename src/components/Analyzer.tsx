@@ -1406,7 +1406,6 @@ export class AnalyzerView extends React.Component<
             </div>
           );
         }
-
         const layerMenuItems = [];
         for (const name in this.options) {
           const option = this.options[name];
