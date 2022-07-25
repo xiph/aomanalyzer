@@ -10,7 +10,9 @@
     "build-release": "webpack -p --config config/webpack.config.js",
     "package-darwin": "electron-packager . --platform=darwin --arch=x64 --electron-version=2.0.8 --overwrite --icon=vomit.icns --out=release_builds --tmpdir=/tmp",
     "package-linux": "electron-packager . --platform=linux --arch=x64 --electron-version=2.0.8 --overwrite  --out=release_builds --tmpdir=/tmp",
-    "package-win32": "electron-packager . --platform=win32 --arch=x64 --electron-version=2.0.8 --overwrite  --out=release_builds --tmpdir=/tmp"
+    "package-win32": "electron-packager . --platform=win32 --arch=x64 --electron-version=2.0.8 --overwrite  --out=release_builds --tmpdir=/tmp",
+    "check-lint": "eslint \"src/**/*.{js,ts,tsx}\"",
+    "lint": "eslint \"src/**/*.{js,ts,tsx}\" --quiet --fix"
   },
   "author": "Michael Bebenita",
   "license": "ISC",
@@ -27,10 +29,17 @@
   "dependencies": {
     "@material-ui/core": "^4.11.4",
     "@material-ui/icons": "^4.11.2",
+    "@typescript-eslint/eslint-plugin": "^4.26.0",
+    "@typescript-eslint/parser": "^4.26.0",
     "argparse": "^1.0.9",
     "electron": "^5.0.7",
     "electron-packager-dummy-wine": "^1.0.2",
+    "eslint": "^7.27.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.4.0",
+    "eslint-plugin-react": "^7.24.0",
     "file-saver": "^1.3.3",
+    "prettier": "^2.3.0",
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
     "react-input-autosize": "1.1.0",
