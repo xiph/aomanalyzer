@@ -32,7 +32,7 @@
     "@typescript-eslint/eslint-plugin": "^4.26.0",
     "@typescript-eslint/parser": "^4.26.0",
     "argparse": "^1.0.9",
-    "electron": "^5.0.7",
+    "electron": "^18.3.7",
     "electron-packager-dummy-wine": "^1.0.2",
     "eslint": "^7.27.0",
     "eslint-config-prettier": "^8.3.0",
