@@ -1,4 +1,4 @@
-# [AOM Analyzer](http://aomanalyzer.org)
+# [AOM Analyzer](http://github.com/xiph/aomanalyzer)
 
 ## Install & Build
 
